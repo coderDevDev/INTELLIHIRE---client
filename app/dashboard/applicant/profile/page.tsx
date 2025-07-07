@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,14 +18,33 @@ import {
   Download,
   Pencil,
   Trash2,
-  Plus
+  Plus,
+  CheckCircle,
+  FileText
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 
 const DEFAULT_AVATAR = '/avatar-placeholder.png';
 
-const SAMPLE_EXPERIENCE = [];
+const SAMPLE_EXPERIENCE: any[] = [];
 
-const SAMPLE_EDUCATION = [];
+const SAMPLE_EDUCATION: any[] = [];
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+const getPdsDownloadUrl = (pdsFile: string) => {
+  if (!pdsFile) return '#';
+  // Remove any leading slashes
+  const filePath = pdsFile.replace(/^\/+/, '');
+  // Remove 'api' from API_URL if present, to get the base URL
+  const baseUrl = API_URL.replace(/\/api$/, '');
+  return `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
+};
 
 export default function ApplicantProfilePage() {
   const user = authAPI.getCurrentUser();
@@ -68,6 +87,10 @@ export default function ApplicantProfilePage() {
   });
   const [certDeleteIdx, setCertDeleteIdx] = useState<number | null>(null);
 
+  const pdsInputRef = useRef<HTMLInputElement>(null);
+  const [pdsFile, setPdsFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   useEffect(() => {
     async function fetchProfile() {
       if (!user?.id) return;
@@ -76,9 +99,11 @@ export default function ApplicantProfilePage() {
         const data = await userAPI.getUserById(user.id);
         setProfile(data);
         setAvatar(data.profilePicture || DEFAULT_AVATAR);
-        setExperience(data.experience || SAMPLE_EXPERIENCE);
-        setEducation(data.education || SAMPLE_EDUCATION);
-        setCertification(data.certification || []);
+        setExperience(Array.isArray(data.experience) ? data.experience : []);
+        setEducation(Array.isArray(data.education) ? data.education : []);
+        setCertification(
+          Array.isArray(data.certification) ? data.certification : []
+        );
       } catch (err) {
         toast.error('Failed to load profile');
       } finally {
@@ -122,9 +147,33 @@ export default function ApplicantProfilePage() {
   };
 
   const handleSave = async () => {
-    // TODO: Send updated profile to backend (including avatar upload)
-    setEditMode(false);
-    toast.success('Profile updated successfully!');
+    try {
+      let profilePicture = profile.profilePicture;
+      if (avatarFile) {
+        // Upload avatar first
+        const formData = new FormData();
+        formData.append('picture', avatarFile);
+        const res = await userAPI.uploadProfilePicture(formData);
+        profilePicture = res.profilePicture;
+      }
+      // Prepare update payload
+      const updatePayload: any = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phoneNumber: profile.phoneNumber,
+        address: profile.address,
+        gender: profile.gender,
+        dob: profile.dob,
+        profilePicture
+      };
+      const updated = await userAPI.updateProfile(updatePayload);
+      setProfile(updated);
+      setEditMode(false);
+      setAvatarFile(null);
+      toast.success('Profile updated successfully!');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to update profile.');
+    }
   };
 
   const age = profile.dob
@@ -305,6 +354,59 @@ export default function ApplicantProfilePage() {
 
   const cancelCertDelete = () => setCertDeleteIdx(null);
 
+  const handlePdsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setPdsFile(e.target.files[0]);
+    }
+  };
+
+  const handlePdsUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pdsFile) return;
+    try {
+      // Upload to backend
+      await userAPI.uploadPds(pdsFile);
+      toast.success('PDS uploaded successfully!');
+      setPdsFile(null);
+      if (pdsInputRef.current) pdsInputRef.current.value = '';
+      // Refresh user data to get new PDS file path
+      const res = await userAPI.getUserById(user._id);
+      setProfile(res);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to upload PDS.');
+    }
+  };
+
+  // Drag and drop handlers for PDS upload
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf') {
+        setPdsFile(file);
+        if (pdsInputRef.current) pdsInputRef.current.value = '';
+      } else {
+        toast.error('Only PDF files are allowed.');
+      }
+    }
+  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  // Remove uploaded PDS (frontend only, optional backend integration)
+  const handleRemovePds = () => {
+    setProfile({ ...profile, pdsFile: undefined });
+    // Optionally, call backend to delete file
+    toast('PDS removed (frontend only)');
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-8 max-w-5xl mx-auto py-8">
       {/* Left Sidebar */}
@@ -417,11 +519,7 @@ export default function ApplicantProfilePage() {
             )}
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="w-full flex items-center gap-2 mb-4">
-          <Download className="h-4 w-4" /> Download Resume
-        </Button>
+
         <div className="w-full flex flex-col gap-2">
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-brand-blue" />
@@ -474,6 +572,122 @@ export default function ApplicantProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Download Resume & PDS Template in one row */}
+        <div className="flex flex-row gap-2 w-full mb-4 mt-4">
+          <Button
+            asChild
+            variant="outline"
+            className="flex-1 flex items-center gap-2"
+            disabled={!user?.resume}>
+            <a href={user?.resume || '#'} download={!!user?.resume}>
+              <Download className="h-4 w-4" />
+              Resume
+            </a>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="flex-1 flex items-center gap-2">
+            <a
+              href="https://lto.gov.ph/wp-content/uploads/2023/11/CS_Form_No._212_Revised-2017_Personal-Data-Sheet.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              download>
+              <Download className="h-4 w-4" />
+              PDS
+            </a>
+          </Button>
+        </div>
+        {/* Upload PDS with drag-and-drop */}
+        <form
+          onSubmit={handlePdsUpload}
+          className="w-full flex flex-col gap-2 mb-4">
+          <label className="text-sm font-medium">Upload PDS (PDF)</label>
+          <div
+            className={`border-2 border-dashed rounded-md p-4 text-center cursor-pointer transition-colors ${
+              isDragging
+                ? 'border-brand-blue bg-blue-50'
+                : 'border-gray-300 bg-white'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => pdsInputRef.current?.click()}>
+            {pdsFile ? (
+              <span className="text-brand-blue font-medium">
+                {pdsFile.name}
+              </span>
+            ) : (
+              <span className="text-gray-500">
+                Drag & drop your PDS PDF here, or{' '}
+                <span className="underline text-brand-blue">browse</span>
+              </span>
+            )}
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handlePdsChange}
+              ref={pdsInputRef}
+              className="hidden"
+              required
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={!pdsFile}>
+            Upload PDS
+          </Button>
+          {/* Show download link for uploaded PDS with enhanced UI */}
+          {profile?.pdsFile && (
+            <div className="flex flex-col items-start gap-2 mt-3 bg-gray-50 border rounded-md p-3 shadow-sm relative">
+              <div className="flex items-center gap-2 w-full">
+                <FileText className="text-brand-blue h-5 w-5" />
+                <span
+                  className="font-medium text-brand-blue truncate max-w-[140px]"
+                  title={profile.pdsFile.split('/').pop()}>
+                  {profile.pdsFile.split('/').pop()}
+                </span>
+                <span className="text-xs text-gray-500 ml-2">PDF</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        size="icon"
+                        variant="ghost"
+                        className="ml-1">
+                        <a
+                          href={getPdsDownloadUrl(profile.pdsFile)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Download your uploaded PDS</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="ml-1"
+                  onClick={handleRemovePds}>
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Upload successful</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            </div>
+          )}
+        </form>
         <div className="flex justify-center gap-2 mt-6">
           {editMode ? (
             <>
@@ -526,7 +740,7 @@ export default function ApplicantProfilePage() {
             </Button>
           </div>
           <div className="space-y-4">
-            {experience.map((exp, i) => (
+            {(experience || []).map((exp, i) => (
               <Card
                 key={i}
                 className="p-4 flex flex-col md:flex-row md:items-center md:justify-between relative group">
@@ -657,7 +871,7 @@ export default function ApplicantProfilePage() {
             </Button>
           </div>
           <div className="space-y-4">
-            {education.map((edu, i) => (
+            {(education || []).map((edu, i) => (
               <Card
                 key={i}
                 className="p-4 flex flex-col md:flex-row md:items-center md:justify-between relative group">
@@ -769,12 +983,7 @@ export default function ApplicantProfilePage() {
             </Button>
           </div>
           <div className="space-y-4">
-            {certification.length === 0 && (
-              <div className="text-muted-foreground text-sm">
-                No certifications added yet.
-              </div>
-            )}
-            {certification.map((cert, i) => (
+            {(certification || []).map((cert, i) => (
               <Card
                 key={i}
                 className="p-4 flex flex-col md:flex-row md:items-center md:justify-between relative group">
