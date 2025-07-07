@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -9,6 +10,32 @@ const api = axios.create({
   }
 });
 
+// --- Auto-logout timer management ---
+let logoutTimer: ReturnType<typeof setTimeout> | null = null;
+function setAutoLogout(token: string) {
+  try {
+    const { exp } = jwtDecode<{ exp: number }>(token);
+    if (exp) {
+      const msUntilExpiry = exp * 1000 - Date.now();
+      if (logoutTimer) clearTimeout(logoutTimer);
+      if (msUntilExpiry > 0) {
+        logoutTimer = setTimeout(() => {
+          authAPI.logout();
+          window.location.href = '/login?expired=1';
+        }, msUntilExpiry);
+      } else {
+        // Token already expired
+        authAPI.logout();
+        window.location.href = '/login?expired=1';
+      }
+    }
+  } catch {
+    // Invalid token, force logout
+    authAPI.logout();
+    window.location.href = '/login?expired=1';
+  }
+}
+
 // Add token to requests if it exists
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
@@ -17,6 +44,18 @@ api.interceptors.request.use(config => {
   }
   return config;
 });
+
+// Add response interceptor to handle 401 Unauthorized
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      authAPI.logout();
+      window.location.href = '/login?expired=1';
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth API calls
 export const authAPI = {
@@ -30,6 +69,7 @@ export const authAPI = {
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      setAutoLogout(response.data.token);
     }
     return response.data;
   },
@@ -39,6 +79,7 @@ export const authAPI = {
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      setAutoLogout(response.data.token);
     }
     return response.data;
   },
@@ -46,15 +87,43 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    if (logoutTimer) {
+      clearTimeout(logoutTimer);
+      logoutTimer = null;
+    }
   },
 
   getCurrentUser: () => {
+    if (typeof window === 'undefined') return null;
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    try {
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      if (exp && Date.now() >= exp * 1000) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (logoutTimer) {
+          clearTimeout(logoutTimer);
+          logoutTimer = null;
+        }
+        return false;
+      }
+      setAutoLogout(token); // Refresh auto-logout timer on check
+      return true;
+    } catch {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (logoutTimer) {
+        clearTimeout(logoutTimer);
+        logoutTimer = null;
+      }
+      return false;
+    }
   },
 
   getToken: () => {
@@ -132,6 +201,19 @@ export const categoryAPI = {
 
   getCategoryById: async (id: string) => {
     const response = await api.get(`/categories/${id}`);
+    return response.data;
+  }
+};
+
+// User API calls
+export const userAPI = {
+  getUserById: async (id: string) => {
+    const response = await api.get(`/users/${id}`);
+    return response.data;
+  },
+
+  updateProfile: async (profileData: any) => {
+    const response = await api.put('/users/profile', profileData);
     return response.data;
   }
 };

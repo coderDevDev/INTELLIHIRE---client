@@ -17,11 +17,10 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authAPI } from '@/lib/api-service';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export function LoginForm() {
   const router = useRouter();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState('applicant');
   const [formData, setFormData] = useState({
@@ -47,10 +46,7 @@ export function LoginForm() {
         password: formData.password
       });
 
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!'
-      });
+      toast.success('Login successful');
 
       console.log({ response });
       // Redirect based on user role
@@ -62,13 +58,14 @@ export function LoginForm() {
         router.push('/dashboard/admin');
       }
     } catch (error: any) {
-      toast({
-        title: 'Login failed',
-        description:
-          error.response?.data?.message ||
-          'Please check your credentials and try again.',
-        variant: 'destructive'
-      });
+      toast.error('Login failed. Please check your credentials and try again');
+      // toast({
+      //   title: 'Login failed',
+      //   description:
+      //     error.response?.data?.message ||
+      //     'Please check your credentials and try again.',
+      //   variant: 'destructive'
+      // });
     } finally {
       setIsLoading(false);
     }

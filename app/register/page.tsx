@@ -1,6 +1,6 @@
-import { RegisterForm } from "@/components/register-form"
-import { MainNav } from "@/components/main-nav"
-import { Footer } from "@/components/footer"
+import { RegisterForm } from '@/components/register-form';
+import { MainNav } from '@/components/main-nav';
+import { Footer } from '@/components/footer';
 
 export default function RegisterPage() {
   return (
@@ -10,11 +10,13 @@ export default function RegisterPage() {
           <MainNav />
         </div>
       </header>
-      <main className="flex-1 container max-w-md mx-auto py-12">
-        <h1 className="text-2xl font-bold mb-6 text-center">Create an Account</h1>
+      <main className="flex-1 container max-w-2xl mx-auto py-12">
+        {/* <h1 className="text-2xl font-bold mb-6 text-center">
+          Create an Account
+        </h1> */}
         <RegisterForm />
       </main>
       <Footer />
     </div>
-  )
+  );
 }
