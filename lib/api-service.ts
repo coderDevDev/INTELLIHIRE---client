@@ -21,7 +21,12 @@ api.interceptors.request.use(config => {
 // Auth API calls
 export const authAPI = {
   login: async (credentials: { email: string; password: string }) => {
-    const response = await api.post('/auth/login', credentials);
+    console.log({ credentials });
+
+    const response = await api.post('/auth/login', {
+      email: credentials.email,
+      password: credentials.password
+    });
     if (response.data.token) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -117,6 +122,11 @@ export const companyAPI = {
 export const categoryAPI = {
   getCategories: async () => {
     const response = await api.get('/categories');
+    return response.data;
+  },
+
+  getCategory: async (id: string) => {
+    const response = await api.get(`/categories/${id}`);
     return response.data;
   },
 

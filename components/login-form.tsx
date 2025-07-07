@@ -41,7 +41,11 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await authAPI.login(formData.email, formData.password);
+      console.log({ formData });
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
 
       toast({
         title: 'Login successful',

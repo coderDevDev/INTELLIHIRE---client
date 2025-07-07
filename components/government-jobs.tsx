@@ -1,53 +1,25 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Building, Clock, Landmark } from "lucide-react"
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { MapPin, Building, Clock, Landmark } from 'lucide-react';
 
-export function GovernmentJobs() {
-  const jobs = [
-    {
-      id: 1,
-      title: "IT Helpdesk",
-      department: "City Information Technology Office",
-      location: "Sto. Tomas City Hall",
-      type: "Full-time",
-      salary: "SG-11 (₱25,439/month)",
-      posted: "Just now",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 2,
-      title: "Administrative Assistant",
-      department: "City Mayor's Office",
-      location: "Sto. Tomas City Hall",
-      type: "Contract",
-      salary: "SG-8 (₱18,998/month)",
-      posted: "5 days ago",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 3,
-      title: "Software Developer",
-      department: "City Information Technology Office",
-      location: "Sto. Tomas City Hall",
-      type: "Full-time",
-      salary: "SG-15 (₱35,097/month)",
-      posted: "3 days ago",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 4,
-      title: "Quality Assurance",
-      department: "City Planning and Development Office",
-      location: "Sto. Tomas City Hall",
-      type: "Full-time",
-      salary: "SG-13 (₱29,798/month)",
-      posted: "1 week ago",
-      logo: "/placeholder.svg?height=40&width=40",
-    },
-  ]
+export type GovernmentJob = {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  salary: string;
+  posted: string;
+  logo?: string;
+};
 
+type GovernmentJobsProps = {
+  jobs: GovernmentJob[];
+};
+
+export function GovernmentJobs({ jobs }: GovernmentJobsProps) {
   return (
     <section className="bg-brand-blue py-12 md:py-16">
       <div className="container px-4 md:px-6">
@@ -65,7 +37,7 @@ export function GovernmentJobs() {
           </div>
         </div>
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-8 md:grid-cols-2">
-          {jobs.map((job) => (
+          {jobs.map(job => (
             <Card key={job.id} className="job-card overflow-hidden">
               <CardContent className="p-6">
                 <div className="mb-4 flex items-start justify-between">
@@ -75,10 +47,14 @@ export function GovernmentJobs() {
                     </div>
                     <div>
                       <h3 className="font-semibold">{job.title}</h3>
-                      <p className="text-sm text-muted-foreground">{job.department}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {job.department}
+                      </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-brand-blue text-brand-blue">
+                  <Badge
+                    variant="outline"
+                    className="border-brand-blue text-brand-blue">
                     Government
                   </Badge>
                 </div>
@@ -95,7 +71,9 @@ export function GovernmentJobs() {
                     <Clock className="h-4 w-4" />
                     <span>Posted {job.posted}</span>
                   </div>
-                  <div className="pt-1 font-medium text-brand-blue">{job.salary}</div>
+                  <div className="pt-1 font-medium text-brand-blue">
+                    {job.salary}
+                  </div>
                 </div>
                 <div className="mt-4 flex justify-end">
                   <Button asChild>
@@ -111,9 +89,10 @@ export function GovernmentJobs() {
             variant="outline"
             size="lg"
             className="border-white text-white hover:bg-white hover:text-brand-blue"
-            asChild
-          >
-            <Link href="/jobs/government" className="inline-flex items-center gap-2">
+            asChild>
+            <Link
+              href="/jobs/government"
+              className="inline-flex items-center gap-2">
               <Landmark className="h-4 w-4" />
               View All Government Jobs
             </Link>
@@ -121,5 +100,5 @@ export function GovernmentJobs() {
         </div>
       </div>
     </section>
-  )
+  );
 }
