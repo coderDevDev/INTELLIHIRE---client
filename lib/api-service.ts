@@ -234,5 +234,44 @@ export const userAPI = {
   }
 };
 
+// Document API calls
+export const documentAPI = {
+  uploadDocument: async (file: File, type: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    const token = authAPI.getToken();
+    const response = await api.post('/documents', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  }
+};
+
+// Application API calls
+export const applicationAPI = {
+  submitApplication: async (payload: any) => {
+    const token = authAPI.getToken();
+    const response = await api.post('/applications', payload, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+  getMyApplications: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/applications/list/my-applications', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  }
+};
+
 // Export the API instance for other services
 export default api;
