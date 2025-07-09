@@ -231,6 +231,17 @@ export const userAPI = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
+  },
+
+  getApplicants: async (params = {}) => {
+    const token = authAPI.getToken();
+    const response = await api.get('/users', {
+      params: { role: 'applicant', ...params },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
   }
 };
 
@@ -244,6 +255,26 @@ export const documentAPI = {
     const response = await api.post('/documents', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  getMyDocuments: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/documents/my-documents', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  deleteDocument: async (documentId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.delete(`/documents/${documentId}`, {
+      headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }
     });
@@ -265,6 +296,26 @@ export const applicationAPI = {
   getMyApplications: async () => {
     const token = authAPI.getToken();
     const response = await api.get('/applications/list/my-applications', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+  getApplicationsByApplicant: async (applicantId: string, params = {}) => {
+    const token = authAPI.getToken();
+    const response = await api.get('/applications', {
+      params: { applicantId, ...params },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+  getAdminApplications: async (params = {}) => {
+    const token = authAPI.getToken();
+    const response = await api.get('/applications', {
+      params,
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }

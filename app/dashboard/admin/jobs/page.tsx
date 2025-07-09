@@ -35,10 +35,18 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Plus, MoreHorizontal, Search, Filter, Download } from 'lucide-react';
+import {
+  Plus,
+  MoreHorizontal,
+  Search,
+  Filter,
+  Download,
+  Briefcase
+} from 'lucide-react';
 import Link from 'next/link';
 import { jobAPI, categoryAPI, authAPI } from '@/lib/api-service';
 import { useToast } from '@/components/ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface Job {
   _id: string;
@@ -240,10 +248,14 @@ export default function JobPostingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between">
-          <h1 className="text-2xl font-bold">Job Postings</h1>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Modern Header */}
+      <header className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <Briefcase className="h-8 w-8 text-brand-blue" />
+            <h1 className="text-3xl font-bold text-gray-900">Job Postings</h1>
+          </div>
           <Button asChild>
             <Link href="/dashboard/admin/jobs/create">
               <Plus className="mr-2 h-4 w-4" /> Create Job Posting
@@ -252,26 +264,31 @@ export default function JobPostingsPage() {
         </div>
       </header>
       <main className="flex-1 overflow-auto">
-        <div className="container py-6 space-y-6">
-          <Card>
+        <div className="container py-8 space-y-8">
+          <Card className="shadow-md border-0">
             <CardHeader>
-              <CardTitle>Manage Job Postings</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-brand-blue" />
+                Manage Job Postings
+              </CardTitle>
               <CardDescription>
-                Create, edit, and manage job postings for the PESO job portal.
-                Total: {totalJobs} job postings
+                Create, edit, and manage job postings for the PESO job portal.{' '}
+                <span className="font-semibold text-brand-blue">
+                  Total: {totalJobs} job postings
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Filters */}
-              <div className="flex flex-col gap-4 mb-6">
+              <div className="flex flex-col gap-4 mb-8">
                 {/* Search and Export */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="relative w-full max-w-sm">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder="Search jobs..."
-                      className="w-full pl-8"
+                      className="w-full pl-8 rounded-lg border border-input bg-background shadow-sm focus-visible:ring-2 focus-visible:ring-brand-blue"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -285,7 +302,7 @@ export default function JobPostingsPage() {
                 </div>
 
                 {/* Filter Controls */}
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-4 items-center rounded-lg bg-gray-50 p-4 border border-gray-100 shadow-sm">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Filters:</span>
@@ -355,9 +372,9 @@ export default function JobPostingsPage() {
               </div>
 
               {/* Jobs Table */}
-              <div className="rounded-md border">
+              <div className="rounded-xl border overflow-x-auto bg-white shadow-sm">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
                     <TableRow>
                       <TableHead>Job Title</TableHead>
                       <TableHead>Company</TableHead>
@@ -375,19 +392,31 @@ export default function JobPostingsPage() {
                   <TableBody>
                     {loading ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8">
-                          Loading job postings...
+                        <TableCell colSpan={11} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="h-6 w-6 animate-spin text-brand-blue" />
+                            <span className="text-muted-foreground">
+                              Loading job postings...
+                            </span>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : jobs.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center py-8">
-                          No job postings found
+                        <TableCell colSpan={11} className="text-center py-12">
+                          <div className="flex flex-col items-center gap-2">
+                            <Briefcase className="h-8 w-8 text-gray-300" />
+                            <span className="text-muted-foreground">
+                              No job postings found
+                            </span>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      jobs.map(job => (
-                        <TableRow key={job._id}>
+                      jobs.map((job, idx) => (
+                        <TableRow
+                          key={job._id}
+                          className={idx % 2 === 0 ? 'bg-gray-50/50' : ''}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               {job.title}
@@ -413,7 +442,9 @@ export default function JobPostingsPage() {
                           <TableCell>
                             <span
                               className={
-                                isExpired(job.expiryDate) ? 'text-red-500' : ''
+                                isExpired(job.expiryDate)
+                                  ? 'text-red-500 font-semibold'
+                                  : ''
                               }>
                               {formatDate(job.expiryDate)}
                             </span>
@@ -507,7 +538,7 @@ export default function JobPostingsPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6">
+                <div className="flex items-center justify-between mt-8">
                   <div className="text-sm text-muted-foreground">
                     Showing {(currentPage - 1) * pageSize + 1} to{' '}
                     {Math.min(currentPage * pageSize, totalJobs)} of {totalJobs}{' '}
