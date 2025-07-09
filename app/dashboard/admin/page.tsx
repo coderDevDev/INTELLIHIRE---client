@@ -35,99 +35,113 @@ import {
 import Link from 'next/link';
 import { AdminDashboardCharts } from '@/components/admin-dashboard-charts';
 import { useEffect, useState } from 'react';
-import { authAPI } from '@/lib/api-service';
+import { authAPI, jobAPI, userAPI, applicationAPI } from '@/lib/api-service';
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    activeJobs: 12,
-    totalApplicants: 245,
-    documentsProcessed: 189,
-    successfulMatches: 78,
-    successRate: 32
+    activeJobs: 0,
+    totalApplicants: 0,
+    documentsProcessed: 0,
+    successfulMatches: 0,
+    successRate: 0
   });
+  const [recentJobs, setRecentJobs] = useState<any[]>([]);
+  const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
 
   useEffect(() => {
-    const currentUser = authAPI.getCurrentUser();
-    setUser(currentUser);
-    // TODO: Fetch real admin statistics
-    setLoading(false);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const currentUser = authAPI.getCurrentUser();
+        setUser(currentUser);
+
+        // Fetch all data in parallel
+        const [jobsRes, applicantsRes, applicationsRes] = await Promise.all([
+          jobAPI.getAdminJobs({ limit: 10, page: 1 }),
+          userAPI.getApplicants({ limit: 10, page: 1 }),
+          applicationAPI.getAdminApplications({ limit: 100, page: 1 })
+        ]);
+
+        console.log('API Responses:', {
+          jobsRes,
+          applicantsRes,
+          applicationsRes
+        });
+
+        // Process jobs data
+        const jobs = jobsRes.jobs || [];
+        setRecentJobs(
+          jobs.slice(0, 4).map((job: any) => ({
+            id: job._id,
+            title: job.title,
+            company: job.companyId?.name || 'Unknown Company',
+            posted: job.postedDate
+              ? new Date(job.postedDate).toLocaleDateString()
+              : 'Unknown',
+            applicants: 0, // Will be calculated from applications
+            status: job.status,
+            location: job.location
+          }))
+        );
+
+        // Process applicants data
+        const applicants = applicantsRes.users || applicantsRes || [];
+        console.log('Applicants data:', applicants);
+
+        if (!Array.isArray(applicants)) {
+          console.error('Applicants is not an array:', applicants);
+          setRecentApplicants([]);
+        } else {
+          setRecentApplicants(
+            applicants.slice(0, 4).map((applicant: any) => ({
+              id: applicant._id,
+              name:
+                `${applicant.firstName || ''} ${
+                  applicant.lastName || ''
+                }`.trim() || 'Unknown',
+              position: 'Applicant',
+              status: 'active',
+              applied: applicant.createdAt
+                ? new Date(applicant.createdAt).toLocaleDateString()
+                : 'Unknown',
+              avatar: applicant.firstName?.[0] || applicant.lastName?.[0] || 'U'
+            }))
+          );
+        }
+
+        // Calculate statistics
+        const activeJobs = jobs.filter(
+          (job: any) => job.status === 'active'
+        ).length;
+        const totalApplicants = applicants.length;
+        const applications =
+          applicationsRes.applications || applicationsRes || [];
+        const successfulMatches = applications.filter((app: any) =>
+          ['hired', 'offered'].includes(app.status)
+        ).length;
+        const successRate =
+          applications.length > 0
+            ? Math.round((successfulMatches / applications.length) * 100)
+            : 0;
+
+        setStats({
+          activeJobs,
+          totalApplicants,
+          documentsProcessed: totalApplicants * 2, // Estimate: each applicant has PDS and resume
+          successfulMatches,
+          successRate
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
-
-  const recentJobs = [
-    {
-      id: 1,
-      title: 'Software Developer',
-      company: 'Tech Solutions Inc.',
-      posted: '2 days ago',
-      applicants: 18,
-      status: 'active',
-      location: 'Sto. Tomas'
-    },
-    {
-      id: 2,
-      title: 'Web Designer',
-      company: 'Creative Agency',
-      posted: '3 days ago',
-      applicants: 12,
-      status: 'active',
-      location: 'Sto. Tomas'
-    },
-    {
-      id: 3,
-      title: 'Project Manager',
-      company: 'Construction Corp',
-      posted: '5 days ago',
-      applicants: 24,
-      status: 'active',
-      location: 'Sto. Tomas'
-    },
-    {
-      id: 4,
-      title: 'Marketing Specialist',
-      company: 'Digital Marketing Co.',
-      posted: '1 week ago',
-      applicants: 9,
-      status: 'closed',
-      location: 'Sto. Tomas'
-    }
-  ];
-
-  const recentApplicants = [
-    {
-      id: 1,
-      name: 'John Doe',
-      position: 'Software Developer',
-      status: 'screening',
-      applied: '2 hours ago',
-      avatar: 'JD'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      position: 'Web Designer',
-      status: 'interview',
-      applied: '1 day ago',
-      avatar: 'JS'
-    },
-    {
-      id: 3,
-      name: 'Robert Johnson',
-      position: 'Project Manager',
-      status: 'offered',
-      applied: '2 days ago',
-      avatar: 'RJ'
-    },
-    {
-      id: 4,
-      name: 'Emily Williams',
-      position: 'Marketing Specialist',
-      status: 'hired',
-      applied: '3 days ago',
-      avatar: 'EW'
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -226,7 +240,7 @@ export default function AdminDashboard() {
                 <div className="text-3xl font-bold">{stats.activeJobs}</div>
                 <div className="flex items-center gap-1 text-xs text-blue-200">
                   <TrendingUp className="h-3 w-3" />
-                  +2 from last month
+                  Active positions
                 </div>
               </CardContent>
             </Card>
@@ -244,7 +258,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-green-200">
                   <TrendingUp className="h-3 w-3" />
-                  +18% from last month
+                  Registered users
                 </div>
               </CardContent>
             </Card>
@@ -320,44 +334,51 @@ export default function AdminDashboard() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentJobs.map(job => (
-                  <div
-                    key={job.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-gray-900 truncate">
-                          {job.title}
-                        </h4>
-                        <Badge
-                          className={`text-xs ${getStatusColor(job.status)}`}>
-                          {job.status.charAt(0).toUpperCase() +
-                            job.status.slice(1)}
-                        </Badge>
+                {recentJobs.length > 0 ? (
+                  recentJobs.map(job => (
+                    <div
+                      key={job.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold text-gray-900 truncate">
+                            {job.title}
+                          </h4>
+                          <Badge
+                            className={`text-xs ${getStatusColor(job.status)}`}>
+                            {job.status.charAt(0).toUpperCase() +
+                              job.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <Building className="h-3 w-3" />
+                            {job.company}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {job.location}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                          <span>Posted {job.posted}</span>
+                          <span>•</span>
+                          <span>{job.applicants} applicants</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Building className="h-3 w-3" />
-                          {job.company}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {job.location}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                        <span>Posted {job.posted}</span>
-                        <span>•</span>
-                        <span>{job.applicants} applicants</span>
-                      </div>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/dashboard/admin/jobs/${job.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dashboard/admin/jobs/${job.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Briefcase className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No jobs posted yet</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 
@@ -383,44 +404,51 @@ export default function AdminDashboard() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recentApplicants.map(applicant => (
-                  <div
-                    key={applicant.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-600 flex items-center justify-center text-white font-medium">
-                        {applicant.avatar}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900 truncate">
-                            {applicant.name}
-                          </h4>
-                          <Badge
-                            className={`text-xs ${getStatusColor(
-                              applicant.status
-                            )}`}>
-                            {getStatusIcon(applicant.status)}
-                            {applicant.status.charAt(0).toUpperCase() +
-                              applicant.status.slice(1)}
-                          </Badge>
+                {recentApplicants.length > 0 ? (
+                  recentApplicants.map(applicant => (
+                    <div
+                      key={applicant.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-600 flex items-center justify-center text-white font-medium">
+                          {applicant.avatar}
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {applicant.position}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Applied {applicant.applied}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold text-gray-900 truncate">
+                              {applicant.name}
+                            </h4>
+                            <Badge
+                              className={`text-xs ${getStatusColor(
+                                applicant.status
+                              )}`}>
+                              {getStatusIcon(applicant.status)}
+                              {applicant.status.charAt(0).toUpperCase() +
+                                applicant.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {applicant.position}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Applied {applicant.applied}
+                          </p>
+                        </div>
                       </div>
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link
+                          href={`/dashboard/admin/applicants/${applicant.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link
-                        href={`/dashboard/admin/applicants/${applicant.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No applicants yet</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
@@ -459,9 +487,9 @@ export default function AdminDashboard() {
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2"
                   asChild>
-                  <Link href="/dashboard/admin/companies">
-                    <Building className="h-6 w-6" />
-                    <span>Manage Companies</span>
+                  <Link href="/dashboard/admin/applications">
+                    <FileText className="h-6 w-6" />
+                    <span>View Applications</span>
                   </Link>
                 </Button>
 

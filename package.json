@@ -48,6 +48,7 @@
     "date-fns": "latest",
     "embla-carousel-react": "8.5.1",
     "formik": "^2.4.6",
+    "framer-motion": "^12.23.0",
     "gcp-metadata": "latest",
     "input-otp": "1.4.1",
     "jwt-decode": "^4.0.0",

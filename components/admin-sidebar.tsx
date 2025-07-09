@@ -59,21 +59,21 @@ export function AdminSidebar() {
       description: 'View applicants',
       badge: '245'
     },
-    {
-      label: 'Documents',
-      icon: FileText,
-      href: '/dashboard/admin/documents',
-      active: pathname === '/dashboard/admin/documents',
-      description: 'PDS and resumes',
-      badge: '189'
-    },
-    {
-      label: 'Analytics',
-      icon: BarChart,
-      href: '/dashboard/admin/analytics',
-      active: pathname === '/dashboard/admin/analytics',
-      description: 'System analytics'
-    },
+    // {
+    //   label: 'Documents',
+    //   icon: FileText,
+    //   href: '/dashboard/admin/documents',
+    //   active: pathname === '/dashboard/admin/documents',
+    //   description: 'PDS and resumes',
+    //   badge: '189'
+    // },
+    // {
+    //   label: 'Analytics',
+    //   icon: BarChart,
+    //   href: '/dashboard/admin/analytics',
+    //   active: pathname === '/dashboard/admin/analytics',
+    //   description: 'System analytics'
+    // },
     {
       label: 'Messages',
       icon: MessageSquare,
