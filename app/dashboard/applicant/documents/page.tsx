@@ -35,7 +35,13 @@ import {
   Shield,
   ArrowUpRight,
   ExternalLink,
-  Briefcase
+  Briefcase,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Target,
+  Award,
+  Heart
 } from 'lucide-react';
 import {
   Tooltip,
@@ -102,6 +108,13 @@ export default function DocumentsPage() {
   }>({
     open: false,
     document: null
+  });
+  const [pdsDataModal, setPdsDataModal] = useState<{
+    open: boolean;
+    data: any | null;
+  }>({
+    open: false,
+    data: null
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -407,7 +420,7 @@ export default function DocumentsPage() {
                     <div>
                       <CardTitle className="text-xl font-semibold flex items-center gap-2">
                         <User className="h-5 w-5 text-brand-blue" />
-                        Personal Data Sheet (PDS)
+                        Personal Data Sheet (PDS)ss
                       </CardTitle>
                       <CardDescription>
                         Upload your completed Personal Data Sheet in PDF format
@@ -473,6 +486,95 @@ export default function DocumentsPage() {
                             }
                             className="text-red-500 hover:text-red-700">
                             <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              const pdsDoc = documents.find(
+                                doc => doc.type === 'pds'
+                              );
+                              if (pdsDoc) {
+                                try {
+                                  const pdsData = await documentAPI.getPdsData(
+                                    pdsDoc.id
+                                  );
+                                  setPdsDataModal({
+                                    open: true,
+                                    data: pdsData
+                                  });
+                                } catch (error) {
+                                  console.error(
+                                    'Error fetching PDS data:',
+                                    error
+                                  );
+                                  toast.error('Failed to load PDS data');
+                                }
+                              }
+                            }}
+                            className="text-brand-blue hover:text-brand-blue-dark">
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Data
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              try {
+                                const debugInfo =
+                                  await documentAPI.getPdsDataDebug();
+                                console.log('PDS Debug Info:', debugInfo);
+
+                                if (debugInfo.totalEntries > 1) {
+                                  // Offer cleanup options
+                                  const cleanupOption = confirm(
+                                    `Found ${debugInfo.totalEntries} PDS data entries.\n\n` +
+                                      `Choose cleanup option:\n` +
+                                      `- Click OK: Keep one entry per document (current behavior)\n` +
+                                      `- Click Cancel: Keep only the single most recent entry`
+                                  );
+
+                                  if (cleanupOption !== null) {
+                                    // User made a choice
+                                    const keepOnePerDocument = cleanupOption; // true for OK, false for Cancel
+                                    const cleanupResult =
+                                      await documentAPI.cleanupPdsData(
+                                        keepOnePerDocument
+                                      );
+
+                                    console.log(
+                                      'Cleanup result:',
+                                      cleanupResult
+                                    );
+
+                                    const mode = keepOnePerDocument
+                                      ? 'one per document'
+                                      : 'single most recent';
+                                    toast.success(
+                                      `Cleanup completed! Mode: ${mode}. Removed ${cleanupResult.removedEntries} entries.`
+                                    );
+
+                                    // Refresh documents to get updated state
+                                    if (user) {
+                                      await fetchDocumentsData(user);
+                                    }
+                                  }
+                                } else {
+                                  toast.info(
+                                    `Found ${debugInfo.totalEntries} PDS data entry(ies)`
+                                  );
+                                }
+                              } catch (error) {
+                                console.error(
+                                  'Error getting debug info:',
+                                  error
+                                );
+                                toast.error('Failed to get debug info');
+                              }
+                            }}
+                            className="text-orange-500 hover:text-orange-700">
+                            <Info className="h-4 w-4 mr-2" />
+                            Debug
                           </Button>
                         </div>
                       </div>
@@ -890,6 +992,764 @@ export default function DocumentsPage() {
               className="bg-red-600 hover:bg-red-700">
               Remove
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* PDS Data Modal */}
+      <AlertDialog
+        open={pdsDataModal.open}
+        onOpenChange={open =>
+          setPdsDataModal({ open, data: pdsDataModal.data })
+        }>
+        <AlertDialogContent className="max-w-4xl h-[90vh] flex flex-col">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Personal Data Sheet (PDS)</AlertDialogTitle>
+            <AlertDialogDescription>
+              Extracted data from your uploaded PDS document.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <CardContent className="flex-1 overflow-y-auto p-0">
+            {pdsDataModal.data ? (
+              <div className="p-6 space-y-6">
+                {/* Personal Information */}
+                {pdsDataModal.data.personalInformation && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                      <User className="h-5 w-5 text-brand-blue" />
+                      Personal Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p>
+                          <span className="font-medium">Name:</span>{' '}
+                          {pdsDataModal.data.personalInformation.firstName ||
+                            ''}{' '}
+                          {pdsDataModal.data.personalInformation.middleName ||
+                            ''}{' '}
+                          {/* Handle both surname and lastName */}
+                          {pdsDataModal.data.personalInformation.surname ||
+                            pdsDataModal.data.personalInformation.lastName ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Birth Date:</span>{' '}
+                          {pdsDataModal.data.personalInformation.dateOfBirth ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Place of Birth:</span>{' '}
+                          {pdsDataModal.data.personalInformation.placeOfBirth ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Gender:</span>{' '}
+                          {pdsDataModal.data.personalInformation.sex || ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Civil Status:</span>{' '}
+                          {pdsDataModal.data.personalInformation.civilStatus ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Citizenship:</span>{' '}
+                          {pdsDataModal.data.personalInformation.citizenship
+                            ?.type ||
+                            pdsDataModal.data.personalInformation.citizenship ||
+                            ''}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p>
+                          <span className="font-medium">Height:</span>{' '}
+                          {pdsDataModal.data.personalInformation.heightCm || ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Weight:</span>{' '}
+                          {pdsDataModal.data.personalInformation.weightKg || ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Blood Type:</span>{' '}
+                          {pdsDataModal.data.personalInformation.bloodType ||
+                            'N/A'}
+                        </p>
+                        <p>
+                          <span className="font-medium">Email:</span>{' '}
+                          {/* Handle both direct field and nested contactInformation */}
+                          {pdsDataModal.data.personalInformation.emailAddress ||
+                            pdsDataModal.data.personalInformation
+                              .contactInformation?.emailAddress ||
+                            'N/A'}
+                        </p>
+                        <p>
+                          <span className="font-medium">Mobile:</span>{' '}
+                          {pdsDataModal.data.personalInformation.mobileNo ||
+                            pdsDataModal.data.personalInformation
+                              .contactInformation?.mobileNo ||
+                            'N/A'}
+                        </p>
+                        <p>
+                          <span className="font-medium">Telephone:</span>{' '}
+                          {pdsDataModal.data.personalInformation.telephoneNo ||
+                            pdsDataModal.data.personalInformation
+                              .contactInformation?.telephoneNo ||
+                            'N/A'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Address Information */}
+                    {pdsDataModal.data.personalInformation
+                      .residentialAddress && (
+                      <div className="mt-4">
+                        <h4 className="font-medium text-gray-700 mb-2">
+                          Address Information
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="font-medium text-sm text-gray-600">
+                              Residential Address:
+                            </p>
+                            <p className="text-sm">
+                              {/* Handle both houseBlockLotNo and houseLotBlockNo */}
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.houseBlockLotNo ||
+                                pdsDataModal.data.personalInformation
+                                  .residentialAddress?.houseLotBlockNo ||
+                                ''}{' '}
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.street || ''}
+                            </p>
+                            <p className="text-sm">
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.subdivisionVillage ||
+                                ''}{' '}
+                              {/* Handle both barangay and barangayDistrict */}
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.barangay ||
+                                pdsDataModal.data.personalInformation
+                                  .residentialAddress?.barangayDistrict ||
+                                ''}
+                            </p>
+                            <p className="text-sm">
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.cityMunicipality || ''}
+                              ,{' '}
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.province || ''}{' '}
+                              {pdsDataModal.data.personalInformation
+                                .residentialAddress?.zipCode || ''}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-sm text-gray-600">
+                              Permanent Address:
+                            </p>
+                            <p className="text-sm">
+                              {/* Handle both houseBlockLotNo and houseLotBlockNo */}
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.houseBlockLotNo ||
+                                pdsDataModal.data.personalInformation
+                                  .permanentAddress?.houseLotBlockNo ||
+                                ''}{' '}
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.street || ''}
+                            </p>
+                            <p className="text-sm">
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.subdivisionVillage ||
+                                ''}{' '}
+                              {/* Handle both barangay and barangayDistrict */}
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.barangay ||
+                                pdsDataModal.data.personalInformation
+                                  .permanentAddress?.barangayDistrict ||
+                                ''}
+                            </p>
+                            <p className="text-sm">
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.cityMunicipality || ''}
+                              ,{' '}
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.province || ''}{' '}
+                              {pdsDataModal.data.personalInformation
+                                .permanentAddress?.zipCode || ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Personal Information */}
+                    <div className="mt-4">
+                      <h4 className="font-medium text-gray-700 mb-2">
+                        Additional Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <p>
+                            <span className="font-medium">GSIS ID:</span>{' '}
+                            {/* Handle both direct field and nested identificationNumbers */}
+                            {pdsDataModal.data.personalInformation.gsisIdNo ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.gsisIdNo ||
+                              'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">PAG-IBIG ID:</span>{' '}
+                            {pdsDataModal.data.personalInformation
+                              .pagIbigIdNo ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.pagIbigIdNo ||
+                              'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">PhilHealth No:</span>{' '}
+                            {/* Handle both philhealthNo and philHealthNo */}
+                            {pdsDataModal.data.personalInformation
+                              .philhealthNo ||
+                              pdsDataModal.data.personalInformation
+                                .philHealthNo ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.philHealthNo ||
+                              'N/A'}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <p>
+                            <span className="font-medium">SSS No:</span>{' '}
+                            {pdsDataModal.data.personalInformation.sssNo ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.sssNo ||
+                              'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">TIN:</span>{' '}
+                            {pdsDataModal.data.personalInformation.tin ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.tinNo ||
+                              'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">
+                              Agency Employee No:
+                            </span>{' '}
+                            {pdsDataModal.data.personalInformation
+                              .agencyEmployeeNo ||
+                              pdsDataModal.data.personalInformation
+                                .identificationNumbers?.agencyEmployeeNo ||
+                              'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Family Background */}
+                {pdsDataModal.data.familyBackground && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-brand-blue" />
+                      Family Background
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p>
+                          <span className="font-medium">Father:</span>{' '}
+                          {pdsDataModal.data.familyBackground.father
+                            ?.firstName || ''}{' '}
+                          {pdsDataModal.data.familyBackground.father
+                            ?.middleName || ''}{' '}
+                          {pdsDataModal.data.familyBackground.father?.surname ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Mother:</span>{' '}
+                          {pdsDataModal.data.familyBackground.motherMaidenName
+                            ?.firstName || ''}{' '}
+                          {pdsDataModal.data.familyBackground.motherMaidenName
+                            ?.middleName || ''}{' '}
+                          {pdsDataModal.data.familyBackground.motherMaidenName
+                            ?.surname || ''}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p>
+                          <span className="font-medium">Spouse:</span>{' '}
+                          {pdsDataModal.data.familyBackground.spouse
+                            ?.firstName || ''}{' '}
+                          {pdsDataModal.data.familyBackground.spouse
+                            ?.middleName || ''}{' '}
+                          {/* Handle both surname and lastName */}
+                          {pdsDataModal.data.familyBackground.spouse?.surname ||
+                            pdsDataModal.data.familyBackground.spouse
+                              ?.lastName ||
+                            ''}
+                        </p>
+                        <p>
+                          <span className="font-medium">Occupation:</span>{' '}
+                          {pdsDataModal.data.familyBackground.spouse
+                            ?.occupation || 'N/A'}
+                        </p>
+                        <p>
+                          <span className="font-medium">Children:</span>{' '}
+                          {pdsDataModal.data.familyBackground.children
+                            ?.length || 0}{' '}
+                          child(ren)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Education */}
+                {pdsDataModal.data.educationalBackground &&
+                  pdsDataModal.data.educationalBackground.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <GraduationCap className="h-5 w-5 text-brand-blue" />
+                        Educational Background
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.educationalBackground.map(
+                          (edu: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {edu.level || ''}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {edu.nameOfSchool || ''}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {edu.basicEducationDegreeCourse || ''}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Period:</span>{' '}
+                                    {edu.periodOfAttendance?.from || ''} -{' '}
+                                    {edu.periodOfAttendance?.to || ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">
+                                      Year Graduated:
+                                    </span>{' '}
+                                    {edu.yearGraduated || ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Honors:</span>{' '}
+                                    {edu.scholarshipAcademicHonorsReceived ||
+                                      'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* Civil Service */}
+                {pdsDataModal.data.civilServiceEligibility &&
+                  pdsDataModal.data.civilServiceEligibility.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-brand-blue" />
+                        Civil Service Eligibility
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.civilServiceEligibility.map(
+                          (cs: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {/* Handle both eligibility and careerServiceOrEligibility */}
+                                    {cs.eligibility ||
+                                      cs.careerServiceOrEligibility ||
+                                      ''}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    Rating: {cs.rating || 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Date:</span>{' '}
+                                    {/* Handle both field names */}
+                                    {cs.dateOfExaminationConferment ||
+                                      cs.dateOfExaminationOrConferment ||
+                                      ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Place:</span>{' '}
+                                    {cs.placeOfExaminationConferment ||
+                                      cs.placeOfExaminationOrConferment ||
+                                      ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">
+                                      License:
+                                    </span>{' '}
+                                    {/* Handle both license structures */}
+                                    {cs.license?.number ||
+                                      cs.licenseNumber ||
+                                      'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* Work Experience */}
+                {pdsDataModal.data.workExperience &&
+                  pdsDataModal.data.workExperience.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <Briefcase className="h-5 w-5 text-brand-blue" />
+                        Work Experience
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.workExperience.map(
+                          (work: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {work.positionTitle || ''}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {work.departmentAgencyOfficeCompany || ''}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {work.statusOfAppointment || ''}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Period:</span>{' '}
+                                    {work.from || ''} - {work.to || ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Salary:</span>{' '}
+                                    ₱
+                                    {/* Handle both direct salary and nested salary.amount */}
+                                    {work.monthlySalary
+                                      ? (typeof work.monthlySalary === 'object'
+                                          ? work.monthlySalary.amount
+                                          : work.monthlySalary
+                                        ).toLocaleString()
+                                      : 'N/A'}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">
+                                      Salary Grade:
+                                    </span>{' '}
+                                    {/* Handle both field names */}
+                                    {work.salaryGradeStep ||
+                                      work.salaryJobPayGradeStep ||
+                                      ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">
+                                      Government Service:
+                                    </span>{' '}
+                                    {work.governmentService ? 'Yes' : 'No'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* Voluntary Work */}
+                {pdsDataModal.data.voluntaryWork &&
+                  pdsDataModal.data.voluntaryWork.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <Heart className="h-5 w-5 text-brand-blue" />
+                        Voluntary Work
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.voluntaryWork.map(
+                          (vol: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {/* Handle both nameAndAddress and organization */}
+                                    {vol.nameAndAddress ||
+                                      vol.organization ||
+                                      ''}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {vol.positionNatureOfWork || ''}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Period:</span>{' '}
+                                    {/* Handle both inclusiveDates and from/to */}
+                                    {vol.inclusiveDates?.from || vol.from || ''}{' '}
+                                    -{' '}
+                                    {vol.inclusiveDates?.to ||
+                                      vol.inclusiveDates?.toStatus ||
+                                      vol.to ||
+                                      ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Hours:</span>{' '}
+                                    {vol.numberOfHours ||
+                                      vol.numberOfHoursPerYear ||
+                                      ''}{' '}
+                                    {vol.hoursUnit ||
+                                      vol.numberOfHoursDetail ||
+                                      ''}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* Training */}
+                {pdsDataModal.data.trainings &&
+                  pdsDataModal.data.trainings.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-brand-blue" />
+                        Learning and Development
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.trainings.map(
+                          (train: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {train.title || ''}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    Type: {train.typeOfLd || ''}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {train.conductedSponsoredBy || ''}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Period:</span>{' '}
+                                    {/* Handle both inclusiveDates and from/to */}
+                                    {train.inclusiveDates?.from ||
+                                      train.from ||
+                                      ''}{' '}
+                                    -{' '}
+                                    {train.inclusiveDates?.to || train.to || ''}
+                                  </p>
+                                  <p className="text-sm">
+                                    <span className="font-medium">Hours:</span>{' '}
+                                    {train.numberOfHours || ''}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* References */}
+                {pdsDataModal.data.references &&
+                  pdsDataModal.data.references.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                        <Users className="h-5 w-5 text-brand-blue" />
+                        References
+                      </h3>
+                      <div className="space-y-3">
+                        {pdsDataModal.data.references.map(
+                          (ref: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border border-gray-200 rounded-lg p-3">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {ref.name || 'N/A'}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {ref.address || 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm">
+                                    <span className="font-medium">
+                                      Contact:
+                                    </span>{' '}
+                                    {ref.contactNumber || 'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                <Separator />
+
+                {/* Skills, Recognitions, Memberships */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                      <Target className="h-5 w-5 text-brand-blue" />
+                      Skills & Hobbies
+                    </h3>
+                    <div className="space-y-2">
+                      {/* Handle both direct skills array and nested otherInformation */}
+                      {(pdsDataModal.data.skills &&
+                        pdsDataModal.data.skills.length > 0) ||
+                      (pdsDataModal.data.otherInformation
+                        ?.specialSkillsAndHobbies &&
+                        pdsDataModal.data.otherInformation
+                          .specialSkillsAndHobbies.length > 0) ? (
+                        (
+                          pdsDataModal.data.skills ||
+                          pdsDataModal.data.otherInformation
+                            ?.specialSkillsAndHobbies ||
+                          []
+                        ).map((skill: string, index: number) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            {skill}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No skills listed
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                      <Award className="h-5 w-5 text-brand-blue" />
+                      Recognitions
+                    </h3>
+                    <div className="space-y-2">
+                      {/* Handle both direct recognitions array and nested otherInformation */}
+                      {(pdsDataModal.data.recognitions &&
+                        pdsDataModal.data.recognitions.length > 0) ||
+                      (pdsDataModal.data.otherInformation
+                        ?.nonAcademicDistinctionsRecognition &&
+                        pdsDataModal.data.otherInformation
+                          .nonAcademicDistinctionsRecognition.length > 0) ? (
+                        (
+                          pdsDataModal.data.recognitions ||
+                          pdsDataModal.data.otherInformation
+                            ?.nonAcademicDistinctionsRecognition ||
+                          []
+                        ).map((rec: string, index: number) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            {rec}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No recognitions listed
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                      <Building className="h-5 w-5 text-brand-blue" />
+                      Memberships
+                    </h3>
+                    <div className="space-y-2">
+                      {/* Handle both direct memberships array and nested otherInformation */}
+                      {(pdsDataModal.data.memberships &&
+                        pdsDataModal.data.memberships.length > 0) ||
+                      (pdsDataModal.data.otherInformation?.memberships &&
+                        pdsDataModal.data.otherInformation.memberships.length >
+                          0) ? (
+                        (
+                          pdsDataModal.data.memberships ||
+                          pdsDataModal.data.otherInformation?.memberships ||
+                          []
+                        ).map((mem: string, index: number) => (
+                          <p
+                            key={index}
+                            className="text-sm bg-gray-100 px-2 py-1 rounded">
+                            {mem}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          No memberships listed
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 text-center">
+                <FileText className="h-16 w-16 text-gray-400 mb-4" />
+                <p className="text-lg text-gray-600">No PDS data available.</p>
+              </div>
+            )}
+          </CardContent>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setPdsDataModal({ open: false, data: null })}>
+              Close
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

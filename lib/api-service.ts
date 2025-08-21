@@ -279,6 +279,39 @@ export const documentAPI = {
       }
     });
     return response.data;
+  },
+
+  getPdsData: async (documentId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.get(`/documents/pds-data/${documentId}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  // Debug endpoint to see all PDS data entries
+  getPdsDataDebug: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/documents/pds-data-debug', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  // Cleanup duplicate PDS data entries
+  cleanupPdsData: async (keepOnePerDocument = true) => {
+    const token = authAPI.getToken();
+    const response = await api.delete('/documents/pds-data-cleanup', {
+      params: { keepOnePerDocument: keepOnePerDocument.toString() },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
   }
 };
 
