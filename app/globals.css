@@ -58,34 +58,662 @@
   }
 }
 
+/* Modern Animations and Effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Utility Classes */
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Enhanced Card Styles */
+.modern-card {
+  @apply relative overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-lg transition-all duration-500;
+}
+
+.modern-card:hover {
+  @apply shadow-2xl transform -translate-y-2;
+}
+
+.modern-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.modern-card:hover::before {
+  left: 100%;
+}
+
+/* Gradient Text */
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+.gradient-text-gold {
+  @apply bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent;
+}
+
+/* Glass Morphism */
+.glass {
+  @apply bg-white/10 backdrop-blur-md border border-white/20;
+}
+
+.glass-dark {
+  @apply bg-gray-900/10 backdrop-blur-md border border-gray-800/20;
+}
+
+/* Enhanced Button Styles */
+.btn-modern {
+  @apply relative overflow-hidden rounded-xl font-semibold transition-all duration-300 transform hover:-translate-y-1;
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn-modern:hover::before {
+  left: 100%;
+}
+
+/* Legacy Styles (Updated) */
 .hero-gradient {
-  background: linear-gradient(90deg, #1a237e 0%, #2979ff 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
 }
 
 .category-card {
-  transition: all 0.3s ease;
+  @apply transition-all duration-500 ease-out;
 }
 
 .category-card:hover {
-  transform: translateY(-5px);
+  @apply transform -translate-y-3 shadow-2xl;
 }
 
 .job-card {
-  transition: all 0.3s ease;
+  @apply transition-all duration-300 ease-out;
 }
 
 .job-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  @apply transform -translate-y-2 shadow-xl;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15),
+    0 10px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
 .company-logo {
-  filter: grayscale(100%);
-  opacity: 0.7;
-  transition: all 0.3s ease;
+  @apply filter grayscale opacity-70 transition-all duration-300 ease-out;
 }
 
 .company-logo:hover {
-  filter: grayscale(0%);
+  @apply filter-none opacity-100;
+}
+
+/* Scroll Animations */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.6s ease-out;
+}
+
+.scroll-reveal.revealed {
   opacity: 1;
+  transform: translateY(0);
+}
+
+/* Loading States */
+.skeleton {
+  @apply animate-pulse bg-gray-200 rounded;
+}
+
+.skeleton-dark {
+  @apply animate-pulse bg-gray-700 rounded;
+}
+
+/* Focus States */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* Responsive Typography */
+.text-responsive-xl {
+  @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl;
+}
+
+.text-responsive-lg {
+  @apply text-lg sm:text-xl md:text-2xl lg:text-3xl;
+}
+
+.text-responsive-md {
+  @apply text-base sm:text-lg md:text-xl;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Mobile-Specific Enhancements */
+@media (max-width: 768px) {
+  /* Touch-friendly button sizes */
+  .btn-mobile {
+    @apply min-h-[44px] min-w-[44px] px-4 py-3 text-base;
+  }
+
+  /* Mobile-optimized cards */
+  .card-mobile {
+    @apply p-4 mx-2 rounded-2xl;
+  }
+
+  /* Mobile-friendly spacing */
+  .space-mobile {
+    @apply space-y-4;
+  }
+
+  /* Mobile-optimized grids */
+  .grid-mobile {
+    @apply grid-cols-1 gap-4;
+  }
+
+  /* Mobile-friendly text sizes */
+  .text-mobile-sm {
+    @apply text-sm leading-relaxed;
+  }
+
+  .text-mobile-base {
+    @apply text-base leading-relaxed;
+  }
+
+  .text-mobile-lg {
+    @apply text-lg leading-relaxed;
+  }
+
+  /* Mobile-optimized glassmorphism */
+  .glass-mobile {
+    @apply bg-white/90 backdrop-blur-xl border border-white/60;
+  }
+
+  /* Mobile-friendly animations */
+  .animate-mobile-fade-in {
+    animation: fadeInUp 0.4s ease-out forwards;
+  }
+
+  /* Mobile-optimized shadows */
+  .shadow-mobile {
+    @apply shadow-lg;
+  }
+
+  /* Mobile-friendly hover states */
+  .hover-mobile {
+    @apply active:scale-95 transition-transform duration-150;
+  }
+
+  /* Mobile-optimized input fields */
+  .input-mobile {
+    @apply h-12 text-base px-4 rounded-xl;
+  }
+
+  /* Mobile-friendly badges */
+  .badge-mobile {
+    @apply px-3 py-1.5 text-sm rounded-lg;
+  }
+
+  /* Mobile-optimized modals */
+  .modal-mobile {
+    @apply mx-4 my-8 max-h-[90vh] overflow-y-auto;
+  }
+
+  /* Mobile-friendly navigation */
+  .nav-mobile {
+    @apply flex-col space-y-2 p-4;
+  }
+
+  /* Mobile-optimized tables */
+  .table-mobile {
+    @apply block overflow-x-auto whitespace-nowrap;
+  }
+
+  /* Mobile-friendly progress bars */
+  .progress-mobile {
+    @apply h-3 rounded-full;
+  }
+
+  /* Mobile-optimized dropdowns */
+  .dropdown-mobile {
+    @apply w-full max-h-60 overflow-y-auto;
+  }
+
+  /* Mobile-friendly tooltips */
+  .tooltip-mobile {
+    @apply text-sm px-3 py-2 rounded-lg;
+  }
+
+  /* Mobile-optimized loading states */
+  .loading-mobile {
+    @apply flex flex-col items-center justify-center p-8;
+  }
+
+  /* Mobile-friendly error states */
+  .error-mobile {
+    @apply text-center p-6 rounded-xl;
+  }
+
+  /* Mobile-optimized success states */
+  .success-mobile {
+    @apply text-center p-6 rounded-xl;
+  }
+
+  /* Mobile-friendly empty states */
+  .empty-mobile {
+    @apply text-center py-12 px-4;
+  }
+
+  /* Mobile-optimized search */
+  .search-mobile {
+    @apply w-full h-12 text-base px-4 rounded-xl;
+  }
+
+  /* Mobile-friendly filters */
+  .filter-mobile {
+    @apply flex flex-col space-y-3 p-4;
+  }
+
+  /* Mobile-optimized pagination */
+  .pagination-mobile {
+    @apply flex justify-center space-x-2;
+  }
+
+  /* Mobile-friendly tabs */
+  .tabs-mobile {
+    @apply flex overflow-x-auto space-x-1 pb-2;
+  }
+
+  /* Mobile-optimized accordions */
+  .accordion-mobile {
+    @apply space-y-2;
+  }
+
+  /* Mobile-friendly carousels */
+  .carousel-mobile {
+    @apply overflow-x-auto snap-x snap-mandatory;
+  }
+
+  /* Mobile-optimized forms */
+  .form-mobile {
+    @apply space-y-4 p-4;
+  }
+
+  /* Mobile-friendly date pickers */
+  .datepicker-mobile {
+    @apply w-full h-12 text-base;
+  }
+
+  /* Mobile-optimized file uploads */
+  .upload-mobile {
+    @apply w-full h-32 border-2 border-dashed rounded-xl;
+  }
+
+  /* Mobile-friendly charts */
+  .chart-mobile {
+    @apply w-full h-64 overflow-hidden;
+  }
+
+  /* Mobile-optimized maps */
+  .map-mobile {
+    @apply w-full h-64 rounded-xl;
+  }
+
+  /* Mobile-friendly calendars */
+  .calendar-mobile {
+    @apply w-full;
+  }
+
+  /* Mobile-optimized notifications */
+  .notification-mobile {
+    @apply mx-4 mb-4 rounded-xl p-4;
+  }
+
+  /* Mobile-friendly modals */
+  .modal-overlay-mobile {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm;
+  }
+
+  /* Mobile-optimized sidebars */
+  .sidebar-mobile {
+    @apply fixed inset-y-0 left-0 w-80 transform transition-transform;
+  }
+
+  /* Mobile-friendly headers */
+  .header-mobile {
+    @apply h-16 px-4 flex items-center justify-between;
+  }
+
+  /* Mobile-optimized footers */
+  .footer-mobile {
+    @apply p-4 text-center;
+  }
+
+  /* Mobile-friendly breadcrumbs */
+  .breadcrumb-mobile {
+    @apply flex items-center space-x-2 text-sm;
+  }
+
+  /* Mobile-optimized stats */
+  .stats-mobile {
+    @apply grid grid-cols-2 gap-4;
+  }
+
+  /* Mobile-friendly lists */
+  .list-mobile {
+    @apply space-y-3;
+  }
+
+  /* Mobile-optimized cards */
+  .card-grid-mobile {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  /* Mobile-friendly buttons */
+  .button-group-mobile {
+    @apply flex flex-col space-y-2;
+  }
+
+  /* Mobile-optimized inputs */
+  .input-group-mobile {
+    @apply flex flex-col space-y-2;
+  }
+
+  /* Mobile-friendly selects */
+  .select-mobile {
+    @apply w-full h-12 text-base;
+  }
+
+  /* Mobile-optimized checkboxes */
+  .checkbox-mobile {
+    @apply h-5 w-5;
+  }
+
+  /* Mobile-friendly radios */
+  .radio-mobile {
+    @apply h-5 w-5;
+  }
+
+  /* Mobile-optimized switches */
+  .switch-mobile {
+    @apply h-6 w-11;
+  }
+
+  /* Mobile-optimized sliders */
+  .slider-mobile {
+    @apply h-2;
+  }
+
+  /* Mobile-optimized progress */
+  .progress-mobile {
+    @apply h-3;
+  }
+
+  /* Mobile-optimized meters */
+  .meter-mobile {
+    @apply h-4;
+  }
+
+  /* Mobile-optimized spinners */
+  .spinner-mobile {
+    @apply h-8 w-8;
+  }
+
+  /* Mobile-optimized skeletons */
+  .skeleton-mobile {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Mobile-optimized dividers */
+  .divider-mobile {
+    @apply my-4;
+  }
+
+  /* Mobile-friendly separators */
+  .separator-mobile {
+    @apply my-3;
+  }
+
+  /* Mobile-optimized avatars */
+  .avatar-mobile {
+    @apply h-10 w-10;
+  }
+
+  /* Mobile-friendly badges */
+  .badge-group-mobile {
+    @apply flex flex-wrap gap-2;
+  }
+
+  /* Mobile-optimized chips */
+  .chip-mobile {
+    @apply px-3 py-1.5 text-sm rounded-full;
+  }
+
+  /* Mobile-friendly tags */
+  .tag-mobile {
+    @apply px-2 py-1 text-xs rounded;
+  }
+
+  /* Mobile-optimized labels */
+  .label-mobile {
+    @apply text-sm font-medium;
+  }
+
+  /* Mobile-friendly captions */
+  .caption-mobile {
+    @apply text-xs text-gray-500;
+  }
+
+  /* Mobile-optimized descriptions */
+  .description-mobile {
+    @apply text-sm text-gray-600;
+  }
+
+  /* Mobile-friendly headings */
+  .heading-mobile {
+    @apply text-lg font-semibold;
+  }
+
+  /* Mobile-optimized subheadings */
+  .subheading-mobile {
+    @apply text-base font-medium;
+  }
+
+  /* Mobile-friendly body text */
+  .body-mobile {
+    @apply text-sm leading-relaxed;
+  }
+
+  /* Mobile-optimized small text */
+  .small-mobile {
+    @apply text-xs leading-relaxed;
+  }
+
+  /* Mobile-friendly large text */
+  .large-mobile {
+    @apply text-base leading-relaxed;
+  }
+
+  /* Mobile-optimized extra large text */
+  .xl-mobile {
+    @apply text-lg leading-relaxed;
+  }
+
+  /* Mobile-optimized 2xl text */
+  .2xl-mobile {
+    @apply text-xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 3xl text */
+  .3xl-mobile {
+    @apply text-2xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 4xl text */
+  .4xl-mobile {
+    @apply text-3xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 5xl text */
+  .5xl-mobile {
+    @apply text-4xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 6xl text */
+  .6xl-mobile {
+    @apply text-5xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 7xl text */
+  .7xl-mobile {
+    @apply text-6xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 8xl text */
+  .8xl-mobile {
+    @apply text-7xl leading-relaxed;
+  }
+
+  /* Mobile-optimized 9xl text */
+  .9xl-mobile {
+    @apply text-8xl leading-relaxed;
+  }
 }

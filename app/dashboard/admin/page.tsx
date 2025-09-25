@@ -179,11 +179,23 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
-            <p className="text-gray-600">Loading admin dashboard...</p>
+      <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+        <div className="flex items-center justify-center h-full relative z-10">
+          <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600 font-medium">
+              Loading admin dashboard...
+            </p>
           </div>
         </div>
       </div>
@@ -191,21 +203,21 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
         <div className="container flex h-16 items-center justify-between px-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
-            <p className="text-sm text-gray-600">
-              Welcome back, {user?.firstName || 'Admin'}! Here's your system
-              overview.
-            </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/80 backdrop-blur-sm border-white/50 hover:bg-white/90"
+              asChild>
               <Link
                 href="/dashboard/admin/jobs"
                 className="flex items-center gap-2">
@@ -213,7 +225,10 @@ export default function AdminDashboard() {
                 Manage Jobs
               </Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+              asChild>
               <Link
                 href="/dashboard/admin/applicants"
                 className="flex items-center gap-2">
@@ -225,69 +240,73 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative z-10">
         <div className="container px-6 py-8 space-y-8">
           {/* Stats Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Active Job Postings
                 </CardTitle>
-                <Briefcase className="h-5 w-5 text-blue-200 group-hover:scale-110 transition-transform" />
+                <Briefcase className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats.activeJobs}</div>
-                <div className="flex items-center gap-1 text-xs text-blue-200">
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.activeJobs}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-blue-600">
                   <TrendingUp className="h-3 w-3" />
                   Active positions
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Total Applicants
                 </CardTitle>
-                <Users className="h-5 w-5 text-green-200 group-hover:scale-110 transition-transform" />
+                <Users className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
+                <div className="text-3xl font-bold text-gray-900">
                   {stats.totalApplicants}
                 </div>
-                <div className="flex items-center gap-1 text-xs text-green-200">
+                <div className="flex items-center gap-1 text-xs text-green-600">
                   <TrendingUp className="h-3 w-3" />
                   Registered users
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Documents Processed
                 </CardTitle>
-                <FileUp className="h-5 w-5 text-purple-200 group-hover:scale-110 transition-transform" />
+                <FileUp className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
+                <div className="text-3xl font-bold text-gray-900">
                   {stats.documentsProcessed}
                 </div>
-                <p className="text-xs text-purple-200">PDS and Resumes</p>
+                <p className="text-xs text-purple-600">PDS and Resumes</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Success Rate
                 </CardTitle>
-                <BarChart className="h-5 w-5 text-orange-200 group-hover:scale-110 transition-transform" />
+                <BarChart className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats.successRate}%</div>
-                <p className="text-xs text-orange-200">
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.successRate}%
+                </div>
+                <p className="text-xs text-orange-600">
                   {stats.successfulMatches} successful matches
                 </p>
               </CardContent>
@@ -295,10 +314,10 @@ export default function AdminDashboard() {
           </div>
 
           {/* Charts Section */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <Activity className="h-5 w-5 text-brand-blue" />
+                <Activity className="h-5 w-5 text-blue-600" />
                 System Analytics
               </CardTitle>
               <CardDescription>
@@ -313,18 +332,22 @@ export default function AdminDashboard() {
           {/* Main Content Grid */}
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Recent Job Postings */}
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                    <Briefcase className="h-5 w-5 text-brand-blue" />
+                    <Briefcase className="h-5 w-5 text-blue-600" />
                     Recent Job Postings
                   </CardTitle>
                   <CardDescription>
                     Latest job postings added to the system
                   </CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-white/60 backdrop-blur-sm hover:bg-white/80"
+                  asChild>
                   <Link
                     href="/dashboard/admin/jobs"
                     className="flex items-center gap-2">
@@ -338,7 +361,7 @@ export default function AdminDashboard() {
                   recentJobs.map(job => (
                     <div
                       key={job.id}
-                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                      className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-semibold text-gray-900 truncate">
@@ -383,18 +406,22 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Recent Applicants */}
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                    <UserPlus className="h-5 w-5 text-brand-blue" />
+                    <UserPlus className="h-5 w-5 text-blue-600" />
                     Recent Applicants
                   </CardTitle>
                   <CardDescription>
                     Latest applicants in the system
                   </CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-white/60 backdrop-blur-sm hover:bg-white/80"
+                  asChild>
                   <Link
                     href="/dashboard/admin/applicants"
                     className="flex items-center gap-2">
@@ -408,9 +435,9 @@ export default function AdminDashboard() {
                   recentApplicants.map(applicant => (
                     <div
                       key={applicant.id}
-                      className="flex items-center justify-between p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                      className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-600 flex items-center justify-center text-white font-medium">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-medium">
                           {applicant.avatar}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -454,7 +481,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="text-xl font-semibold">
                 Quick Actions
@@ -465,40 +492,20 @@ export default function AdminDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
-                  asChild>
-                  <Link href="/dashboard/admin/jobs">
-                    <Briefcase className="h-6 w-6" />
-                    <span>Manage Jobs</span>
-                  </Link>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
-                  asChild>
-                  <Link href="/dashboard/admin/applicants">
-                    <Users className="h-6 w-6" />
-                    <span>View Applicants</span>
-                  </Link>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/dashboard/admin/applications">
-                    <FileText className="h-6 w-6" />
+                    <FileText className="h-6 w-6 text-purple-600" />
                     <span>View Applications</span>
                   </Link>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/dashboard/admin/settings">
-                    <Settings className="h-6 w-6" />
+                    <Settings className="h-6 w-6 text-orange-600" />
                     <span>System Settings</span>
                   </Link>
                 </Button>
