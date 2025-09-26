@@ -248,32 +248,43 @@ export default function JobPostingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full min-w-0">
       {/* Modern Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
         <div className="container flex h-20 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <Briefcase className="h-8 w-8 text-brand-blue" />
-            <h1 className="text-3xl font-bold text-gray-900">Job Postings</h1>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Job Postings
+              </h1>
+              <p className="text-sm text-gray-600">
+                Manage and oversee all job postings
+              </p>
+            </div>
           </div>
-          <Button asChild>
+          <Button
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            asChild>
             <Link href="/dashboard/admin/jobs/create">
               <Plus className="mr-2 h-4 w-4" /> Create Job Posting
             </Link>
           </Button>
         </div>
       </header>
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative z-10">
         <div className="container py-8 space-y-8">
-          <Card className="shadow-md border-0">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-brand-blue" />
+                <Briefcase className="h-5 w-5 text-blue-600" />
                 Manage Job Postings
               </CardTitle>
               <CardDescription>
                 Create, edit, and manage job postings for the PESO job portal.{' '}
-                <span className="font-semibold text-brand-blue">
+                <span className="font-semibold text-blue-600">
                   Total: {totalJobs} job postings
                 </span>
               </CardDescription>
@@ -284,17 +295,20 @@ export default function JobPostingsPage() {
                 {/* Search and Export */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                     <Input
                       type="search"
                       placeholder="Search jobs..."
-                      className="w-full pl-8 rounded-lg border border-input bg-background shadow-sm focus-visible:ring-2 focus-visible:ring-brand-blue"
+                      className="w-full pl-8 rounded-xl border border-white/50 bg-white/60 backdrop-blur-sm shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus:bg-white/80 transition-all duration-300"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
                       <Download className="mr-2 h-4 w-4" />
                       Export
                     </Button>
@@ -302,14 +316,16 @@ export default function JobPostingsPage() {
                 </div>
 
                 {/* Filter Controls */}
-                <div className="flex flex-wrap gap-4 items-center rounded-lg bg-gray-50 p-4 border border-gray-100 shadow-sm">
+                <div className="flex flex-wrap gap-4 items-center rounded-xl bg-white/40 backdrop-blur-sm p-4 border border-white/50 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Filters:</span>
+                    <Filter className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Filters:
+                    </span>
                   </div>
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[150px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -324,7 +340,7 @@ export default function JobPostingsPage() {
                   <Select
                     value={categoryFilter}
                     onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -340,7 +356,7 @@ export default function JobPostingsPage() {
                   <Select
                     value={employmentTypeFilter}
                     onValueChange={setEmploymentTypeFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
                       <SelectValue placeholder="Employment Type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -354,7 +370,7 @@ export default function JobPostingsPage() {
                   </Select>
 
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
                       <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
@@ -372,21 +388,43 @@ export default function JobPostingsPage() {
               </div>
 
               {/* Jobs Table */}
-              <div className="rounded-xl border overflow-x-auto bg-white shadow-sm">
+              <div className="rounded-xl border border-white/50 overflow-x-auto bg-white/60 backdrop-blur-sm shadow-lg">
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
-                    <TableRow>
-                      <TableHead>Job Title</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Posted</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead>Applications</TableHead>
-                      <TableHead>Views</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-[80px]">Actions</TableHead>
+                  <TableHeader className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-white/50">
+                    <TableRow className="hover:bg-white/60">
+                      <TableHead className="text-gray-700 font-semibold">
+                        Job Title
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Company
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Category
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Location
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Type
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Posted
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Expires
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Applications
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Views
+                      </TableHead>
+                      <TableHead className="text-gray-700 font-semibold">
+                        Status
+                      </TableHead>
+                      <TableHead className="w-[80px] text-gray-700 font-semibold">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -394,8 +432,8 @@ export default function JobPostingsPage() {
                       <TableRow>
                         <TableCell colSpan={11} className="text-center py-12">
                           <div className="flex flex-col items-center gap-2">
-                            <Loader2 className="h-6 w-6 animate-spin text-brand-blue" />
-                            <span className="text-muted-foreground">
+                            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                            <span className="text-gray-600">
                               Loading job postings...
                             </span>
                           </div>
@@ -406,7 +444,7 @@ export default function JobPostingsPage() {
                         <TableCell colSpan={11} className="text-center py-12">
                           <div className="flex flex-col items-center gap-2">
                             <Briefcase className="h-8 w-8 text-gray-300" />
-                            <span className="text-muted-foreground">
+                            <span className="text-gray-600">
                               No job postings found
                             </span>
                           </div>
@@ -416,7 +454,9 @@ export default function JobPostingsPage() {
                       jobs.map((job, idx) => (
                         <TableRow
                           key={job._id}
-                          className={idx % 2 === 0 ? 'bg-gray-50/50' : ''}>
+                          className={`hover:bg-white/60 transition-colors duration-200 ${
+                            idx % 2 === 0 ? 'bg-white/30' : 'bg-white/20'
+                          }`}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               {job.title}
@@ -538,8 +578,8 @@ export default function JobPostingsPage() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-8">
-                  <div className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between mt-8 p-4 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
+                  <div className="text-sm text-gray-600">
                     Showing {(currentPage - 1) * pageSize + 1} to{' '}
                     {Math.min(currentPage * pageSize, totalJobs)} of {totalJobs}{' '}
                     results
@@ -548,6 +588,7 @@ export default function JobPostingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
                       onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}>
                       Previous
@@ -564,6 +605,11 @@ export default function JobPostingsPage() {
                                 currentPage === page ? 'default' : 'outline'
                               }
                               size="sm"
+                              className={
+                                currentPage === page
+                                  ? 'bg-blue-600 hover:bg-blue-700'
+                                  : 'bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300'
+                              }
                               onClick={() => setCurrentPage(page)}>
                               {page}
                             </Button>
@@ -574,6 +620,7 @@ export default function JobPostingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
                       onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}>
                       Next

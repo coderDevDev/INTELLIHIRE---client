@@ -156,9 +156,9 @@ export default function JobDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading job details...</p>
+        <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600 font-medium">Loading job details...</p>
         </div>
       </div>
     );
@@ -167,9 +167,13 @@ export default function JobDetailsPage() {
   if (!job) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p className="text-lg font-semibold mb-2">Job not found</p>
-          <Button asChild>
+        <div className="text-center bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+          <p className="text-lg font-semibold mb-4 text-gray-900">
+            Job not found
+          </p>
+          <Button
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            asChild>
             <Link href="/dashboard/admin/jobs">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Jobs
@@ -181,28 +185,42 @@ export default function JobDetailsPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+    <div className="flex flex-col h-full">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-white/60 backdrop-blur-sm hover:bg-white/80"
+              asChild>
               <Link href="/dashboard/admin/jobs">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold">{job.title}</h1>
-              <p className="text-muted-foreground">{job.companyId?.name}</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                {job.title}
+              </h1>
+              <p className="text-sm text-gray-600">{job.companyId?.name}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button asChild>
+          <div className="flex items-center gap-3">
+            <Button
+              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
+              asChild>
               <Link href={`/dashboard/admin/jobs/${job._id}/edit`}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Job
               </Link>
             </Button>
-            <Button asChild>
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+              asChild>
               <Link href={`/dashboard/admin/jobs/${job._id}/applications`}>
                 <Users className="mr-2 h-4 w-4" />
                 View Applications ({job.applicationCount})
@@ -212,10 +230,10 @@ export default function JobDetailsPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
-        <div className="container py-6 space-y-6">
+      <main className="flex-1 overflow-auto relative z-10">
+        <div className="container py-8 space-y-8">
           {/* Job Overview */}
-          <Card>
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -256,25 +274,23 @@ export default function JobDetailsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
+                <div className="text-center p-4 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
+                  <div className="text-2xl font-bold text-blue-600">
                     {job.applicationCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    Applications
-                  </div>
+                  <div className="text-sm text-gray-600">Applications</div>
                 </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
+                <div className="text-center p-4 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
+                  <div className="text-2xl font-bold text-green-600">
                     {job.viewCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">Views</div>
+                  <div className="text-sm text-gray-600">Views</div>
                 </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
+                <div className="text-center p-4 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50">
+                  <div className="text-2xl font-bold text-purple-600">
                     {job.positionCount}
                   </div>
-                  <div className="text-sm text-muted-foreground">Positions</div>
+                  <div className="text-sm text-gray-600">Positions</div>
                 </div>
               </div>
             </CardContent>
@@ -284,7 +300,7 @@ export default function JobDetailsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="space-y-6">
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Job Description</CardTitle>
                 </CardHeader>
@@ -293,7 +309,7 @@ export default function JobDetailsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Responsibilities</CardTitle>
                 </CardHeader>
@@ -302,7 +318,7 @@ export default function JobDetailsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Requirements</CardTitle>
                 </CardHeader>
@@ -311,7 +327,7 @@ export default function JobDetailsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Benefits</CardTitle>
                 </CardHeader>
@@ -323,14 +339,14 @@ export default function JobDetailsPage() {
 
             {/* Right Column */}
             <div className="space-y-6">
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Job Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Salary Range
                       </label>
                       <p className="font-medium">
@@ -343,13 +359,13 @@ export default function JobDetailsPage() {
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Experience Level
                       </label>
                       <p className="font-medium">{job.experienceLevel}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Experience Years
                       </label>
                       <p className="font-medium">
@@ -358,13 +374,13 @@ export default function JobDetailsPage() {
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Education Level
                       </label>
                       <p className="font-medium">{job.educationLevel}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Remote Work
                       </label>
                       <p className="font-medium">
@@ -372,7 +388,7 @@ export default function JobDetailsPage() {
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="text-sm font-medium text-gray-600">
                         Expiry Date
                       </label>
                       <p className="font-medium">
@@ -383,14 +399,17 @@ export default function JobDetailsPage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle>Required Skills</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {job.skills.map((skill, index) => (
-                      <Badge key={index} variant="outline">
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-white/60 backdrop-blur-sm border-white/50">
                         {skill}
                       </Badge>
                     ))}
@@ -399,7 +418,7 @@ export default function JobDetailsPage() {
               </Card>
 
               {job.eligibility.length > 0 && (
-                <Card>
+                <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                   <CardHeader>
                     <CardTitle>Eligibility Requirements</CardTitle>
                   </CardHeader>

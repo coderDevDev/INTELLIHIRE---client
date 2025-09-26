@@ -184,6 +184,164 @@ export const jobAPI = {
   getGovernmentJobs: async () => {
     const response = await api.get('/jobs/government/list');
     return response.data;
+  },
+
+  // Job Recommendations API
+  getJobRecommendations: async (params = {}) => {
+    const token = authAPI.getToken();
+    const response = await api.get('/jobs/recommendations', {
+      params,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  saveJob: async (jobId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      `/jobs/${jobId}/save`,
+      {},
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  unsaveJob: async (jobId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.delete(`/jobs/${jobId}/save`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  getSavedJobs: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/jobs/saved', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  }
+};
+
+// Career Path API calls
+export const careerPathAPI = {
+  getCareerPaths: async (params = {}) => {
+    const token = authAPI.getToken();
+    const response = await api.get('/career-paths', {
+      params,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  getCareerPathById: async (id: string) => {
+    const token = authAPI.getToken();
+    const response = await api.get(`/career-paths/${id}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  startCareerPath: async (careerPathId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      `/career-paths/${careerPathId}/start`,
+      {},
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  completeMilestone: async (milestoneId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      `/career-paths/milestones/${milestoneId}/complete`,
+      {},
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  getUserGoals: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/career-paths/goals', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  createGoal: async (goalData: any) => {
+    const token = authAPI.getToken();
+    const response = await api.post('/career-paths/goals', goalData, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  updateGoal: async (goalId: string, goalData: any) => {
+    const token = authAPI.getToken();
+    const response = await api.put(`/career-paths/goals/${goalId}`, goalData, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  deleteGoal: async (goalId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.delete(`/career-paths/goals/${goalId}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  getCareerInsights: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/career-paths/insights', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  getUserProgress: async () => {
+    const token = authAPI.getToken();
+    const response = await api.get('/career-paths/progress', {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
   }
 };
 
@@ -320,6 +478,84 @@ export const documentAPI = {
     const token = authAPI.getToken();
     const response = await api.delete('/documents/pds-data-cleanup', {
       params: { keepOnePerDocument: keepOnePerDocument.toString() },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    return response.data;
+  },
+
+  // Generate resume from PDS data
+  generateResume: async (
+    documentId: string,
+    targetIndustry = 'General',
+    targetRole = 'Professional'
+  ) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      `/documents/generate-resume/${documentId}`,
+      {
+        targetIndustry,
+        targetRole
+      },
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  // Generate multiple resume variants for different industries
+  generateResumeVariants: async (
+    documentId: string,
+    industries = ['Technology', 'Healthcare', 'Finance', 'Education']
+  ) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      `/documents/generate-resume-variants/${documentId}`,
+      {
+        industries
+      },
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  // Optimize resume for specific job
+  optimizeResumeForJob: async (
+    resumeData: any,
+    jobDescription: string,
+    jobTitle: string,
+    companyName?: string
+  ) => {
+    const token = authAPI.getToken();
+    const response = await api.post(
+      '/documents/optimize-resume-for-job',
+      {
+        resumeData,
+        jobDescription,
+        jobTitle,
+        companyName
+      },
+      {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      }
+    );
+    return response.data;
+  },
+
+  // Get saved resume for a document
+  getSavedResume: async (documentId: string) => {
+    const token = authAPI.getToken();
+    const response = await api.get(`/documents/resume/${documentId}`, {
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       }

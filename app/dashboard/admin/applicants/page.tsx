@@ -421,7 +421,7 @@ export default function AdminApplicantsPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Modern Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container flex h-20 items-center justify-between px-6">

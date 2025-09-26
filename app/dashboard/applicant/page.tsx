@@ -31,6 +31,7 @@ import {
 import Link from 'next/link';
 import { authAPI, userAPI, applicationAPI } from '@/lib/api-service';
 import { useEffect, useState } from 'react';
+import { AIJobRecommendations } from '@/components/ai-job-recommendations';
 
 export default function ApplicantDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -217,11 +218,23 @@ export default function ApplicantDashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
-            <p className="text-gray-600">Loading your dashboard...</p>
+      <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+        <div className="flex items-center justify-center h-full relative z-10">
+          <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600 font-medium">
+              Loading your dashboard...
+            </p>
           </div>
         </div>
       </div>
@@ -231,25 +244,56 @@ export default function ApplicantDashboard() {
   const recentApplications = applications.slice(0, 3);
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container flex h-16 items-center justify-between px-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-600">
-              Welcome back, {user?.firstName || 'User'}! Here's what's happening
-              with your applications.
-            </p>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}></div>
+        <div
+          className="absolute bottom-40 right-1/3 w-64 h-64 bg-green-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '1s' }}></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-yellow-300/10 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '3s' }}></div>
+      </div>
+
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-sm text-gray-600">
+                Welcome back, {user?.firstName || 'User'}! Here's what's
+                happening with your applications.
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
+              asChild>
               <Link href="/jobs" className="flex items-center gap-2">
                 <Plus className="h-4 w-4" />
                 Find Jobs
               </Link>
             </Button>
-            <Button size="sm" asChild>
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+              asChild>
               <Link
                 href="/dashboard/applicant/profile"
                 className="flex items-center gap-2">
@@ -261,69 +305,77 @@ export default function ApplicantDashboard() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative z-10">
         <div className="container px-6 py-8 space-y-8">
           {/* Stats Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Total Applications
                 </CardTitle>
-                <Briefcase className="h-5 w-5 text-blue-200 group-hover:scale-110 transition-transform" />
+                <Briefcase className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats.applications}</div>
-                <p className="text-xs text-blue-200">Active applications</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.applications}
+                </div>
+                <p className="text-xs text-blue-600">Active applications</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Documents
                 </CardTitle>
-                <FileUp className="h-5 w-5 text-green-200 group-hover:scale-110 transition-transform" />
+                <FileUp className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats.documents}</div>
-                <p className="text-xs text-green-200">PDS & Resume uploaded</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.documents}
+                </div>
+                <p className="text-xs text-green-600">PDS & Resume uploaded</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Job Matches
                 </CardTitle>
-                <Search className="h-5 w-5 text-purple-200 group-hover:scale-110 transition-transform" />
+                <Search className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{stats.matches}</div>
-                <p className="text-xs text-purple-200">Based on your profile</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.matches}
+                </div>
+                <p className="text-xs text-purple-600">Based on your profile</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Profile Completion
                 </CardTitle>
-                <TrendingUp className="h-5 w-5 text-orange-200 group-hover:scale-110 transition-transform" />
+                <TrendingUp className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
+                <div className="text-3xl font-bold text-gray-900">
                   {stats.profileCompletion}%
                 </div>
-                <p className="text-xs text-orange-200">Complete your profile</p>
+                <p className="text-xs text-orange-600">Complete your profile</p>
               </CardContent>
             </Card>
           </div>
 
+          {/* AI Job Recommendations */}
+
           {/* Main Content Grid */}
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Recent Applications */}
-            <Card className="lg:col-span-2 group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+            <Card className="lg:col-span-2 group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -334,7 +386,11 @@ export default function ApplicantDashboard() {
                       Your latest job applications and their status
                     </CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="bg-white/60 backdrop-blur-sm hover:bg-white/80"
+                    asChild>
                     <Link
                       href="/dashboard/applicant/applications"
                       className="flex items-center gap-2">
@@ -361,7 +417,7 @@ export default function ApplicantDashboard() {
                   recentApplications.map(app => (
                     <div
                       key={app._id}
-                      className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors">
+                      className="flex items-center gap-4 p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
                           {app.jobId?.companyId?.logo ? (
@@ -415,7 +471,7 @@ export default function ApplicantDashboard() {
             </Card>
 
             {/* Profile Completion */}
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">
                   Profile Completion
@@ -442,10 +498,10 @@ export default function ApplicantDashboard() {
                     const personalStatus = getProfileSectionStatus('personal');
                     return (
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
                           personalStatus.completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50'
+                            : 'bg-white/40 border-white/50 hover:bg-white/60'
                         }`}>
                         {personalStatus.completed ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
@@ -479,10 +535,10 @@ export default function ApplicantDashboard() {
                       getProfileSectionStatus('education');
                     return (
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
                           educationStatus.completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50'
+                            : 'bg-white/40 border-white/50 hover:bg-white/60'
                         }`}>
                         {educationStatus.completed ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
@@ -516,10 +572,10 @@ export default function ApplicantDashboard() {
                       getProfileSectionStatus('experience');
                     return (
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
                           experienceStatus.completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50'
+                            : 'bg-white/40 border-white/50 hover:bg-white/60'
                         }`}>
                         {experienceStatus.completed ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
@@ -553,10 +609,10 @@ export default function ApplicantDashboard() {
                       getProfileSectionStatus('documents');
                     return (
                       <div
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
                           documentsStatus.completed
-                            ? 'bg-green-50 border-green-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50'
+                            : 'bg-white/40 border-white/50 hover:bg-white/60'
                         }`}>
                         {documentsStatus.completed ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
@@ -586,7 +642,9 @@ export default function ApplicantDashboard() {
                   })()}
                 </div>
 
-                <Button className="w-full" asChild>
+                <Button
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                  asChild>
                   <Link href="/dashboard/applicant/profile">
                     Complete Profile
                   </Link>
@@ -596,7 +654,7 @@ export default function ApplicantDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="text-xl font-semibold">
                 Quick Actions
@@ -609,40 +667,40 @@ export default function ApplicantDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/jobs">
-                    <Search className="h-6 w-6" />
+                    <Search className="h-6 w-6 text-blue-600" />
                     <span>Browse Jobs</span>
                   </Link>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/dashboard/applicant/profile">
-                    <FileUp className="h-6 w-6" />
+                    <FileUp className="h-6 w-6 text-green-600" />
                     <span>Upload Documents</span>
                   </Link>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/dashboard/applicant/profile">
-                    <Eye className="h-6 w-6" />
+                    <Eye className="h-6 w-6 text-purple-600" />
                     <span>View Profile</span>
                   </Link>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
                   asChild>
                   <Link href="/dashboard/applicant/applications">
-                    <Briefcase className="h-6 w-6" />
+                    <Briefcase className="h-6 w-6 text-orange-600" />
                     <span>My Applications</span>
                   </Link>
                 </Button>

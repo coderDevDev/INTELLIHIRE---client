@@ -106,7 +106,7 @@ export default function AdminApplicantDetailPage() {
 
   if (loading)
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex items-center justify-center h-full">
           <div className="flex flex-col items-center gap-4">
             <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
@@ -117,7 +117,7 @@ export default function AdminApplicantDetailPage() {
     );
   if (error)
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -128,7 +128,7 @@ export default function AdminApplicantDetailPage() {
     );
   if (!applicant)
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -160,7 +160,7 @@ export default function AdminApplicantDetailPage() {
       : 0;
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container flex h-16 items-center justify-between px-6">

@@ -94,9 +94,9 @@ export default function EditJobPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading job details...</p>
+        <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600 font-medium">Loading job details...</p>
         </div>
       </div>
     );
@@ -105,9 +105,13 @@ export default function EditJobPage() {
   if (!job) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <p className="text-lg font-semibold mb-2">Job not found</p>
-          <Button asChild>
+        <div className="text-center bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+          <p className="text-lg font-semibold mb-4 text-gray-900">
+            Job not found
+          </p>
+          <Button
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            asChild>
             <Link href="/dashboard/admin/jobs">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Jobs
@@ -119,26 +123,36 @@ export default function EditJobPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+    <div className="flex flex-col h-full">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-white/60 backdrop-blur-sm hover:bg-white/80"
+              asChild>
               <Link href={`/dashboard/admin/jobs/${jobId}`}>
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <ArrowLeft className="h-6 w-6 text-white" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold">Edit Job</h1>
-              <p className="text-muted-foreground">{job.title}</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Edit Job
+              </h1>
+              <p className="text-sm text-gray-600">{job.title}</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
-        <div className="container py-6">
-          <Card>
+      <main className="flex-1 overflow-auto relative z-10">
+        <div className="container py-8">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle>Edit Job Posting</CardTitle>
               <CardDescription>

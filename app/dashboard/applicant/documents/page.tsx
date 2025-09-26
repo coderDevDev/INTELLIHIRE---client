@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { authAPI, userAPI, documentAPI } from '@/lib/api-service';
+import { ResumeModal } from '@/components/resume-modal';
 import {
   FileText,
   Upload,
@@ -116,6 +117,20 @@ export default function DocumentsPage() {
     open: false,
     data: null
   });
+  const [resumeModal, setResumeModal] = useState<{
+    open: boolean;
+    data: any | null;
+    metadata: any | null;
+  }>({
+    open: false,
+    data: null,
+    metadata: null
+  });
+
+  // Debug resume modal state changes
+  useEffect(() => {
+    console.log('Resume modal state changed:', resumeModal);
+  }, [resumeModal]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdsInputRef = useRef<HTMLInputElement>(null);
@@ -301,13 +316,82 @@ export default function DocumentsPage() {
     return Math.round((uploadedDocs / requiredDocs.length) * 100);
   };
 
+  const handleRegenerateResume = async (industry: string, role: string) => {
+    try {
+      const pdsDoc = documents.find(
+        doc => doc.type === 'pds' && doc.source === 'documents'
+      );
+      if (pdsDoc) {
+        // Generate new resume variant
+        const result = await documentAPI.generateResume(
+          pdsDoc.id,
+          industry,
+          role
+        );
+        setResumeModal({
+          open: true,
+          data: result.resume,
+          metadata: result.metadata
+        });
+        toast.success(`Resume variant for ${industry} generated successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Error regenerating resume:', error);
+      toast.error(
+        `Failed to generate resume variant: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+      throw error;
+    }
+  };
+
+  const handleOptimizeForJob = async (jobData: any) => {
+    try {
+      if (resumeModal.data) {
+        const result = await documentAPI.optimizeResumeForJob(
+          resumeModal.data,
+          jobData.jobDescription || '',
+          jobData.jobTitle || '',
+          jobData.companyName || ''
+        );
+        setResumeModal({
+          open: true,
+          data: result.optimizedResume,
+          metadata: result.metadata
+        });
+        toast.success('Resume optimized for job successfully!');
+      }
+    } catch (error: any) {
+      console.error('Error optimizing resume:', error);
+      toast.error(
+        `Failed to optimize resume: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+      throw error;
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
-            <p className="text-gray-600">Loading your documents...</p>
+      <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+        <div className="flex items-center justify-center h-full relative z-10">
+          <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600 font-medium">
+              Loading your documents...
+            </p>
           </div>
         </div>
       </div>
@@ -317,20 +401,45 @@ export default function DocumentsPage() {
   const completionPercentage = calculateCompletion();
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container flex h-16 items-center justify-between px-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-            <p className="text-sm text-gray-600">
-              Manage your professional documents and certificates
-            </p>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}></div>
+        <div
+          className="absolute bottom-40 right-1/3 w-64 h-64 bg-green-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '1s' }}></div>
+        <div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-yellow-300/10 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '3s' }}></div>
+      </div>
+
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <FileText className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Documents
+              </h1>
+              <p className="text-sm text-gray-600">
+                Manage your professional documents and certificates
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
+              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
               onClick={() => fileInputRef.current?.click()}>
               <Plus className="h-4 w-4 mr-2" />
               Upload Document
@@ -346,65 +455,67 @@ export default function DocumentsPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative z-10">
         <div className="container px-6 py-8 space-y-8">
           {/* Stats Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Total Documents
                 </CardTitle>
-                <FileText className="h-5 w-5 text-blue-200 group-hover:scale-110 transition-transform" />
+                <FileText className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{documents.length}</div>
-                <p className="text-xs text-blue-200">Uploaded files</p>
+                <div className="text-3xl font-bold text-gray-900">
+                  {documents.length}
+                </div>
+                <p className="text-xs text-blue-600">Uploaded files</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Required Documents
                 </CardTitle>
-                <FileCheck className="h-5 w-5 text-green-200 group-hover:scale-110 transition-transform" />
+                <FileCheck className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">2</div>
-                <p className="text-xs text-green-200">PDS & Resume</p>
+                <div className="text-3xl font-bold text-gray-900">2</div>
+                <p className="text-xs text-green-600">PDS & Resume</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Completion
                 </CardTitle>
-                <FileUp className="h-5 w-5 text-purple-200 group-hover:scale-110 transition-transform" />
+                <FileUp className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
+                <div className="text-3xl font-bold text-gray-900">
                   {completionPercentage}%
                 </div>
-                <p className="text-xs text-purple-200">Documents ready</p>
+                <p className="text-xs text-purple-600">Documents ready</p>
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-orange-100">
+                <CardTitle className="text-sm font-medium text-gray-700">
                   Last Updated
                 </CardTitle>
-                <Calendar className="h-5 w-5 text-orange-200 group-hover:scale-110 transition-transform" />
+                <Calendar className="h-5 w-5 text-orange-600 group-hover:scale-110 transition-transform" />
               </CardHeader>
               <CardContent>
-                <div className="text-lg font-bold">
+                <div className="text-lg font-bold text-gray-900">
                   {profile?.updatedAt
                     ? new Date(profile.updatedAt).toLocaleDateString()
                     : 'Never'}
                 </div>
-                <p className="text-xs text-orange-200">Profile documents</p>
+                <p className="text-xs text-orange-600">Profile documents</p>
               </CardContent>
             </Card>
           </div>
@@ -414,13 +525,13 @@ export default function DocumentsPage() {
             {/* Required Documents */}
             <div className="lg:col-span-2 space-y-6">
               {/* PDS Upload */}
-              <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                        <User className="h-5 w-5 text-brand-blue" />
-                        Personal Data Sheet (PDS)ss
+                        <User className="h-5 w-5 text-blue-600" />
+                        Personal Data Sheet (PDS)
                       </CardTitle>
                       <CardDescription>
                         Upload your completed Personal Data Sheet in PDF format
@@ -428,7 +539,7 @@ export default function DocumentsPage() {
                     </div>
                     <Badge
                       variant="secondary"
-                      className="bg-yellow-100 text-yellow-700">
+                      className="bg-yellow-100/80 text-yellow-700 border-yellow-200/50">
                       Required
                     </Badge>
                   </div>
@@ -487,36 +598,145 @@ export default function DocumentsPage() {
                             className="text-red-500 hover:text-red-700">
                             <Trash2 className="h-4 w-4" />
                           </Button>
+
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={async () => {
-                              const pdsDoc = documents.find(
-                                doc => doc.type === 'pds'
-                              );
-                              if (pdsDoc) {
-                                try {
-                                  const pdsData = await documentAPI.getPdsData(
-                                    pdsDoc.id
+                              try {
+                                const pdsDoc = documents.find(
+                                  doc => doc.type === 'pds'
+                                );
+                                if (pdsDoc) {
+                                  console.log('PDS Document found:', pdsDoc);
+                                  console.log('Document ID:', pdsDoc.id);
+                                  console.log(
+                                    'Document source:',
+                                    pdsDoc.source
                                   );
-                                  setPdsDataModal({
-                                    open: true,
-                                    data: pdsData
-                                  });
-                                } catch (error) {
-                                  console.error(
-                                    'Error fetching PDS data:',
-                                    error
-                                  );
-                                  toast.error('Failed to load PDS data');
+
+                                  // Check if this is a documents API document or profile document
+                                  if (pdsDoc.source === 'documents') {
+                                    toast.info('Loading resume...');
+
+                                    try {
+                                      // First try to get existing saved resume
+                                      const savedResume =
+                                        await documentAPI.getSavedResume(
+                                          pdsDoc.id
+                                        );
+                                      console.log(
+                                        'Found saved resume:',
+                                        savedResume
+                                      );
+                                      console.log('Resume data structure:', {
+                                        hasResume: !!savedResume.resume,
+                                        hasMetadata: !!savedResume.metadata,
+                                        resumeKeys: savedResume.resume
+                                          ? Object.keys(savedResume.resume)
+                                          : [],
+                                        metadataKeys: savedResume.metadata
+                                          ? Object.keys(savedResume.metadata)
+                                          : []
+                                      });
+
+                                      // Open resume modal with saved data
+                                      console.log(
+                                        'Setting resume modal state...'
+                                      );
+                                      setResumeModal({
+                                        open: true,
+                                        data: savedResume.resume,
+                                        metadata: savedResume.metadata
+                                      });
+                                      console.log('Resume modal state set:', {
+                                        open: true,
+                                        data: !!savedResume.resume,
+                                        metadata: !!savedResume.metadata
+                                      });
+
+                                      toast.success(
+                                        'Resume loaded successfully!'
+                                      );
+                                    } catch (savedResumeError: any) {
+                                      // If no saved resume found, generate a new one
+                                      if (
+                                        savedResumeError.response?.status ===
+                                        404
+                                      ) {
+                                        console.log(
+                                          'No saved resume found, generating new one...'
+                                        );
+                                        toast.info(
+                                          'Generating resume from PDS data...'
+                                        );
+
+                                        const result =
+                                          await documentAPI.generateResume(
+                                            pdsDoc.id,
+                                            'General',
+                                            'Professional'
+                                          );
+                                        console.log(
+                                          'Generated resume:',
+                                          result
+                                        );
+
+                                        // Open resume modal with generated data
+                                        console.log(
+                                          'Setting resume modal state for generated resume...'
+                                        );
+                                        setResumeModal({
+                                          open: true,
+                                          data: result.resume,
+                                          metadata: result.metadata
+                                        });
+                                        console.log(
+                                          'Generated resume modal state set:',
+                                          {
+                                            open: true,
+                                            data: !!result.resume,
+                                            metadata: !!result.metadata
+                                          }
+                                        );
+
+                                        toast.success(
+                                          'Resume generated successfully!'
+                                        );
+                                      } else {
+                                        throw savedResumeError;
+                                      }
+                                    }
+                                  } else {
+                                    toast.error(
+                                      'Please upload PDS through the documents system first'
+                                    );
+                                  }
+                                } else {
+                                  toast.error('No PDS document found');
                                 }
+                              } catch (error: any) {
+                                console.error(
+                                  'Error loading/generating resume:',
+                                  error
+                                );
+                                console.error(
+                                  'Error details:',
+                                  error.response?.data
+                                );
+                                toast.error(
+                                  `Failed to load resume: ${
+                                    error.response?.data?.message ||
+                                    error.message
+                                  }`
+                                );
                               }
                             }}
-                            className="text-brand-blue hover:text-brand-blue-dark">
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Data
+                            className="text-blue-500 hover:text-blue-700">
+                            <FileUp className="h-4 w-4 mr-2" />
+                            View Resume
                           </Button>
-                          <Button
+                          {/* <Button
                             size="sm"
                             variant="outline"
                             onClick={async () => {
@@ -564,7 +784,7 @@ export default function DocumentsPage() {
                                     `Found ${debugInfo.totalEntries} PDS data entry(ies)`
                                   );
                                 }
-                              } catch (error) {
+                              } catch (error: any) {
                                 console.error(
                                   'Error getting debug info:',
                                   error
@@ -575,29 +795,49 @@ export default function DocumentsPage() {
                             className="text-orange-500 hover:text-orange-700">
                             <Info className="h-4 w-4 mr-2" />
                             Debug
-                          </Button>
+                          </Button> */}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div
-                      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                      className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 backdrop-blur-sm ${
                         isDragging
-                          ? 'border-brand-blue bg-blue-50'
-                          : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+                          ? 'border-blue-400 bg-blue-50/80 shadow-lg scale-105'
+                          : 'border-white/50 bg-white/40 hover:border-blue-300 hover:bg-white/60 hover:shadow-md'
                       }`}
                       onDrop={e => handleDrop(e, 'pds')}
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onClick={() => pdsInputRef.current?.click()}>
-                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Upload Personal Data Sheet
+                      <div className="relative">
+                        <FileText
+                          className={`h-16 w-16 mx-auto mb-4 transition-all duration-300 ${
+                            isDragging
+                              ? 'text-blue-600 scale-110'
+                              : 'text-gray-400'
+                          }`}
+                        />
+                        {isDragging && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-20 h-20 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {isDragging
+                          ? 'Drop your PDS here!'
+                          : 'Upload Personal Data Sheet'}
                       </h3>
-                      <p className="text-gray-500 mb-4">
-                        Drag and drop your PDS PDF here, or click to browse
+                      <p className="text-gray-600 mb-6">
+                        {isDragging
+                          ? 'Release to upload your PDF file'
+                          : 'Drag and drop your PDS PDF here, or click to browse'}
                       </p>
-                      <Button variant="outline" disabled={uploading}>
+                      <Button
+                        variant="outline"
+                        disabled={uploading}
+                        className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300">
                         {uploading ? (
                           <>
                             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -1753,6 +1993,20 @@ export default function DocumentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Resume Modal */}
+      <div className="relative z-[9999]">
+        <ResumeModal
+          isOpen={resumeModal.open}
+          onClose={() =>
+            setResumeModal({ open: false, data: null, metadata: null })
+          }
+          resumeData={resumeModal.data}
+          metadata={resumeModal.metadata}
+          onRegenerate={handleRegenerateResume}
+          onOptimizeForJob={handleOptimizeForJob}
+        />
+      </div>
     </div>
   );
 }
