@@ -51,9 +51,9 @@ export function MainHeader() {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Jobs', href: '/jobs' },
-    { name: 'Companies', href: '/companies' },
-    { name: 'Services', href: '/services' },
-    { name: 'About', href: '/about' }
+    { name: 'Companies', href: '/companies' }
+    // { name: 'Services', href: '/services' },
+    // { name: 'About', href: '/about' }
   ];
 
   const isActive = (path: string) => {

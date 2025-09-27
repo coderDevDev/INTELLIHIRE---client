@@ -10,6 +10,10 @@ import {
 } from '@/lib/api-service';
 import { MainHeader } from '@/components/main-header';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import {
   Briefcase,
@@ -26,8 +30,17 @@ import {
   ArrowRight,
   File,
   Search,
-  Building
+  Building,
+  MapPin,
+  DollarSign,
+  Star,
+  ArrowLeft,
+  Loader2,
+  Eye,
+  Download
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // A. The application's pdsId (linked Document, preferred if present)
@@ -160,82 +173,191 @@ function ApplicationStatusCard({
   user: any;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-gradient-to-br from-green-50 to-white border border-green-200 shadow-lg mb-8 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-4">
-        <Briefcase className="h-7 w-7 text-green-600" />
-        <div>
-          <h3 className="font-bold text-xl text-green-800">
-            Application Status
-          </h3>
-          <div className="text-xs text-gray-500">
-            Track your application progress below
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full animate-float"
+          style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}></div>
+      </div>
+
+      <div className="container relative z-10 py-8 md:py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-blue-600" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Application Submitted
+              </h1>
+            </div>
+            <p className="text-gray-600 text-lg">
+              Your application has been successfully submitted and is being
+              reviewed.
+            </p>
           </div>
-        </div>
+
+          {/* Status Card */}
+          <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg rounded-3xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+              <div className="flex items-center gap-3">
+                <Briefcase className="h-6 w-6" />
+                <div>
+                  <CardTitle className="text-xl">Application Status</CardTitle>
+                  <p className="text-blue-100 text-sm">
+                    Track your application progress below
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {/* Status Badge and Date */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <StatusBadge status={application.status} />
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="h-4 w-4" />
+                  <span>
+                    Submitted:{' '}
+                    {new Date(application.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Job Information */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Job Details
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-gray-500" />
+                    <span className="font-medium">Position:</span>
+                    <span>{application.jobId?.title}</span>
+                  </div>
+                  {application.jobId?.companyId && (
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium">Company:</span>
+                      <span>{application.jobId.companyId.name}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Documents */}
+              <div className="bg-blue-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  Submitted Documents
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium">Resume</span>
+                    </div>
+                    {application.resumeId?.fileUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-white/60 backdrop-blur-sm border-white/50">
+                        <a
+                          href={`/${application.resumeId.fileUrl.replace(
+                            /\\/g,
+                            '/'
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <File className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium">PDS</span>
+                    </div>
+                    {application.pdsId?.fileUrl ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-white/60 backdrop-blur-sm border-white/50">
+                        <a
+                          href={getPdsDownloadUrl(application.pdsId.fileUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </a>
+                      </Button>
+                    ) : user?.pdsFile ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-white/60 backdrop-blur-sm border-white/50">
+                        <a
+                          href={getPdsDownloadUrl(user.pdsFile)}
+                          target="_blank"
+                          rel="noopener noreferrer">
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </a>
+                      </Button>
+                    ) : (
+                      <span className="text-gray-400 text-sm">
+                        No PDS uploaded
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Stepper */}
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-4">
+                  Application Progress
+                </h3>
+                <Stepper status={application.status} />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button
+                  asChild
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                  <Link href="/jobs">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Jobs
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="flex-1 bg-white/60 backdrop-blur-sm border-white/50">
+                  <Link href="/dashboard/applicant">
+                    <User className="h-4 w-4 mr-2" />
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
-      <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-8">
-        <div className="flex items-center gap-2 mb-2 md:mb-0">
-          <StatusBadge status={application.status} />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <Calendar className="h-4 w-4 text-gray-400" />
-          <span>
-            Submitted: {new Date(application.createdAt).toLocaleString()}
-          </span>
-        </div>
-      </div>
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
-          <FileText className="h-4 w-4 text-blue-400" />
-          <span className="font-semibold">Resume:</span>
-          {application.resumeId?.fileUrl && (
-            <a
-              href={`/${application.resumeId.fileUrl.replace(/\\/g, '/')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline ml-1">
-              View
-            </a>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
-          <File className="h-4 w-4 text-blue-400" />
-          <span className="font-semibold">PDS:</span>
-          {application.pdsId?.fileUrl ? (
-            <a
-              href={getPdsDownloadUrl(application.pdsId.fileUrl)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline ml-1">
-              View
-            </a>
-          ) : user?.pdsFile ? (
-            <a
-              href={getPdsDownloadUrl(user.pdsFile)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline ml-1">
-              View
-            </a>
-          ) : (
-            <span className="text-gray-400 ml-1">No PDS uploaded</span>
-          )}
-        </div>
-      </div>
-      <div className="mb-4">
-        <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
-          <User className="h-4 w-4 text-gray-400" />
-          <span className="font-semibold">Job:</span>
-          <span className="ml-1">{application.jobId?.title}</span>
-        </div>
-        {application.jobId?.companyId && (
-          <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
-            <Building className="h-4 w-4 text-gray-400" />
-            <span className="font-semibold">Company:</span>
-            <span className="ml-1">{application.jobId.companyId.name}</span>
-          </div>
-        )}
-      </div>
-      <Stepper status={application.status} />
     </div>
   );
 }
@@ -344,8 +466,14 @@ export default function JobApplyPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
+      <div className="flex min-h-screen flex-col">
+        <MainHeader />
+        <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-lg text-gray-600">Loading application form...</p>
+          </div>
+        </main>
       </div>
     );
   }
@@ -354,26 +482,54 @@ export default function JobApplyPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <MainHeader />
-        <main className="flex-1 flex flex-col items-center justify-center bg-gray-50 px-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg w-full flex flex-col items-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-2 text-center">
+        <main className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50 px-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 max-w-lg w-full flex flex-col items-center">
+            {/* Success Icon */}
+            <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+              <CheckCircle className="h-8 w-8 text-blue-600" />
+            </div>
+
+            {/* Success Message */}
+            <h2 className="text-2xl font-bold mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Application Submitted!
             </h2>
-            <p className="text-center mb-6">
+            <p className="text-center mb-8 text-gray-600 leading-relaxed">
               Thank you for applying for{' '}
-              <span className="font-semibold">{job.title}</span> at{' '}
-              <span className="font-semibold">{job.companyId?.name}</span>.
+              <span className="font-semibold text-gray-900">{job.title}</span>{' '}
+              at{' '}
+              <span className="font-semibold text-gray-900">
+                {job.companyId?.name}
+              </span>
+              .
               <br />
               We will review your application and contact you soon.
             </p>
-            <Button asChild className="w-full mb-2">
-              <Link href="/jobs">Back to Jobs</Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/dashboard/applicant">Go to Dashboard</Link>
-            </Button>
-          </div>
+
+            {/* Action Buttons */}
+            <div className="w-full space-y-3">
+              <Button
+                asChild
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                <Link href="/jobs">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Jobs
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full bg-white/60 backdrop-blur-sm border-white/50">
+                <Link href="/dashboard/applicant">
+                  <User className="h-4 w-4 mr-2" />
+                  Go to Dashboard
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
         </main>
       </div>
     );
@@ -382,253 +538,388 @@ export default function JobApplyPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <MainHeader />
-      <main className="flex-1 bg-gray-50 py-8 md:py-12">
-        <div className="container max-w-xl mx-auto px-4 md:px-6">
-          {existingApp ? (
-            <ApplicationStatusCard application={existingApp} user={user} />
-          ) : (
-            <>
-              {/* Job Info */}
-              <div className="mb-6 flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-brand-blue mb-1">
-                  <Briefcase className="h-5 w-5" />
-                  <span className="font-semibold">{job.title}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {job.companyId?.name}
-                </div>
-              </div>
-              {/* Applicant Info Review */}
-              {user && (
-                <div className="mb-8 p-6 rounded-xl bg-gradient-to-br from-blue-50 to-white border border-blue-100 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    {user.profilePicture && (
-                      <img
-                        src={`/${user.profilePicture.replace(/\\/g, '/')}`}
-                        alt="Profile"
-                        className="h-12 w-12 rounded-full border object-cover"
-                      />
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-lg text-brand-blue">
-                        Applicant Information
-                      </h3>
-                      <div className="text-xs text-gray-500">
-                        Review your details before submitting your application.
-                      </div>
+      <main className="flex-1 relative bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+
+        <div className="container relative z-10 py-8 md:py-12">
+          <div className="max-w-4xl mx-auto px-4 md:px-6">
+            {existingApp ? (
+              <ApplicationStatusCard application={existingApp} user={user} />
+            ) : (
+              <>
+                {/* Header */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-center mb-8">
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Briefcase className="h-6 w-6 text-blue-600" />
                     </div>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      Apply for Position
+                    </h1>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm mb-4">
-                    <div>
-                      <span className="font-medium text-gray-700">Name:</span>{' '}
-                      {user.firstName} {user.lastName}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Email:</span>{' '}
-                      {user.email}
-                    </div>
-                    {user.phoneNumber && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Phone:
-                        </span>{' '}
-                        {user.phoneNumber}
+                  <p className="text-gray-600 text-lg">
+                    Complete your application for this exciting opportunity
+                  </p>
+                </motion.div>
+
+                {/* Job Info Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="mb-8">
+                  <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg rounded-3xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
+                          {job.companyId?.logo ? (
+                            <img
+                              src={job.companyId.logo}
+                              alt={job.companyId.name}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <Building className="h-8 w-8 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-2">
+                            {job.title}
+                          </CardTitle>
+                          <p className="text-blue-100 text-lg mb-3">
+                            {job.companyId?.name}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              {job.location}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="h-4 w-4" />
+                              {job.employmentType}
+                            </div>
+                            {job.salaryMin && job.salaryMax && (
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="h-4 w-4" />₱
+                                {job.salaryMin.toLocaleString()} - ₱
+                                {job.salaryMax.toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    {user.gender && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Gender:
-                        </span>{' '}
-                        {user.gender}
-                      </div>
-                    )}
-                    {user.dob && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Date of Birth:
-                        </span>{' '}
-                        {new Date(user.dob).toLocaleDateString()}
-                      </div>
-                    )}
-                    {user.address && (
-                      <div className="col-span-1 md:col-span-2">
-                        <span className="font-medium text-gray-700">
-                          Address:
-                        </span>{' '}
-                        {user.address.street || ''} {user.address.city || ''}{' '}
-                        {user.address.province || ''}
-                      </div>
-                    )}
-                  </div>
-                  <div className="border-t my-4" />
-                  {/* Experience */}
-                  {user.experience && user.experience.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Briefcase className="h-4 w-4 text-blue-400" />
-                        <span className="font-semibold text-blue-900">
-                          Experience
-                        </span>
-                      </div>
-                      <ul className="pl-2 list-disc text-xs text-gray-700">
-                        {user.experience.map((exp: any, i: number) => (
-                          <li key={exp._id || i} className="mb-1">
-                            <span className="font-medium">
-                              {exp.title || exp.position || ''}
+                    </CardHeader>
+                  </Card>
+                </motion.div>
+                {/* Applicant Info Review */}
+                {user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="mb-8">
+                    <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg rounded-3xl overflow-hidden">
+                      <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 p-6">
+                        <div className="flex items-center gap-3">
+                          {user.profilePicture && (
+                            <img
+                              src={`/${user.profilePicture.replace(
+                                /\\/g,
+                                '/'
+                              )}`}
+                              alt="Profile"
+                              className="h-12 w-12 rounded-full border object-cover"
+                            />
+                          )}
+                          <div>
+                            <CardTitle className="text-lg text-gray-900">
+                              Applicant Information
+                            </CardTitle>
+                            <p className="text-sm text-gray-600">
+                              Review your details before submitting your
+                              application
+                            </p>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm mb-4">
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Name:
                             </span>{' '}
-                            at <span>{exp.company || ''}</span>
-                            {exp.location && <span>, {exp.location}</span>}{' '}
-                            {exp.type && <span>({exp.type})</span>}{' '}
-                            {exp.start && <span>— {exp.start}</span>}
-                            {exp.end && <span> to {exp.end}</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {/* Education */}
-                  {user.education && user.education.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <GraduationCap className="h-4 w-4 text-blue-400" />
-                        <span className="font-semibold text-blue-900">
-                          Education
-                        </span>
-                      </div>
-                      <ul className="pl-2 list-disc text-xs text-gray-700">
-                        {user.education.map((e: any, i: number) => (
-                          <li key={e._id || i} className="mb-1">
-                            {e.degree || e.course || e.field || ''} at{' '}
-                            {e.school || e.institution || ''}{' '}
-                            {e.yearGraduated ? `(${e.yearGraduated})` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {/* Certifications */}
-                  {user.certification && user.certification.length > 0 && (
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <FileText className="h-4 w-4 text-blue-400" />
-                        <span className="font-semibold text-blue-900">
-                          Certifications
-                        </span>
-                      </div>
-                      <ul className="pl-2 list-disc text-xs text-gray-700">
-                        {user.certification.map((c: any, i: number) => (
-                          <li key={c._id || i} className="mb-1">
-                            {c.name || ''} {c.issuer ? `- ${c.issuer}` : ''}{' '}
-                            {c.year ? `(${c.year})` : ''}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {/* Uploaded PDS/Resume */}
-                  <div className="border-t my-4" />
-                  <div className="flex items-center gap-2 mb-2">
-                    <Upload className="h-4 w-4 text-blue-400" />
-                    <span className="font-semibold text-blue-900">
-                      Uploaded Documents
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-700 mb-2">
-                    The PDS or resume you upload will be used in your
-                    application.
-                  </div>
-                  <div className="flex flex-col gap-1 text-xs">
-                    {user.pdsFile && (
-                      <div>
-                        <span className="font-medium">PDS:</span>{' '}
-                        <a
-                          href={getPdsDownloadUrl(user.pdsFile)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline">
-                          View Uploaded PDS
-                        </a>
-                      </div>
-                    )}
-                    {resume && (
-                      <div>
-                        <span className="font-medium">Resume:</span>{' '}
-                        {resume.name}
-                      </div>
-                    )}
-                    {!user.pdsFile && !resume && (
-                      <div className="text-gray-400">
-                        No PDS or resume uploaded yet.
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-6 flex justify-end">
-                    <Link href="/dashboard/applicant/profile">
-                      <Button
-                        variant="outline"
-                        className="text-brand-blue border-brand-blue hover:bg-brand-blue/10">
-                        Edit Profile
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              )}
-              {/* Application Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                    <Upload className="h-4 w-4" /> Resume (PDF, DOCX)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleResumeChange}
-                      ref={fileInputRef}
-                      className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-brand-blue file:text-white hover:file:bg-blue-700"
-                    />
-                    {resume && (
-                      <span className="text-xs text-green-700">
-                        {resume.name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                    <FileText className="h-4 w-4" /> Cover Letter (optional)
-                  </label>
-                  <textarea
-                    value={coverLetter}
-                    onChange={e => setCoverLetter(e.target.value)}
-                    rows={5}
-                    placeholder="Write a brief cover letter..."
-                    className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm shadow-sm"
-                  />
-                </div>
-                {error && (
-                  <div className="text-red-600 text-sm mb-2">{error}</div>
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">
+                              Email:
+                            </span>{' '}
+                            {user.email}
+                          </div>
+                          {user.phoneNumber && (
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Phone:
+                              </span>{' '}
+                              {user.phoneNumber}
+                            </div>
+                          )}
+                          {user.gender && (
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Gender:
+                              </span>{' '}
+                              {user.gender}
+                            </div>
+                          )}
+                          {user.dob && (
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Date of Birth:
+                              </span>{' '}
+                              {new Date(user.dob).toLocaleDateString()}
+                            </div>
+                          )}
+                          {user.address && (
+                            <div className="col-span-1 md:col-span-2">
+                              <span className="font-medium text-gray-700">
+                                Address:
+                              </span>{' '}
+                              {user.address.street || ''}{' '}
+                              {user.address.city || ''}{' '}
+                              {user.address.province || ''}
+                            </div>
+                          )}
+                        </div>
+                        <div className="border-t my-4" />
+                        {/* Experience */}
+                        {user.experience && user.experience.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Briefcase className="h-4 w-4 text-blue-400" />
+                              <span className="font-semibold text-blue-900">
+                                Experience
+                              </span>
+                            </div>
+                            <ul className="pl-2 list-disc text-xs text-gray-700">
+                              {user.experience.map((exp: any, i: number) => (
+                                <li key={exp._id || i} className="mb-1">
+                                  <span className="font-medium">
+                                    {exp.title || exp.position || ''}
+                                  </span>{' '}
+                                  at <span>{exp.company || ''}</span>
+                                  {exp.location && (
+                                    <span>, {exp.location}</span>
+                                  )}{' '}
+                                  {exp.type && <span>({exp.type})</span>}{' '}
+                                  {exp.start && <span>— {exp.start}</span>}
+                                  {exp.end && <span> to {exp.end}</span>}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {/* Education */}
+                        {user.education && user.education.length > 0 && (
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-1">
+                              <GraduationCap className="h-4 w-4 text-blue-400" />
+                              <span className="font-semibold text-blue-900">
+                                Education
+                              </span>
+                            </div>
+                            <ul className="pl-2 list-disc text-xs text-gray-700">
+                              {user.education.map((e: any, i: number) => (
+                                <li key={e._id || i} className="mb-1">
+                                  {e.degree || e.course || e.field || ''} at{' '}
+                                  {e.school || e.institution || ''}{' '}
+                                  {e.yearGraduated
+                                    ? `(${e.yearGraduated})`
+                                    : ''}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {/* Certifications */}
+                        {user.certification &&
+                          user.certification.length > 0 && (
+                            <div className="mb-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <FileText className="h-4 w-4 text-blue-400" />
+                                <span className="font-semibold text-blue-900">
+                                  Certifications
+                                </span>
+                              </div>
+                              <ul className="pl-2 list-disc text-xs text-gray-700">
+                                {user.certification.map((c: any, i: number) => (
+                                  <li key={c._id || i} className="mb-1">
+                                    {c.name || ''}{' '}
+                                    {c.issuer ? `- ${c.issuer}` : ''}{' '}
+                                    {c.year ? `(${c.year})` : ''}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        {/* Uploaded PDS/Resume */}
+                        <div className="border-t my-4" />
+                        <div className="flex items-center gap-2 mb-2">
+                          <Upload className="h-4 w-4 text-blue-400" />
+                          <span className="font-semibold text-blue-900">
+                            Uploaded Documents
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-700 mb-2">
+                          The PDS or resume you upload will be used in your
+                          application.
+                        </div>
+                        <div className="flex flex-col gap-1 text-xs">
+                          {user.pdsFile && (
+                            <div>
+                              <span className="font-medium">PDS:</span>{' '}
+                              <a
+                                href={getPdsDownloadUrl(user.pdsFile)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline">
+                                View Uploaded PDS
+                              </a>
+                            </div>
+                          )}
+                          {resume && (
+                            <div>
+                              <span className="font-medium">Resume:</span>{' '}
+                              {resume.name}
+                            </div>
+                          )}
+                          {!user.pdsFile && !resume && (
+                            <div className="text-gray-400">
+                              No PDS or resume uploaded yet.
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                          <Button
+                            variant="outline"
+                            asChild
+                            className="bg-white/60 backdrop-blur-sm border-white/50">
+                            <Link href="/dashboard/applicant/profile">
+                              Edit Profile
+                            </Link>
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 )}
-                <Button
-                  type="submit"
-                  className="w-full text-lg py-3"
-                  size="lg"
-                  disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Submit Application'}
-                </Button>
-              </form>
-            </>
-          )}
-          <div className="flex justify-center">
-            <Button variant="outline" asChild>
-              <Link
-                href={`/jobs/${job._id}`}
-                className="inline-flex items-center gap-2">
-                <Briefcase className="h-4 w-4" />
-                Back to Job Details
-              </Link>
-            </Button>
+                {/* Application Form */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}>
+                  <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg rounded-3xl overflow-hidden">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 p-6">
+                      <CardTitle className="text-lg text-gray-900">
+                        Application Form
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">
+                        Upload your resume and add a cover letter
+                      </p>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                          <Label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-blue-600" />
+                            Resume (PDF, DOCX)
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              onChange={handleResumeChange}
+                              ref={fileInputRef}
+                              className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                            />
+                            {resume && (
+                              <Badge className="bg-green-100 text-green-700">
+                                {resume.name}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                            Cover Letter (optional)
+                          </Label>
+                          <Textarea
+                            value={coverLetter}
+                            onChange={e => setCoverLetter(e.target.value)}
+                            rows={5}
+                            placeholder="Write a brief cover letter explaining why you're interested in this position..."
+                            className="w-full rounded-lg border border-gray-200 bg-white/60 backdrop-blur-sm px-4 py-3 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        {error && (
+                          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                            {error}
+                          </div>
+                        )}
+                        <Button
+                          type="submit"
+                          className="w-full text-lg py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                          size="lg"
+                          disabled={submitting}>
+                          {submitting ? (
+                            <>
+                              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-5 w-5 mr-2" />
+                              Submit Application
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </>
+            )}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex justify-center mt-8">
+              <Button
+                variant="outline"
+                asChild
+                className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
+                <Link
+                  href={`/jobs/${job._id}`}
+                  className="inline-flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Job Details
+                </Link>
+              </Button>
+            </motion.div>
           </div>
         </div>
       </main>

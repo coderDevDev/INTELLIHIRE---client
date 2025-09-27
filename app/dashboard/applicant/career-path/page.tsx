@@ -676,7 +676,7 @@ export default function CareerPathPage() {
             value={activeTab}
             onValueChange={setActiveTab}
             className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm border border-white/50 shadow-lg">
+            <TabsList className="grid w-full grid-cols-2 bg-white/60 backdrop-blur-sm border border-white/50 shadow-lg">
               <TabsTrigger
                 value="overview"
                 className="data-[state=active]:bg-white/80">
@@ -687,21 +687,21 @@ export default function CareerPathPage() {
                 className="data-[state=active]:bg-white/80">
                 Career Paths
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="goals"
                 className="data-[state=active]:bg-white/80">
                 My Goals
-              </TabsTrigger>
-              <TabsTrigger
+              </TabsTrigger> */}
+              {/* <TabsTrigger
                 value="insights"
                 className="data-[state=active]:bg-white/80">
                 Insights
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid ">
                 {/* Recommended Career Paths */}
                 <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                   <CardHeader>
@@ -771,7 +771,7 @@ export default function CareerPathPage() {
                 </Card>
 
                 {/* Career Goals Progress */}
-                <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+                {/* <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Target className="h-5 w-5 text-green-600" />
@@ -818,11 +818,11 @@ export default function CareerPathPage() {
                       </div>
                     ))}
                   </CardContent>
-                </Card>
+                </Card> */}
               </div>
 
               {/* Recent Insights */}
-              <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+              {/* <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Lightbulb className="h-5 w-5 text-orange-600" />
@@ -867,7 +867,7 @@ export default function CareerPathPage() {
                     ))}
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </TabsContent>
 
             {/* Career Paths Tab */}
