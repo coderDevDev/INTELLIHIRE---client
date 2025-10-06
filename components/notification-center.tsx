@@ -18,7 +18,7 @@ import {
   Info,
   X,
   Settings,
-  MarkAsRead,
+  Check,
   Trash2,
   Filter,
   Search,
@@ -309,7 +309,7 @@ export function NotificationCenter({
               size="sm"
               onClick={markAllAsRead}
               className="w-full bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
-              <MarkAsRead className="h-4 w-4 mr-2" />
+              <Check className="h-4 w-4 mr-2" />
               Mark All as Read
             </Button>
           )}
