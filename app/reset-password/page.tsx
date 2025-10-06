@@ -1,8 +1,11 @@
+'use client';
+
+import { Suspense } from 'react';
 import { ResetPasswordForm } from '@/components/reset-password-form';
 import { MainHeader } from '@/components/main-header';
 import { ModernFooter } from '@/components/modern-footer';
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -34,3 +37,20 @@ export default function ResetPasswordPage() {
   );
 }
 
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col">
+          <main className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-blue-50">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading reset password form...</p>
+            </div>
+          </main>
+        </div>
+      }>
+      <ResetPasswordPageContent />
+    </Suspense>
+  );
+}
