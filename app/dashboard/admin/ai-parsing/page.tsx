@@ -81,7 +81,7 @@ export default function AIParsingPage() {
   const fetchParsingData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch documents data
       const documentsRes = await documentAPI.getAllDocuments();
       const docs = documentsRes.documents || documentsRes || [];
@@ -89,15 +89,22 @@ export default function AIParsingPage() {
       // Calculate stats
       const totalDocs = docs.length;
       const today = new Date().toDateString();
-      const processedToday = docs.filter((doc: any) => 
-        new Date(doc.createdAt).toDateString() === today
+      const processedToday = docs.filter(
+        (doc: any) => new Date(doc.createdAt).toDateString() === today
       ).length;
-      
-      const completedDocs = docs.filter((doc: any) => doc.status === 'completed').length;
-      const successRate = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
-      
-      const pendingDocs = docs.filter((doc: any) => doc.status === 'pending').length;
-      const failedDocs = docs.filter((doc: any) => doc.status === 'failed').length;
+
+      const completedDocs = docs.filter(
+        (doc: any) => doc.status === 'completed'
+      ).length;
+      const successRate =
+        totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
+
+      const pendingDocs = docs.filter(
+        (doc: any) => doc.status === 'pending'
+      ).length;
+      const failedDocs = docs.filter(
+        (doc: any) => doc.status === 'failed'
+      ).length;
 
       setStats({
         totalDocuments: totalDocs,
@@ -203,7 +210,9 @@ export default function AIParsingPage() {
         <div className="flex items-center justify-center h-full relative z-10">
           <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-            <p className="text-gray-600 font-medium">Loading AI parsing data...</p>
+            <p className="text-gray-600 font-medium">
+              Loading AI parsing data...
+            </p>
           </div>
         </div>
       </div>
@@ -333,7 +342,7 @@ export default function AIParsingPage() {
                     <p>No documents found</p>
                   </div>
                 ) : (
-                  documents.map((doc) => (
+                  documents.map(doc => (
                     <div
                       key={doc._id}
                       className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
@@ -346,26 +355,41 @@ export default function AIParsingPage() {
                             <h4 className="font-semibold text-gray-900 truncate">
                               {doc.fileName}
                             </h4>
-                            <Badge className={`text-xs ${getStatusColor(doc.status)}`}>
+                            <Badge
+                              className={`text-xs ${getStatusColor(
+                                doc.status
+                              )}`}>
                               {getStatusIcon(doc.status)}
-                              {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                              {doc.status.charAt(0).toUpperCase() +
+                                doc.status.slice(1)}
                             </Badge>
                           </div>
                           <p className="text-sm text-gray-600">
-                            {doc.user.firstName} {doc.user.lastName} • {doc.user.email}
+                            {doc.user.firstName} {doc.user.lastName} •{' '}
+                            {doc.user.email}
                           </p>
                           <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
-                            <span>Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}</span>
+                            <span>
+                              Uploaded:{' '}
+                              {new Date(doc.uploadedAt).toLocaleDateString()}
+                            </span>
                             {doc.processedAt && (
                               <>
                                 <span>•</span>
-                                <span>Processed: {new Date(doc.processedAt).toLocaleDateString()}</span>
+                                <span>
+                                  Processed:{' '}
+                                  {new Date(
+                                    doc.processedAt
+                                  ).toLocaleDateString()}
+                                </span>
                               </>
                             )}
                           </div>
                           {doc.error && (
                             <div className="mt-2 p-2 rounded-lg bg-red-50 border border-red-200">
-                              <p className="text-xs text-red-600">{doc.error}</p>
+                              <p className="text-xs text-red-600">
+                                {doc.error}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -425,25 +449,36 @@ export default function AIParsingPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Success Rate</span>
-                    <span className="text-sm text-gray-600">{stats.successRate}%</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Success Rate
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {stats.successRate}%
+                    </span>
                   </div>
                   <Progress value={stats.successRate} className="h-2" />
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Processing Speed</span>
-                    <span className="text-sm text-gray-600">{stats.averageProcessingTime}s avg</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Processing Speed
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {stats.averageProcessingTime}s avg
+                    </span>
                   </div>
                   <Progress value={75} className="h-2" />
                 </div>
                 <div className="p-4 rounded-xl border border-green-200 bg-green-50/80 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-900">AI Processing Active</span>
+                    <span className="text-sm font-medium text-green-900">
+                      AI Processing Active
+                    </span>
                   </div>
                   <p className="text-xs text-green-700 mt-1">
-                    All AI services are operational and processing documents efficiently.
+                    All AI services are operational and processing documents
+                    efficiently.
                   </p>
                 </div>
               </CardContent>
@@ -462,19 +497,27 @@ export default function AIParsingPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm text-center">
-                    <div className="text-2xl font-bold text-blue-600">{stats.totalDocuments}</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {stats.totalDocuments}
+                    </div>
                     <div className="text-xs text-gray-600">Total Documents</div>
                   </div>
                   <div className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm text-center">
-                    <div className="text-2xl font-bold text-green-600">{stats.successRate}%</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {stats.successRate}%
+                    </div>
                     <div className="text-xs text-gray-600">Success Rate</div>
                   </div>
                   <div className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm text-center">
-                    <div className="text-2xl font-bold text-yellow-600">{stats.pendingDocuments}</div>
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {stats.pendingDocuments}
+                    </div>
                     <div className="text-xs text-gray-600">Pending</div>
                   </div>
                   <div className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm text-center">
-                    <div className="text-2xl font-bold text-red-600">{stats.failedDocuments}</div>
+                    <div className="text-2xl font-bold text-red-600">
+                      {stats.failedDocuments}
+                    </div>
                     <div className="text-xs text-gray-600">Failed</div>
                   </div>
                 </div>
@@ -486,3 +529,5 @@ export default function AIParsingPage() {
     </div>
   );
 }
+
+

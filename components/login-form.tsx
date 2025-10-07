@@ -1,9 +1,10 @@
 'use client';
 
-import type React from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,35 +26,43 @@ import {
   Shield,
   Eye,
   EyeOff,
-  ArrowRight
+  ArrowRight,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+import {
+  loginSchema,
+  type LoginFormData
+} from '@/lib/validations/authValidation';
 
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState('applicant');
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+
+  // React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors }
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    },
+    mode: 'onChange' // Real-time validation
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
 
     try {
-      console.log({ formData });
+      console.log('📝 Logging in:', { email: data.email, password: '***' });
       const response = await authAPI.login({
-        email: formData.email,
-        password: formData.password
+        email: data.email,
+        password: data.password
       });
 
       toast.success('Login successful');
@@ -77,10 +86,45 @@ export function LoginForm() {
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(
-        error.response?.data?.message ||
-          'Login failed. Please check your credentials and try again.'
-      );
+
+      // Check if error is due to unverified email
+      if (error.response?.data?.requiresVerification) {
+        toast.error(error.response.data.message, {
+          description:
+            'Please check your email inbox for the verification link.',
+          duration: 8000,
+          action: {
+            label: 'Resend Email',
+            onClick: async () => {
+              try {
+                const response = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification`,
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: error.response.data.email })
+                  }
+                );
+
+                if (response.ok) {
+                  toast.success(
+                    'Verification email sent! Please check your inbox.'
+                  );
+                } else {
+                  toast.error('Failed to resend verification email');
+                }
+              } catch (err) {
+                toast.error('Failed to resend verification email');
+              }
+            }
+          }
+        });
+      } else {
+        toast.error(
+          error.response?.data?.message ||
+            'Login failed. Please check your credentials and try again.'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +170,9 @@ export function LoginForm() {
                 </TabsList>
 
                 <TabsContent value="applicant">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form
+                    onSubmit={handleFormSubmit(onSubmit)}
+                    className="space-y-6">
                     <div className="space-y-2">
                       <Label
                         htmlFor="email"
@@ -140,12 +186,20 @@ export function LoginForm() {
                           id="email"
                           type="email"
                           placeholder="your@email.com"
-                          required
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                          {...register('email')}
+                          className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                            errors.email
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                              : ''
+                          }`}
                         />
                       </div>
+                      {errors.email && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -158,10 +212,7 @@ export function LoginForm() {
                         </Label>
                         <Link
                           href="/forgot-password"
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline cursor-pointer relative z-30"
-                          onClick={() =>
-                            console.log('Forgot password link clicked')
-                          }>
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline cursor-pointer relative z-30">
                           Forgot password?
                         </Link>
                       </div>
@@ -170,10 +221,12 @@ export function LoginForm() {
                         <Input
                           id="password"
                           type={showPassword ? 'text' : 'password'}
-                          required
-                          value={formData.password}
-                          onChange={handleChange}
-                          className="pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                          {...register('password')}
+                          className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                            errors.password
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                              : ''
+                          }`}
                         />
                         <button
                           type="button"
@@ -186,6 +239,12 @@ export function LoginForm() {
                           )}
                         </button>
                       </div>
+                      {errors.password && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.password.message}
+                        </p>
+                      )}
                     </div>
 
                     <Button
@@ -194,7 +253,7 @@ export function LoginForm() {
                       disabled={isLoading}>
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <Loader2 className="h-4 w-4 animate-spin" />
                           Logging in...
                         </div>
                       ) : (
@@ -208,7 +267,9 @@ export function LoginForm() {
                 </TabsContent>
 
                 <TabsContent value="admin">
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form
+                    onSubmit={handleFormSubmit(onSubmit)}
+                    className="space-y-6">
                     <div className="space-y-2">
                       <Label
                         htmlFor="email"
@@ -222,12 +283,20 @@ export function LoginForm() {
                           id="email"
                           type="email"
                           placeholder="admin@example.com"
-                          required
-                          value={formData.email}
-                          onChange={handleChange}
-                          className="pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                          {...register('email')}
+                          className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                            errors.email
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                              : ''
+                          }`}
                         />
                       </div>
+                      {errors.email && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -249,10 +318,12 @@ export function LoginForm() {
                         <Input
                           id="password"
                           type={showPassword ? 'text' : 'password'}
-                          required
-                          value={formData.password}
-                          onChange={handleChange}
-                          className="pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                          {...register('password')}
+                          className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                            errors.password
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                              : ''
+                          }`}
                         />
                         <button
                           type="button"
@@ -265,6 +336,12 @@ export function LoginForm() {
                           )}
                         </button>
                       </div>
+                      {errors.password && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.password.message}
+                        </p>
+                      )}
                     </div>
 
                     <Button
@@ -273,7 +350,7 @@ export function LoginForm() {
                       disabled={isLoading}>
                       {isLoading ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <Loader2 className="h-4 w-4 animate-spin" />
                           Logging in...
                         </div>
                       ) : (

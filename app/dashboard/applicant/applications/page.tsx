@@ -23,12 +23,15 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
-  Plus
+  Plus,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -189,12 +192,37 @@ export default function ApplicantApplicationsPage() {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Calculate stats from applications
+  const calculateStats = (apps: any[]) => {
+    return {
+      total: apps.length,
+      applied: apps.filter(a => a.status === 'applied').length,
+      screening: apps.filter(a => a.status === 'screening').length,
+      interview: apps.filter(a => a.status === 'interview').length,
+      offered: apps.filter(a => a.status === 'offered').length,
+      hired: apps.filter(a => a.status === 'hired').length,
+      rejected: apps.filter(a => a.status === 'rejected').length
+    };
+  };
+
+  const [stats, setStats] = useState({
+    total: 0,
+    applied: 0,
+    screening: 0,
+    interview: 0,
+    offered: 0,
+    hired: 0,
+    rejected: 0
+  });
+
   useEffect(() => {
     async function fetchApplications() {
       setLoading(true);
       try {
         const data = await applicationAPI.getMyApplications();
-        setApplications(data.applications || []);
+        const apps = data.applications || [];
+        setApplications(apps);
+        setStats(calculateStats(apps));
       } catch {
         setApplications([]);
       }
@@ -287,11 +315,23 @@ export default function ApplicantApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center gap-4">
-            <RefreshCw className="h-8 w-8 animate-spin text-brand-blue" />
-            <p className="text-gray-600">Loading your applications...</p>
+      <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+        <div className="flex items-center justify-center h-full relative z-10">
+          <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-gray-600 font-medium">
+              Loading your applications...
+            </p>
           </div>
         </div>
       </div>
@@ -300,27 +340,42 @@ export default function ApplicantApplicationsPage() {
 
   if (applications.length === 0) {
     return (
-      <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-center space-y-4">
-            <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
-              <FileText className="h-12 w-12 text-gray-400" />
+      <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+          <div
+            className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '2s' }}></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+            style={{ animationDelay: '4s' }}></div>
+        </div>
+        <div className="flex flex-col items-center justify-center h-full relative z-10">
+          <div className="text-center space-y-4 bg-white/80 backdrop-blur-xl rounded-3xl p-12 shadow-2xl border border-white/50">
+            <div className="flex h-24 w-24 mx-auto items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
+              <FileText className="h-12 w-12 text-blue-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               No Applications Yet
             </h2>
             <p className="text-gray-600 max-w-md">
               You haven't applied to any jobs yet. Start your job search journey
               today!
             </p>
-            <div className="flex gap-3">
-              <Button asChild>
+            <div className="flex gap-3 justify-center pt-4">
+              <Button
+                asChild
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
                 <Link href="/jobs" className="flex items-center gap-2">
                   <Search className="h-4 w-4" />
                   Browse Jobs
                 </Link>
               </Button>
-              <Button variant="outline" asChild>
+              <Button
+                variant="outline"
+                asChild
+                className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
                 <Link
                   href="/dashboard/applicant/profile"
                   className="flex items-center gap-2">
@@ -336,32 +391,38 @@ export default function ApplicantApplicationsPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container flex h-16 items-center justify-between px-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              My Applications
-            </h1>
-            <p className="text-sm text-gray-600">
-              Track and manage your job applications
-            </p>
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
+        <div className="container flex h-20 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                My Applications
+              </h1>
+              <p className="text-sm text-gray-600">
+                Track and manage your job applications
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowFilters(!showFilters)}>
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-white/60 backdrop-blur-sm border border-white/50 hover:bg-white/80">
               <Filter className="h-4 w-4 mr-2" />
               Filters
             </Button>
-            <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex gap-1 bg-white/60 backdrop-blur-sm border border-white/50 rounded-lg p-1">
               <button
                 className={`p-2 rounded-md transition-all ${
                   view === 'card'
-                    ? 'bg-white text-brand-blue shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
                 }`}
                 onClick={() => setView('card')}
                 title="Card View">
@@ -370,8 +431,8 @@ export default function ApplicantApplicationsPage() {
               <button
                 className={`p-2 rounded-md transition-all ${
                   view === 'table'
-                    ? 'bg-white text-brand-blue shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-blue-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
                 }`}
                 onClick={() => setView('table')}
                 title="Table View">
@@ -382,11 +443,81 @@ export default function ApplicantApplicationsPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
-        <div className="container px-6 py-8 space-y-6">
+      <main className="flex-1 overflow-auto relative z-10">
+        <div className="container px-6 py-8 space-y-8">
+          {/* Stats Cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">
+                  Total Applications
+                </CardTitle>
+                <Briefcase className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.total}
+                </div>
+                <p className="text-xs text-blue-600">All time applications</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">
+                  In Progress
+                </CardTitle>
+                <Clock className="h-5 w-5 text-yellow-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.applied + stats.screening}
+                </div>
+                <p className="text-xs text-yellow-600">Under review</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">
+                  Interviews
+                </CardTitle>
+                <Calendar className="h-5 w-5 text-purple-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.interview + stats.offered}
+                </div>
+                <p className="text-xs text-purple-600">Active opportunities</p>
+              </CardContent>
+            </Card>
+
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">
+                  Success Rate
+                </CardTitle>
+                <TrendingUp className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-gray-900">
+                  {stats.total > 0
+                    ? Math.round(
+                        ((stats.hired + stats.offered) / stats.total) * 100
+                      )
+                    : 0}
+                  %
+                </div>
+                <p className="text-xs text-green-600">
+                  {stats.hired} hired, {stats.offered} offered
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Filters */}
           {showFilters && (
-            <Card className="animate-in slide-in-from-top-2 duration-300">
+            <Card className="animate-in slide-in-from-top-2 duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg">Filters & Search</CardTitle>
               </CardHeader>
@@ -475,14 +606,16 @@ export default function ApplicantApplicationsPage() {
           )}
 
           {/* Controls */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Sort by:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Sort by:
+                </label>
                 <Select
                   value={sortBy}
                   onValueChange={value => setSortBy(value as any)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 bg-white/80 backdrop-blur-sm border-white/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -497,7 +630,8 @@ export default function ApplicantApplicationsPage() {
                   size="sm"
                   onClick={() =>
                     setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))
-                  }>
+                  }
+                  className="bg-white/50 hover:bg-white/80">
                   {sortDir === 'asc' ? (
                     <ChevronUp className="h-4 w-4" />
                   ) : (
@@ -506,14 +640,16 @@ export default function ApplicantApplicationsPage() {
                 </Button>
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Show:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Show:
+                </label>
                 <Select
                   value={pageSize.toString()}
                   onValueChange={value => {
                     setPageSize(Number(value));
                     setPage(1);
                   }}>
-                  <SelectTrigger className="w-20">
+                  <SelectTrigger className="w-20 bg-white/80 backdrop-blur-sm border-white/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -526,13 +662,38 @@ export default function ApplicantApplicationsPage() {
                 </Select>
               </div>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 font-medium">
               Showing {pagedApps.length} of {applications.length} applications
             </div>
           </div>
 
           {/* View rendering */}
-          {view === 'card' ? (
+          {pagedApps.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/50">
+                <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium mb-2">
+                  No applications match your filters
+                </p>
+                <p className="text-sm text-gray-400 mb-4">
+                  Try adjusting your search criteria or filters
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStatusFilter('');
+                    setCompanyFilter('');
+                    setDateFrom('');
+                    setDateTo('');
+                    setSearch('');
+                    setPage(1);
+                  }}
+                  className="bg-white/80 backdrop-blur-sm border-white/50">
+                  Clear All Filters
+                </Button>
+              </div>
+            </div>
+          ) : view === 'card' ? (
             <div className="grid gap-6">
               {pagedApps.map(app => (
                 <ApplicationCard key={app._id} application={app} />
@@ -544,12 +705,13 @@ export default function ApplicantApplicationsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-white/50">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}>
+                disabled={page === 1}
+                className="bg-white/80 backdrop-blur-sm border-white/50">
                 Previous
               </Button>
               <div className="flex gap-1">
@@ -559,7 +721,11 @@ export default function ApplicantApplicationsPage() {
                     variant={p === page ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setPage(p)}
-                    className="w-10">
+                    className={`w-10 ${
+                      p === page
+                        ? 'bg-blue-500 hover:bg-blue-600'
+                        : 'bg-white/80 backdrop-blur-sm border-white/50'
+                    }`}>
                     {p}
                   </Button>
                 ))}
@@ -568,13 +734,25 @@ export default function ApplicantApplicationsPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}>
+                disabled={page === totalPages}
+                className="bg-white/80 backdrop-blur-sm border-white/50">
                 Next
               </Button>
             </div>
           )}
         </div>
       </main>
+
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}></div>
+      </div>
     </div>
   );
 }
@@ -582,9 +760,118 @@ export default function ApplicantApplicationsPage() {
 function ApplicationCard({ application }: { application: any }) {
   const job = application.jobId;
   const company = job?.companyId;
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  const handleWithdraw = async () => {
+    if (
+      !confirm(
+        'Are you sure you want to withdraw this application? This action cannot be undone.'
+      )
+    ) {
+      return;
+    }
+
+    setIsWithdrawing(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/applications/${application._id}/withdraw`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        toast.success('Application withdrawn successfully');
+        window.location.reload(); // Reload to show updated status
+      } else {
+        const error = await response.json();
+        toast.error(error.message || 'Failed to withdraw application');
+      }
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+      toast.error('Failed to withdraw application');
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
+  const handleDownload = () => {
+    // Generate application summary as text
+    const applicationSummary = `
+APPLICATION SUMMARY
+==================
+
+Job Title: ${job?.title || 'N/A'}
+Company: ${company?.name || 'N/A'}
+Location: ${job?.location || 'N/A'}
+Employment Type: ${job?.employmentType || 'N/A'}
+Salary Range: ${
+      job?.salaryMin ? `₱${job.salaryMin.toLocaleString()}` : 'N/A'
+    } - ${job?.salaryMax ? `₱${job.salaryMax.toLocaleString()}` : 'N/A'}
+
+Application Status: ${application.status}
+Applied Date: ${new Date(application.createdAt).toLocaleString()}
+Last Updated: ${new Date(application.updatedAt).toLocaleString()}
+
+${application.notes ? `\nAdmin Notes:\n${application.notes}\n` : ''}
+${
+  application.interviewDate
+    ? `\nInterview Date: ${new Date(
+        application.interviewDate
+      ).toLocaleString()}`
+    : ''
+}
+${
+  application.interviewLocation
+    ? `Interview Location: ${application.interviewLocation}`
+    : ''
+}
+${
+  application.interviewType
+    ? `Interview Type: ${application.interviewType}`
+    : ''
+}
+${
+  application.rejectionReason
+    ? `\nRejection Reason:\n${application.rejectionReason}`
+    : ''
+}
+
+Documents Submitted:
+- Resume: ${application.resumeId?.title || 'N/A'}
+- PDS: ${application.pdsId?.title || 'N/A'}
+${
+  application.additionalDocuments?.length > 0
+    ? `- Additional Documents: ${application.additionalDocuments.length}`
+    : ''
+}
+
+==================
+Generated on: ${new Date().toLocaleString()}
+    `.trim();
+
+    // Create and download file
+    const blob = new Blob([applicationSummary], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `application-${job?.title?.replace(
+      /\s+/g,
+      '-'
+    )}-${new Date().getTime()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    toast.success('Application summary downloaded');
+  };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+    <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Company Logo */}
@@ -677,6 +964,71 @@ function ApplicationCard({ application }: { application: any }) {
             {/* Status Stepper */}
             <Stepper status={application.status} />
 
+            {/* Status Details & Updates */}
+            {application.notes && (
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-start gap-2">
+                  <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      Admin Notes
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      {application.notes}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Interview Details */}
+            {application.status === 'interview' &&
+              application.interviewDate && (
+                <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-4 w-4 text-purple-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-purple-900">
+                        Interview Scheduled
+                      </p>
+                      <p className="text-sm text-purple-700">
+                        <strong>Date:</strong>{' '}
+                        {new Date(application.interviewDate).toLocaleString()}
+                      </p>
+                      {application.interviewLocation && (
+                        <p className="text-sm text-purple-700">
+                          <strong>Location:</strong>{' '}
+                          {application.interviewLocation}
+                        </p>
+                      )}
+                      {application.interviewType && (
+                        <p className="text-sm text-purple-700">
+                          <strong>Type:</strong> {application.interviewType}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {/* Rejection Reason */}
+            {application.status === 'rejected' &&
+              application.rejectionReason && (
+                <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex items-start gap-2">
+                    <XCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-red-900">
+                        Rejection Reason
+                      </p>
+                      <p className="text-sm text-red-700 mt-1">
+                        {application.rejectionReason}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             {/* Actions */}
             <div className="flex items-center justify-between mt-6 pt-4 border-t">
               <div className="flex gap-2">
@@ -693,13 +1045,31 @@ function ApplicationCard({ application }: { application: any }) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleDownload}>
                       <Download className="h-4 w-4 mr-2" />
                       Download Application
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem
+                      onClick={handleWithdraw}
+                      disabled={
+                        isWithdrawing ||
+                        application.status === 'withdrawn' ||
+                        application.status === 'hired'
+                      }
+                      className={`${
+                        application.status === 'withdrawn' ||
+                        application.status === 'hired'
+                          ? 'opacity-50 cursor-not-allowed'
+                          : 'text-red-600'
+                      }`}>
                       <XCircle className="h-4 w-4 mr-2" />
-                      Withdraw Application
+                      {isWithdrawing
+                        ? 'Withdrawing...'
+                        : application.status === 'withdrawn'
+                        ? 'Already Withdrawn'
+                        : application.status === 'hired'
+                        ? 'Cannot Withdraw'
+                        : 'Withdraw Application'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -714,11 +1084,11 @@ function ApplicationCard({ application }: { application: any }) {
 
 function ApplicationsTable({ applications }: { applications: any[] }) {
   return (
-    <Card className="border-0 shadow-md">
+    <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg overflow-hidden">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gradient-to-r from-gray-50 to-blue-50/30 border-b border-white/50">
               <tr>
                 <th className="px-6 py-4 text-left font-medium text-gray-900">
                   Company
@@ -753,7 +1123,7 @@ function ApplicationsTable({ applications }: { applications: any[] }) {
                 return (
                   <tr
                     key={app._id}
-                    className="hover:bg-gray-50 transition-colors">
+                    className="hover:bg-blue-50/30 transition-all duration-200 border-b border-white/30">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">

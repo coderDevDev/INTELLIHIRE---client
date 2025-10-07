@@ -21,18 +21,18 @@ function setAutoLogout(token: string) {
       if (msUntilExpiry > 0) {
         logoutTimer = setTimeout(() => {
           authAPI.logout();
-          window.location.href = '/login?expired=1';
+          // window.location.href = '/login?expired=1';
         }, msUntilExpiry);
       } else {
         // Token already expired
         authAPI.logout();
-        window.location.href = '/login?expired=1';
+        // window.location.href = '/login?expired=1';
       }
     }
   } catch {
     // Invalid token, force logout
     authAPI.logout();
-    window.location.href = '/login?expired=1';
+    // window.location.href = '/login?expired=1';
   }
 }
 
@@ -51,7 +51,7 @@ api.interceptors.response.use(
   error => {
     if (error.response && error.response.status === 401) {
       authAPI.logout();
-      window.location.href = '/login?expired=1';
+      // window.location.href = '/login?expired=1';
     }
     return Promise.reject(error);
   }

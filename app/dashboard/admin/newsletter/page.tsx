@@ -71,7 +71,7 @@ export default function NewsletterPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('compose');
-  
+
   // Compose form state
   const [composeForm, setComposeForm] = useState({
     title: '',
@@ -90,7 +90,7 @@ export default function NewsletterPage() {
   const fetchNewsletterData = async () => {
     try {
       setLoading(true);
-      
+
       // Mock data - in real implementation, fetch from API
       const mockNewsletters: Newsletter[] = [
         {
@@ -132,7 +132,8 @@ export default function NewsletterPage() {
           _id: '1',
           name: 'Job Opportunities',
           subject: 'New Job Opportunities Available',
-          content: 'Dear {{firstName}},\n\nWe have exciting new job opportunities...',
+          content:
+            'Dear {{firstName}},\n\nWe have exciting new job opportunities...',
           category: 'jobs',
           createdAt: '2024-01-10T10:00:00Z'
         },
@@ -161,13 +162,19 @@ export default function NewsletterPage() {
       setSending(newsletterId);
       // Mock sending - in real implementation, call API
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setNewsletters(prev => prev.map(n => 
-        n._id === newsletterId 
-          ? { ...n, status: 'sent' as const, sentAt: new Date().toISOString() }
-          : n
-      ));
-      
+
+      setNewsletters(prev =>
+        prev.map(n =>
+          n._id === newsletterId
+            ? {
+                ...n,
+                status: 'sent' as const,
+                sentAt: new Date().toISOString()
+              }
+            : n
+        )
+      );
+
       toast.success('Newsletter sent successfully');
     } catch (error) {
       toast.error('Failed to send newsletter');
@@ -206,7 +213,7 @@ export default function NewsletterPage() {
       };
 
       setNewsletters(prev => [newNewsletter, ...prev]);
-      
+
       // Reset form
       setComposeForm({
         title: '',
@@ -276,7 +283,9 @@ export default function NewsletterPage() {
         <div className="flex items-center justify-center h-full relative z-10">
           <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
             <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-            <p className="text-gray-600 font-medium">Loading newsletter data...</p>
+            <p className="text-gray-600 font-medium">
+              Loading newsletter data...
+            </p>
           </div>
         </div>
       </div>
@@ -383,18 +392,29 @@ export default function NewsletterPage() {
           </div>
 
           {/* Newsletter Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm border border-white/50">
-              <TabsTrigger value="compose" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="compose"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Compose
               </TabsTrigger>
-              <TabsTrigger value="campaigns" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="campaigns"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Campaigns
               </TabsTrigger>
-              <TabsTrigger value="templates" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="templates"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Templates
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="analytics"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Analytics
               </TabsTrigger>
             </TabsList>
@@ -418,7 +438,12 @@ export default function NewsletterPage() {
                       <Input
                         id="title"
                         value={composeForm.title}
-                        onChange={(e) => setComposeForm(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={e =>
+                          setComposeForm(prev => ({
+                            ...prev,
+                            title: e.target.value
+                          }))
+                        }
                         placeholder="Enter newsletter title"
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
@@ -428,7 +453,12 @@ export default function NewsletterPage() {
                       <Input
                         id="subject"
                         value={composeForm.subject}
-                        onChange={(e) => setComposeForm(prev => ({ ...prev, subject: e.target.value }))}
+                        onChange={e =>
+                          setComposeForm(prev => ({
+                            ...prev,
+                            subject: e.target.value
+                          }))
+                        }
                         placeholder="Enter email subject line"
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
@@ -440,7 +470,12 @@ export default function NewsletterPage() {
                     <select
                       id="recipients"
                       value={composeForm.recipients}
-                      onChange={(e) => setComposeForm(prev => ({ ...prev, recipients: e.target.value }))}
+                      onChange={e =>
+                        setComposeForm(prev => ({
+                          ...prev,
+                          recipients: e.target.value
+                        }))
+                      }
                       className="w-full p-3 rounded-lg border border-white/50 bg-white/60 backdrop-blur-sm">
                       <option value="all">All Users</option>
                       <option value="applicants">Applicants Only</option>
@@ -455,7 +490,12 @@ export default function NewsletterPage() {
                       <Textarea
                         id="customEmails"
                         value={composeForm.customEmails}
-                        onChange={(e) => setComposeForm(prev => ({ ...prev, customEmails: e.target.value }))}
+                        onChange={e =>
+                          setComposeForm(prev => ({
+                            ...prev,
+                            customEmails: e.target.value
+                          }))
+                        }
                         placeholder="Enter email addresses separated by commas"
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                         rows={3}
@@ -468,7 +508,12 @@ export default function NewsletterPage() {
                     <Textarea
                       id="content"
                       value={composeForm.content}
-                      onChange={(e) => setComposeForm(prev => ({ ...prev, content: e.target.value }))}
+                      onChange={e =>
+                        setComposeForm(prev => ({
+                          ...prev,
+                          content: e.target.value
+                        }))
+                      }
                       placeholder="Write your newsletter content here..."
                       className="bg-white/60 backdrop-blur-sm border-white/50"
                       rows={10}
@@ -477,22 +522,36 @@ export default function NewsletterPage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="scheduleDate">Schedule Date (Optional)</Label>
+                      <Label htmlFor="scheduleDate">
+                        Schedule Date (Optional)
+                      </Label>
                       <Input
                         id="scheduleDate"
                         type="date"
                         value={composeForm.scheduleDate}
-                        onChange={(e) => setComposeForm(prev => ({ ...prev, scheduleDate: e.target.value }))}
+                        onChange={e =>
+                          setComposeForm(prev => ({
+                            ...prev,
+                            scheduleDate: e.target.value
+                          }))
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="scheduleTime">Schedule Time (Optional)</Label>
+                      <Label htmlFor="scheduleTime">
+                        Schedule Time (Optional)
+                      </Label>
                       <Input
                         id="scheduleTime"
                         type="time"
                         value={composeForm.scheduleTime}
-                        onChange={(e) => setComposeForm(prev => ({ ...prev, scheduleTime: e.target.value }))}
+                        onChange={e =>
+                          setComposeForm(prev => ({
+                            ...prev,
+                            scheduleTime: e.target.value
+                          }))
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -535,7 +594,7 @@ export default function NewsletterPage() {
                       <p>No newsletters found</p>
                     </div>
                   ) : (
-                    newsletters.map((newsletter) => (
+                    newsletters.map(newsletter => (
                       <div
                         key={newsletter._id}
                         className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
@@ -548,32 +607,51 @@ export default function NewsletterPage() {
                               <h4 className="font-semibold text-gray-900 truncate">
                                 {newsletter.title}
                               </h4>
-                              <Badge className={`text-xs ${getStatusColor(newsletter.status)}`}>
+                              <Badge
+                                className={`text-xs ${getStatusColor(
+                                  newsletter.status
+                                )}`}>
                                 {getStatusIcon(newsletter.status)}
-                                {newsletter.status.charAt(0).toUpperCase() + newsletter.status.slice(1)}
+                                {newsletter.status.charAt(0).toUpperCase() +
+                                  newsletter.status.slice(1)}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-600 mb-2">{newsletter.subject}</p>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {newsletter.subject}
+                            </p>
                             <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>Created: {formatDate(newsletter.createdAt)}</span>
+                              <span>
+                                Created: {formatDate(newsletter.createdAt)}
+                              </span>
                               {newsletter.sentAt && (
                                 <>
                                   <span>•</span>
-                                  <span>Sent: {formatDate(newsletter.sentAt)}</span>
+                                  <span>
+                                    Sent: {formatDate(newsletter.sentAt)}
+                                  </span>
                                 </>
                               )}
                               {newsletter.scheduledAt && (
                                 <>
                                   <span>•</span>
-                                  <span>Scheduled: {formatDate(newsletter.scheduledAt)}</span>
+                                  <span>
+                                    Scheduled:{' '}
+                                    {formatDate(newsletter.scheduledAt)}
+                                  </span>
                                 </>
                               )}
                             </div>
                             {newsletter.status === 'sent' && (
                               <div className="flex items-center gap-4 text-xs text-gray-600 mt-2">
-                                <span>Recipients: {newsletter.recipients.total}</span>
-                                <span>Opened: {newsletter.recipients.opened}</span>
-                                <span>Clicked: {newsletter.recipients.clicked}</span>
+                                <span>
+                                  Recipients: {newsletter.recipients.total}
+                                </span>
+                                <span>
+                                  Opened: {newsletter.recipients.opened}
+                                </span>
+                                <span>
+                                  Clicked: {newsletter.recipients.clicked}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -637,7 +715,7 @@ export default function NewsletterPage() {
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {templates.map((template) => (
+                  {templates.map(template => (
                     <div
                       key={template._id}
                       className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:bg-white/60 hover:shadow-lg transition-all duration-300">
@@ -646,8 +724,12 @@ export default function NewsletterPage() {
                           <FileText className="h-6 w-6 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900">{template.name}</h4>
-                          <p className="text-sm text-gray-600">{template.subject}</p>
+                          <h4 className="font-semibold text-gray-900">
+                            {template.name}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {template.subject}
+                          </p>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge className="bg-purple-100 text-purple-700 text-xs">
                               {template.category}
@@ -695,45 +777,81 @@ export default function NewsletterPage() {
                 <CardContent className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="p-6 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
-                      <h3 className="text-lg font-semibold mb-4">Performance Overview</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Performance Overview
+                      </h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Total Sent</span>
-                          <span className="text-sm font-semibold text-gray-900">1,250</span>
+                          <span className="text-sm text-gray-700">
+                            Total Sent
+                          </span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            1,250
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Open Rate</span>
-                          <span className="text-sm font-semibold text-green-600">78%</span>
+                          <span className="text-sm text-gray-700">
+                            Open Rate
+                          </span>
+                          <span className="text-sm font-semibold text-green-600">
+                            78%
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Click Rate</span>
-                          <span className="text-sm font-semibold text-blue-600">24%</span>
+                          <span className="text-sm text-gray-700">
+                            Click Rate
+                          </span>
+                          <span className="text-sm font-semibold text-blue-600">
+                            24%
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Unsubscribe Rate</span>
-                          <span className="text-sm font-semibold text-red-600">2.1%</span>
+                          <span className="text-sm text-gray-700">
+                            Unsubscribe Rate
+                          </span>
+                          <span className="text-sm font-semibold text-red-600">
+                            2.1%
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="p-6 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
-                      <h3 className="text-lg font-semibold mb-4">Recent Performance</h3>
+                      <h3 className="text-lg font-semibold mb-4">
+                        Recent Performance
+                      </h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Last 30 Days</span>
-                          <span className="text-sm font-semibold text-gray-900">+12%</span>
+                          <span className="text-sm text-gray-700">
+                            Last 30 Days
+                          </span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            +12%
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Best Performing</span>
-                          <span className="text-sm font-semibold text-green-600">Job Opportunities</span>
+                          <span className="text-sm text-gray-700">
+                            Best Performing
+                          </span>
+                          <span className="text-sm font-semibold text-green-600">
+                            Job Opportunities
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Peak Send Time</span>
-                          <span className="text-sm font-semibold text-blue-600">10:00 AM</span>
+                          <span className="text-sm text-gray-700">
+                            Peak Send Time
+                          </span>
+                          <span className="text-sm font-semibold text-blue-600">
+                            10:00 AM
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">Active Subscribers</span>
-                          <span className="text-sm font-semibold text-purple-600">1,180</span>
+                          <span className="text-sm text-gray-700">
+                            Active Subscribers
+                          </span>
+                          <span className="text-sm font-semibold text-purple-600">
+                            1,180
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -747,3 +865,5 @@ export default function NewsletterPage() {
     </div>
   );
 }
+
+

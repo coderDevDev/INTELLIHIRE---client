@@ -68,7 +68,7 @@ export function MainHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/30 shadow-lg">
       {/* Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-10 w-32 h-32 bg-blue-300/10 rounded-full blur-2xl animate-float"></div>
@@ -194,7 +194,7 @@ export function MainHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-64 bg-white/95 backdrop-blur-xl border border-gray-200/50 shadow-2xl rounded-2xl p-2">
+                  className="w-64 bg-white/80 backdrop-blur-xl border border-white/30 shadow-2xl rounded-2xl p-2">
                   <DropdownMenuLabel className="px-3 py-3">
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -356,7 +356,7 @@ export function MainHeader() {
       {/* Enhanced Mobile menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-gray-900/80 backdrop-blur-sm">
-          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white/95 backdrop-blur-xl px-6 py-6 sm:max-w-sm shadow-2xl">
+          <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white/80 backdrop-blur-xl px-6 py-6 sm:max-w-sm shadow-2xl">
             {/* Background Blobs for Mobile Menu */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute top-10 right-10 w-32 h-32 bg-blue-300/10 rounded-full blur-2xl animate-float"></div>

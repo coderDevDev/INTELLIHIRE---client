@@ -105,7 +105,9 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>(
+    {}
+  );
 
   useEffect(() => {
     fetchSettings();
@@ -147,7 +149,11 @@ export default function SettingsPage() {
     }));
   };
 
-  const updateSetting = (section: keyof SystemSettings, field: string, value: any) => {
+  const updateSetting = (
+    section: keyof SystemSettings,
+    field: string,
+    value: any
+  ) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
@@ -234,16 +240,24 @@ export default function SettingsPage() {
         <div className="container px-6 py-8 space-y-8">
           <Tabs defaultValue="general" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 bg-white/60 backdrop-blur-sm border border-white/50">
-              <TabsTrigger value="general" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="general"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 General
               </TabsTrigger>
-              <TabsTrigger value="email" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="email"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Email
               </TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Security
               </TabsTrigger>
-              <TabsTrigger value="features" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+              <TabsTrigger
+                value="features"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Features
               </TabsTrigger>
             </TabsList>
@@ -267,7 +281,9 @@ export default function SettingsPage() {
                       <Input
                         id="siteName"
                         value={settings.general.siteName}
-                        onChange={(e) => updateSetting('general', 'siteName', e.target.value)}
+                        onChange={e =>
+                          updateSetting('general', 'siteName', e.target.value)
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -276,7 +292,13 @@ export default function SettingsPage() {
                       <Input
                         id="siteDescription"
                         value={settings.general.siteDescription}
-                        onChange={(e) => updateSetting('general', 'siteDescription', e.target.value)}
+                        onChange={e =>
+                          updateSetting(
+                            'general',
+                            'siteDescription',
+                            e.target.value
+                          )
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -285,7 +307,9 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="maintenanceMode" className="text-base font-medium">
+                        <Label
+                          htmlFor="maintenanceMode"
+                          className="text-base font-medium">
                           Maintenance Mode
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -295,13 +319,17 @@ export default function SettingsPage() {
                       <Switch
                         id="maintenanceMode"
                         checked={settings.general.maintenanceMode}
-                        onCheckedChange={(checked) => updateSetting('general', 'maintenanceMode', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('general', 'maintenanceMode', checked)
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="registrationEnabled" className="text-base font-medium">
+                        <Label
+                          htmlFor="registrationEnabled"
+                          className="text-base font-medium">
                           User Registration
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -311,13 +339,21 @@ export default function SettingsPage() {
                       <Switch
                         id="registrationEnabled"
                         checked={settings.general.registrationEnabled}
-                        onCheckedChange={(checked) => updateSetting('general', 'registrationEnabled', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting(
+                            'general',
+                            'registrationEnabled',
+                            checked
+                          )
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="emailNotifications" className="text-base font-medium">
+                        <Label
+                          htmlFor="emailNotifications"
+                          className="text-base font-medium">
                           Email Notifications
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -327,7 +363,13 @@ export default function SettingsPage() {
                       <Switch
                         id="emailNotifications"
                         checked={settings.general.emailNotifications}
-                        onCheckedChange={(checked) => updateSetting('general', 'emailNotifications', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting(
+                            'general',
+                            'emailNotifications',
+                            checked
+                          )
+                        }
                       />
                     </div>
                   </div>
@@ -355,7 +397,9 @@ export default function SettingsPage() {
                         id="smtpHost"
                         type="text"
                         value={settings.email.smtpHost}
-                        onChange={(e) => updateSetting('email', 'smtpHost', e.target.value)}
+                        onChange={e =>
+                          updateSetting('email', 'smtpHost', e.target.value)
+                        }
                         placeholder="smtp.gmail.com"
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
@@ -366,7 +410,13 @@ export default function SettingsPage() {
                         id="smtpPort"
                         type="number"
                         value={settings.email.smtpPort}
-                        onChange={(e) => updateSetting('email', 'smtpPort', parseInt(e.target.value))}
+                        onChange={e =>
+                          updateSetting(
+                            'email',
+                            'smtpPort',
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -376,7 +426,9 @@ export default function SettingsPage() {
                         id="smtpUser"
                         type="text"
                         value={settings.email.smtpUser}
-                        onChange={(e) => updateSetting('email', 'smtpUser', e.target.value)}
+                        onChange={e =>
+                          updateSetting('email', 'smtpUser', e.target.value)
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -385,9 +437,17 @@ export default function SettingsPage() {
                       <div className="relative">
                         <Input
                           id="smtpPassword"
-                          type={showPasswords.smtpPassword ? "text" : "password"}
+                          type={
+                            showPasswords.smtpPassword ? 'text' : 'password'
+                          }
                           value={settings.email.smtpPassword}
-                          onChange={(e) => updateSetting('email', 'smtpPassword', e.target.value)}
+                          onChange={e =>
+                            updateSetting(
+                              'email',
+                              'smtpPassword',
+                              e.target.value
+                            )
+                          }
                           className="bg-white/60 backdrop-blur-sm border-white/50 pr-10"
                         />
                         <Button
@@ -395,7 +455,9 @@ export default function SettingsPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => togglePasswordVisibility('smtpPassword')}>
+                          onClick={() =>
+                            togglePasswordVisibility('smtpPassword')
+                          }>
                           {showPasswords.smtpPassword ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
@@ -410,7 +472,9 @@ export default function SettingsPage() {
                         id="fromEmail"
                         type="email"
                         value={settings.email.fromEmail}
-                        onChange={(e) => updateSetting('email', 'fromEmail', e.target.value)}
+                        onChange={e =>
+                          updateSetting('email', 'fromEmail', e.target.value)
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -420,7 +484,9 @@ export default function SettingsPage() {
                         id="fromName"
                         type="text"
                         value={settings.email.fromName}
-                        onChange={(e) => updateSetting('email', 'fromName', e.target.value)}
+                        onChange={e =>
+                          updateSetting('email', 'fromName', e.target.value)
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -430,9 +496,12 @@ export default function SettingsPage() {
                     <div className="flex items-start gap-3">
                       <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-blue-900">Email Testing</h4>
+                        <h4 className="font-medium text-blue-900">
+                          Email Testing
+                        </h4>
                         <p className="text-sm text-blue-700 mt-1">
-                          Test your email configuration to ensure notifications are working properly.
+                          Test your email configuration to ensure notifications
+                          are working properly.
                         </p>
                         <Button
                           variant="outline"
@@ -463,32 +532,56 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="sessionTimeout">Session Timeout (hours)</Label>
+                      <Label htmlFor="sessionTimeout">
+                        Session Timeout (hours)
+                      </Label>
                       <Input
                         id="sessionTimeout"
                         type="number"
                         value={settings.security.sessionTimeout}
-                        onChange={(e) => updateSetting('security', 'sessionTimeout', parseInt(e.target.value))}
+                        onChange={e =>
+                          updateSetting(
+                            'security',
+                            'sessionTimeout',
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+                      <Label htmlFor="maxLoginAttempts">
+                        Max Login Attempts
+                      </Label>
                       <Input
                         id="maxLoginAttempts"
                         type="number"
                         value={settings.security.maxLoginAttempts}
-                        onChange={(e) => updateSetting('security', 'maxLoginAttempts', parseInt(e.target.value))}
+                        onChange={e =>
+                          updateSetting(
+                            'security',
+                            'maxLoginAttempts',
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                      <Label htmlFor="passwordMinLength">
+                        Minimum Password Length
+                      </Label>
                       <Input
                         id="passwordMinLength"
                         type="number"
                         value={settings.security.passwordMinLength}
-                        onChange={(e) => updateSetting('security', 'passwordMinLength', parseInt(e.target.value))}
+                        onChange={e =>
+                          updateSetting(
+                            'security',
+                            'passwordMinLength',
+                            parseInt(e.target.value)
+                          )
+                        }
                         className="bg-white/60 backdrop-blur-sm border-white/50"
                       />
                     </div>
@@ -497,7 +590,9 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="requireEmailVerification" className="text-base font-medium">
+                        <Label
+                          htmlFor="requireEmailVerification"
+                          className="text-base font-medium">
                           Email Verification Required
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -507,13 +602,21 @@ export default function SettingsPage() {
                       <Switch
                         id="requireEmailVerification"
                         checked={settings.security.requireEmailVerification}
-                        onCheckedChange={(checked) => updateSetting('security', 'requireEmailVerification', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting(
+                            'security',
+                            'requireEmailVerification',
+                            checked
+                          )
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="enableTwoFactor" className="text-base font-medium">
+                        <Label
+                          htmlFor="enableTwoFactor"
+                          className="text-base font-medium">
                           Two-Factor Authentication
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -523,7 +626,9 @@ export default function SettingsPage() {
                       <Switch
                         id="enableTwoFactor"
                         checked={settings.security.enableTwoFactor}
-                        onCheckedChange={(checked) => updateSetting('security', 'enableTwoFactor', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('security', 'enableTwoFactor', checked)
+                        }
                       />
                     </div>
                   </div>
@@ -547,7 +652,9 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="aiParsing" className="text-base font-medium">
+                        <Label
+                          htmlFor="aiParsing"
+                          className="text-base font-medium">
                           AI Document Parsing
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -557,13 +664,17 @@ export default function SettingsPage() {
                       <Switch
                         id="aiParsing"
                         checked={settings.features.aiParsing}
-                        onCheckedChange={(checked) => updateSetting('features', 'aiParsing', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('features', 'aiParsing', checked)
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="jobRecommendations" className="text-base font-medium">
+                        <Label
+                          htmlFor="jobRecommendations"
+                          className="text-base font-medium">
                           Job Recommendations
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -573,13 +684,21 @@ export default function SettingsPage() {
                       <Switch
                         id="jobRecommendations"
                         checked={settings.features.jobRecommendations}
-                        onCheckedChange={(checked) => updateSetting('features', 'jobRecommendations', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting(
+                            'features',
+                            'jobRecommendations',
+                            checked
+                          )
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="careerPathPrediction" className="text-base font-medium">
+                        <Label
+                          htmlFor="careerPathPrediction"
+                          className="text-base font-medium">
                           Career Path Prediction
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -589,13 +708,21 @@ export default function SettingsPage() {
                       <Switch
                         id="careerPathPrediction"
                         checked={settings.features.careerPathPrediction}
-                        onCheckedChange={(checked) => updateSetting('features', 'careerPathPrediction', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting(
+                            'features',
+                            'careerPathPrediction',
+                            checked
+                          )
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="resumeGeneration" className="text-base font-medium">
+                        <Label
+                          htmlFor="resumeGeneration"
+                          className="text-base font-medium">
                           Resume Generation
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -605,13 +732,17 @@ export default function SettingsPage() {
                       <Switch
                         id="resumeGeneration"
                         checked={settings.features.resumeGeneration}
-                        onCheckedChange={(checked) => updateSetting('features', 'resumeGeneration', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('features', 'resumeGeneration', checked)
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="videoInterviews" className="text-base font-medium">
+                        <Label
+                          htmlFor="videoInterviews"
+                          className="text-base font-medium">
                           Video Interviews
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -621,13 +752,17 @@ export default function SettingsPage() {
                       <Switch
                         id="videoInterviews"
                         checked={settings.features.videoInterviews}
-                        onCheckedChange={(checked) => updateSetting('features', 'videoInterviews', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('features', 'videoInterviews', checked)
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
                       <div>
-                        <Label htmlFor="newsletterSystem" className="text-base font-medium">
+                        <Label
+                          htmlFor="newsletterSystem"
+                          className="text-base font-medium">
                           Newsletter System
                         </Label>
                         <p className="text-sm text-gray-600">
@@ -637,7 +772,9 @@ export default function SettingsPage() {
                       <Switch
                         id="newsletterSystem"
                         checked={settings.features.newsletterSystem}
-                        onCheckedChange={(checked) => updateSetting('features', 'newsletterSystem', checked)}
+                        onCheckedChange={checked =>
+                          updateSetting('features', 'newsletterSystem', checked)
+                        }
                       />
                     </div>
                   </div>
@@ -650,3 +787,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+

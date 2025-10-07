@@ -1,9 +1,10 @@
 'use client';
 
-import type React from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,168 +28,97 @@ import {
   EyeOff,
   ArrowRight,
   Loader2,
-  CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import {
+  registerSchema,
+  type RegisterFormData
+} from '@/lib/validations/authValidation';
 
 export function RegisterForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState('applicant');
+  const [userType, setUserType] = useState<'applicant' | 'admin'>('applicant');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    role: 'applicant'
+
+  // React Hook Form with Zod validation
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    formState: { errors },
+    setValue
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: '',
+      gender: '',
+      dob: '',
+      password: '',
+      confirmPassword: '',
+      role: 'applicant'
+    },
+    mode: 'onChange' // Real-time validation
   });
-  const [errors, setErrors] = useState<{
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    phone?: string;
-  }>({});
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // Update role when tab changes
+  const handleTabChange = (value: string) => {
+    const role = value as 'applicant' | 'admin';
+    setUserType(role);
+    setValue('role', role);
   };
 
-  const validatePassword = (
-    password: string
-  ): { isValid: boolean; message?: string } => {
-    if (password.length < 8) {
-      return {
-        isValid: false,
-        message: 'Password must be at least 8 characters long'
-      };
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      return {
-        isValid: false,
-        message: 'Password must contain at least one lowercase letter'
-      };
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return {
-        isValid: false,
-        message: 'Password must contain at least one uppercase letter'
-      };
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      return {
-        isValid: false,
-        message: 'Password must contain at least one number'
-      };
-    }
-    return { isValid: true };
-  };
-
-  const validatePhone = (phone: string): boolean => {
-    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [id]: value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[id as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [id]: undefined
-      }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: typeof errors = {};
-
-    // First Name validation
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-
-    // Last Name validation
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    // Phone validation
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!validatePhone(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else {
-      const passwordValidation = validatePassword(formData.password);
-      if (!passwordValidation.isValid) {
-        newErrors.password = passwordValidation.message;
-      }
-    }
-
-    // Confirm Password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  // Form submission handler
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
 
     try {
       const registrationData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        phone: formData.phone.trim(),
-        role: userType
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        email: data.email.trim(),
+        password: data.password,
+        phone: data.phone.trim(),
+        address: data.address?.trim() || '',
+        gender: data.gender || '',
+        dob: data.dob || '',
+        role: data.role
       };
+
+      console.log('📝 Submitting registration:', {
+        ...registrationData,
+        password: '***'
+      });
 
       const response = await authAPI.register(registrationData);
 
-      toast.success('Account created successfully!');
+      if (response.requiresVerification) {
+        toast.success('Account created successfully!', {
+          description: `📧 Please check your email (${data.email}) to verify your account before logging in.`,
+          duration: 8000
+        });
 
-      // Redirect based on user role
-      if (response.user.role === 'applicant') {
-        router.push('/dashboard/applicant');
-      } else if (response.user.role === 'employer') {
-        router.push('/dashboard/employer');
-      } else if (response.user.role === 'admin') {
-        router.push('/dashboard/admin');
+        // Redirect to login page with email parameter
+        setTimeout(() => {
+          router.push(
+            `/login?email=${encodeURIComponent(data.email)}&verified=pending`
+          );
+        }, 3000);
+      } else {
+        // Fallback: if verification not required (shouldn't happen with new flow)
+        toast.success('Account created successfully!');
+
+        if (response.user.role === 'applicant') {
+          router.push('/dashboard/applicant');
+        } else if (response.user.role === 'employer') {
+          router.push('/dashboard/employer');
+        } else if (response.user.role === 'admin') {
+          router.push('/dashboard/admin');
+        }
       }
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -223,7 +153,7 @@ export function RegisterForm() {
           </CardHeader>
 
           <CardContent className="px-6 pb-6">
-            <Tabs defaultValue="applicant" onValueChange={setUserType}>
+            <Tabs defaultValue="applicant" onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-6">
                 <TabsTrigger
                   value="applicant"
@@ -232,16 +162,20 @@ export function RegisterForm() {
                   Job Seeker
                 </TabsTrigger>
                 <TabsTrigger
-                  value="employer"
+                  value="admin"
                   className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-purple-600 font-medium transition-all duration-300">
                   <Shield className="h-4 w-4 mr-2" />
-                  Employer
+                  Admin
                 </TabsTrigger>
               </TabsList>
 
+              {/* APPLICANT TAB */}
               <TabsContent value="applicant">
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form
+                  onSubmit={handleFormSubmit(onSubmit)}
+                  className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
+                    {/* First Name */}
                     <div className="space-y-2">
                       <Label
                         htmlFor="firstName"
@@ -253,9 +187,7 @@ export function RegisterForm() {
                         id="firstName"
                         type="text"
                         placeholder="John"
-                        required
-                        value={formData.firstName}
-                        onChange={handleChange}
+                        {...register('firstName')}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.firstName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -265,11 +197,12 @@ export function RegisterForm() {
                       {errors.firstName && (
                         <p className="text-sm text-red-600 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
-                          {errors.firstName}
+                          {errors.firstName.message}
                         </p>
                       )}
                     </div>
 
+                    {/* Last Name */}
                     <div className="space-y-2">
                       <Label
                         htmlFor="lastName"
@@ -281,9 +214,7 @@ export function RegisterForm() {
                         id="lastName"
                         type="text"
                         placeholder="Doe"
-                        required
-                        value={formData.lastName}
-                        onChange={handleChange}
+                        {...register('lastName')}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.lastName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -293,12 +224,13 @@ export function RegisterForm() {
                       {errors.lastName && (
                         <p className="text-sm text-red-600 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
-                          {errors.lastName}
+                          {errors.lastName.message}
                         </p>
                       )}
                     </div>
                   </div>
 
+                  {/* Email */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
@@ -312,9 +244,7 @@ export function RegisterForm() {
                         id="email"
                         type="email"
                         placeholder="john.doe@email.com"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
+                        {...register('email')}
                         className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.email
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -325,11 +255,12 @@ export function RegisterForm() {
                     {errors.email && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.email}
+                        {errors.email.message}
                       </p>
                     )}
                   </div>
 
+                  {/* Phone */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="phone"
@@ -340,10 +271,8 @@ export function RegisterForm() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      required
-                      value={formData.phone}
-                      onChange={handleChange}
+                      placeholder="09"
+                      {...register('phone')}
                       className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                         errors.phone
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -353,11 +282,72 @@ export function RegisterForm() {
                     {errors.phone && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.phone}
+                        {errors.phone.message}
                       </p>
                     )}
                   </div>
 
+                  {/* Optional Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Gender */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="gender"
+                        className="text-sm font-semibold text-gray-700">
+                        Gender{' '}
+                        <span className="text-gray-400 font-normal">
+                          (Optional)
+                        </span>
+                      </Label>
+                      <select
+                        id="gender"
+                        {...register('gender')}
+                        className="h-12 w-full bg-white/80 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm px-4">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                      </select>
+                    </div>
+
+                    {/* Date of Birth */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="dob"
+                        className="text-sm font-semibold text-gray-700">
+                        Date of Birth{' '}
+                        <span className="text-gray-400 font-normal">
+                          (Optional)
+                        </span>
+                      </Label>
+                      <Input
+                        id="dob"
+                        type="date"
+                        {...register('dob')}
+                        className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="address"
+                      className="text-sm font-semibold text-gray-700">
+                      Address{' '}
+                      <span className="text-gray-400 font-normal">
+                        (Optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="address"
+                      type="text"
+                      placeholder="123 Main St, City, Province"
+                      {...register('address')}
+                      className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                    />
+                  </div>
+
+                  {/* Password */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="password"
@@ -370,9 +360,7 @@ export function RegisterForm() {
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
-                        required
-                        value={formData.password}
-                        onChange={handleChange}
+                        {...register('password')}
                         className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.password
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -393,15 +381,16 @@ export function RegisterForm() {
                     {errors.password && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.password}
+                        {errors.password.message}
                       </p>
                     )}
                     <div className="text-xs text-gray-500 mt-1">
                       Password must be at least 8 characters with uppercase,
-                      lowercase, and number
+                      lowercase, number, and special character
                     </div>
                   </div>
 
+                  {/* Confirm Password */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="confirmPassword"
@@ -414,9 +403,7 @@ export function RegisterForm() {
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        required
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
+                        {...register('confirmPassword')}
                         className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.confirmPassword
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -439,7 +426,7 @@ export function RegisterForm() {
                     {errors.confirmPassword && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.confirmPassword}
+                        {errors.confirmPassword.message}
                       </p>
                     )}
                   </div>
@@ -463,9 +450,13 @@ export function RegisterForm() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="employer">
-                <form onSubmit={handleSubmit} className="space-y-6">
+              {/* ADMIN TAB */}
+              <TabsContent value="admin">
+                <form
+                  onSubmit={handleFormSubmit(onSubmit)}
+                  className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
+                    {/* First Name */}
                     <div className="space-y-2">
                       <Label
                         htmlFor="firstName"
@@ -477,9 +468,7 @@ export function RegisterForm() {
                         id="firstName"
                         type="text"
                         placeholder="Jane"
-                        required
-                        value={formData.firstName}
-                        onChange={handleChange}
+                        {...register('firstName')}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.firstName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -489,11 +478,12 @@ export function RegisterForm() {
                       {errors.firstName && (
                         <p className="text-sm text-red-600 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
-                          {errors.firstName}
+                          {errors.firstName.message}
                         </p>
                       )}
                     </div>
 
+                    {/* Last Name */}
                     <div className="space-y-2">
                       <Label
                         htmlFor="lastName"
@@ -505,9 +495,7 @@ export function RegisterForm() {
                         id="lastName"
                         type="text"
                         placeholder="Smith"
-                        required
-                        value={formData.lastName}
-                        onChange={handleChange}
+                        {...register('lastName')}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.lastName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -517,28 +505,27 @@ export function RegisterForm() {
                       {errors.lastName && (
                         <p className="text-sm text-red-600 flex items-center gap-1">
                           <AlertCircle className="h-3 w-3" />
-                          {errors.lastName}
+                          {errors.lastName.message}
                         </p>
                       )}
                     </div>
                   </div>
 
+                  {/* Email */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="email"
                       className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                       <Mail className="h-4 w-4 text-purple-600" />
-                      Company Email
+                      Admin Email
                     </Label>
                     <div className="relative group">
                       <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="jane.smith@company.com"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
+                        placeholder="admin@intellihire.com"
+                        {...register('email')}
                         className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.email
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -549,11 +536,12 @@ export function RegisterForm() {
                     {errors.email && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.email}
+                        {errors.email.message}
                       </p>
                     )}
                   </div>
 
+                  {/* Phone */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="phone"
@@ -564,10 +552,8 @@ export function RegisterForm() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="+1 (555) 987-6543"
-                      required
-                      value={formData.phone}
-                      onChange={handleChange}
+                      placeholder="09"
+                      {...register('phone')}
                       className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                         errors.phone
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -577,11 +563,76 @@ export function RegisterForm() {
                     {errors.phone && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.phone}
+                        {errors.phone.message}
                       </p>
                     )}
                   </div>
 
+                  {/* Optional Fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Gender */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="gender"
+                        className="text-sm font-semibold text-gray-700">
+                        Gender{' '}
+                        <span className="text-gray-400 font-normal">
+                          (Optional)
+                        </span>
+                      </Label>
+                      <select
+                        id="gender"
+                        {...register('gender')}
+                        className="h-12 w-full bg-white/80 border border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm px-4">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">
+                          Prefer not to say
+                        </option>
+                      </select>
+                    </div>
+
+                    {/* Date of Birth */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="dob"
+                        className="text-sm font-semibold text-gray-700">
+                        Date of Birth{' '}
+                        <span className="text-gray-400 font-normal">
+                          (Optional)
+                        </span>
+                      </Label>
+                      <Input
+                        id="dob"
+                        type="date"
+                        {...register('dob')}
+                        className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="address"
+                      className="text-sm font-semibold text-gray-700">
+                      Address{' '}
+                      <span className="text-gray-400 font-normal">
+                        (Optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="address"
+                      type="text"
+                      placeholder="123 Main St, City, Province"
+                      {...register('address')}
+                      className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                    />
+                  </div>
+
+                  {/* Password */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="password"
@@ -594,9 +645,7 @@ export function RegisterForm() {
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
-                        required
-                        value={formData.password}
-                        onChange={handleChange}
+                        {...register('password')}
                         className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.password
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -617,15 +666,16 @@ export function RegisterForm() {
                     {errors.password && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.password}
+                        {errors.password.message}
                       </p>
                     )}
                     <div className="text-xs text-gray-500 mt-1">
                       Password must be at least 8 characters with uppercase,
-                      lowercase, and number
+                      lowercase, number, and special character
                     </div>
                   </div>
 
+                  {/* Confirm Password */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="confirmPassword"
@@ -638,9 +688,7 @@ export function RegisterForm() {
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        required
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
+                        {...register('confirmPassword')}
                         className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.confirmPassword
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -663,7 +711,7 @@ export function RegisterForm() {
                     {errors.confirmPassword && (
                       <p className="text-sm text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
-                        {errors.confirmPassword}
+                        {errors.confirmPassword.message}
                       </p>
                     )}
                   </div>
@@ -679,7 +727,7 @@ export function RegisterForm() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        Create Employer Account
+                        Create Admin Account
                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                       </div>
                     )}
@@ -694,10 +742,7 @@ export function RegisterForm() {
               Already have an account?{' '}
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200 cursor-pointer relative z-30"
-                onClick={() =>
-                  console.log('Sign In link clicked from register')
-                }>
+                className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200 cursor-pointer relative z-30">
                 Sign In
               </Link>
             </p>

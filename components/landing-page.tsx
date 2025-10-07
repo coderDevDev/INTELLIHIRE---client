@@ -19,6 +19,7 @@ import { ModernFooter } from '@/components/modern-footer';
 import { jobAPI, companyAPI, categoryAPI } from '@/lib/api-service';
 import { JobsSection } from '@/components/jobs-section';
 import { Button } from '@/components/ui/button';
+import { BannerDisplay } from '@/components/banner-display';
 import Link from 'next/link';
 
 import { MapPin, Building, Clock, Briefcase } from 'lucide-react';
@@ -63,6 +64,12 @@ export function LandingPage() {
         <JobCategories categories={categories} />
         {/* <FeaturedJobs jobs={featuredJobs} /> */}
         <hr />
+
+        {/* Middle Banner Section */}
+        <div className="py-8">
+          <BannerDisplay position="middle" className="max-w-6xl mx-auto" />
+        </div>
+
         <div>
           <JobsSection showFilters={false} limit={6} />
           <div className="mt-2 flex justify-center">
@@ -76,8 +83,20 @@ export function LandingPage() {
         </div>
         <hr className="mt-10" />
         <TopCompanies companies={topCompanies} />
+
+        {/* Sidebar Banner Section */}
+        <div className="py-8">
+          <BannerDisplay position="sidebar" className="max-w-4xl mx-auto" />
+        </div>
+
         <GovernmentJobs jobs={governmentJobs} />
         <FeaturesSection />
+
+        {/* Bottom Banner Section */}
+        <div className="py-8">
+          <BannerDisplay position="bottom" className="max-w-6xl mx-auto" />
+        </div>
+
         <CtaSection />
       </main>
       <ModernFooter />

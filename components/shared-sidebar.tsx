@@ -124,14 +124,14 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       description: 'View applicants',
       badge: '245'
     },
-    {
-      label: 'AI Parsing',
-      icon: Brain,
-      href: '/dashboard/admin/ai-parsing',
-      active: pathname === '/dashboard/admin/ai-parsing',
-      description: 'AI document processing',
-      badge: 'NEW'
-    },
+    // {
+    //   label: 'AI Parsing',
+    //   icon: Brain,
+    //   href: '/dashboard/admin/ai-parsing',
+    //   active: pathname === '/dashboard/admin/ai-parsing',
+    //   description: 'AI document processing',
+    //   badge: 'NEW'
+    // },
     {
       label: 'Applicant Ranking',
       icon: Award,
@@ -146,13 +146,13 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       active: pathname === '/dashboard/admin/reports',
       description: 'Generate reports'
     },
-    {
-      label: 'Newsletter',
-      icon: Mail,
-      href: '/dashboard/admin/newsletter',
-      active: pathname === '/dashboard/admin/newsletter',
-      description: 'Email marketing'
-    },
+    // {
+    //   label: 'Newsletter',
+    //   icon: Mail,
+    //   href: '/dashboard/admin/newsletter',
+    //   active: pathname === '/dashboard/admin/newsletter',
+    //   description: 'Email marketing'
+    // },
     {
       label: 'Banner Management',
       icon: Image,
@@ -160,13 +160,13 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       active: pathname === '/dashboard/admin/banners',
       description: 'Manage banners'
     },
-    {
-      label: 'PDS Templates',
-      icon: Download,
-      href: '/dashboard/admin/pds-templates',
-      active: pathname === '/dashboard/admin/pds-templates',
-      description: 'Download PDS templates'
-    },
+    // {
+    //   label: 'PDS Templates',
+    //   icon: Download,
+    //   href: '/dashboard/admin/pds-templates',
+    //   active: pathname === '/dashboard/admin/pds-templates',
+    //   description: 'Download PDS templates'
+    // },
     {
       label: 'Messages',
       icon: MessageSquare,
@@ -342,24 +342,24 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
   const getSecondaryRoutes = () => {
     if (role === 'admin') {
       return [
-        {
-          label: 'System Status',
-          icon: Activity,
-          href: '/dashboard/admin/status',
-          active: pathname === '/dashboard/admin/status'
-        },
-        {
-          label: 'Integrations',
-          icon: Network,
-          href: '/dashboard/admin/integrations',
-          active: pathname === '/dashboard/admin/integrations'
-        },
-        {
-          label: 'Help & Support',
-          icon: HelpCircle,
-          href: '/dashboard/admin/help',
-          active: pathname === '/dashboard/admin/help'
-        }
+        // {
+        //   label: 'System Status',
+        //   icon: Activity,
+        //   href: '/dashboard/admin/status',
+        //   active: pathname === '/dashboard/admin/status'
+        // },
+        // {
+        //   label: 'Integrations',
+        //   icon: Network,
+        //   href: '/dashboard/admin/integrations',
+        //   active: pathname === '/dashboard/admin/integrations'
+        // },
+        // {
+        //   label: 'Help & Support',
+        //   icon: HelpCircle,
+        //   href: '/dashboard/admin/help',
+        //   active: pathname === '/dashboard/admin/help'
+        // }
       ];
     } else if (role === 'applicant') {
       return [
