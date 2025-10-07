@@ -603,6 +603,42 @@ export const applicationAPI = {
       }
     });
     return response.data;
+  },
+  exportJobApplicants: async (jobId: string, format = 'csv') => {
+    const token = authAPI.getToken();
+    const response = await api.get(`/applications/export/job/${jobId}`, {
+      params: { format },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Accept: format === 'csv' ? 'text/csv' : 'application/json'
+      },
+      responseType: format === 'csv' ? 'blob' : 'json'
+    });
+    return response.data;
+  },
+  exportAllApplicants: async (params = {}, format = 'csv') => {
+    const token = authAPI.getToken();
+    const response = await api.get('/applications/export/all', {
+      params: { ...params, format },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Accept: format === 'csv' ? 'text/csv' : 'application/json'
+      },
+      responseType: format === 'csv' ? 'blob' : 'json'
+    });
+    return response.data;
+  },
+  exportRankedApplicants: async (params = {}, format = 'csv') => {
+    const token = authAPI.getToken();
+    const response = await api.get('/applications/export/rankings', {
+      params: { ...params, format },
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Accept: format === 'csv' ? 'text/csv' : 'application/json'
+      },
+      responseType: format === 'csv' ? 'blob' : 'json'
+    });
+    return response.data;
   }
 };
 

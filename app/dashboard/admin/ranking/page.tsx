@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import applicantRankingAPI from '@/lib/api/applicantRankingAPI';
+import { applicationAPI } from '@/lib/api-service';
 import { ResumeModal } from '@/components/resume-modal';
 
 interface ApplicantRanking {
@@ -364,7 +365,21 @@ function ApplicantRankingPageContent() {
         params.status = statusFilter;
       }
 
-      await applicantRankingAPI.exportRankingsCSV(params);
+      // Use the new applicationAPI export function
+      const blob = await applicationAPI.exportRankedApplicants(params, 'csv');
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ranked-applicants-${
+        params.jobId ? 'job-' + params.jobId : 'all'
+      }-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast.success('CSV exported successfully');
     } catch (error) {
       console.error('Error exporting CSV:', error);

@@ -67,7 +67,12 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
-import { jobAPI, categoryAPI, authAPI } from '@/lib/api-service';
+import {
+  jobAPI,
+  categoryAPI,
+  authAPI,
+  applicationAPI
+} from '@/lib/api-service';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -298,6 +303,43 @@ export default function JobPostingsPage() {
     }
   };
 
+  // Handle export all applicants
+  const handleExportAllApplicants = async () => {
+    try {
+      const params = {
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        dateFrom: undefined, // Can be enhanced with date filters
+        dateTo: undefined
+      };
+
+      const blob = await applicationAPI.exportAllApplicants(params, 'csv');
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `all-applicants-${
+        new Date().toISOString().split('T')[0]
+      }.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Success',
+        description: 'Applicants exported successfully'
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export applicants',
+        variant: 'destructive'
+      });
+    }
+  };
+
   // Get status badge variant
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -389,9 +431,10 @@ export default function JobPostingsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={handleExportAllApplicants}
                       className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
                       <Download className="mr-2 h-4 w-4" />
-                      Export
+                      Export All Applicants
                     </Button>
                   </div>
                 </div>

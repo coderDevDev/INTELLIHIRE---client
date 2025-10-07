@@ -13,13 +13,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -29,176 +28,245 @@ import {
   TableRow
 } from '@/components/ui/table';
 import {
-  Plus,
-  MoreHorizontal,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import {
+  Users,
   Search,
   Filter,
-  User,
-  Loader2,
+  Download,
+  Eye,
   Mail,
+  Phone,
+  Calendar,
+  Briefcase,
+  MapPin,
   FileText,
-  CheckCircle,
-  XCircle,
-  Users,
-  Activity,
-  Target,
-  Clock,
   TrendingUp,
   TrendingDown,
-  ChevronDown,
-  X,
-  RefreshCw,
-  Eye,
-  Calendar as CalendarIcon,
-  Building2,
-  MapPin,
-  Briefcase,
-  Star,
-  AlertTriangle
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
-import { userAPI, applicationAPI, jobAPI, companyAPI } from '@/lib/api-service';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
+import { applicationAPI, authAPI } from '@/lib/api-service';
+
+interface Applicant {
+  _id: string;
+  applicantId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    address?: string;
+  };
+  jobId: {
+    _id: string;
+    title: string;
+    companyId?: {
+      name: string;
+    };
+    location?: string;
+  };
+  status: string;
+  createdAt: string;
+  resumeId?: any;
+  pdsId?: any;
+  coverLetter?: string;
+  notes?: string;
+  interviewDate?: string;
+  rejectionReason?: string;
+}
 
 export default function AdminApplicantsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [applicants, setApplicants] = useState<any[]>([]);
+
+  // State
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalApplicants, setTotalApplicants] = useState(0);
-  const [expandedApplicant, setExpandedApplicant] = useState<string | null>(
-    null
-  );
-  const [companyCache, setCompanyCache] = useState<{ [id: string]: any }>({});
-  const [jobCache, setJobCache] = useState<{ [id: string]: any }>({});
-  const [selectedApplicants, setSelectedApplicants] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [sortBy, setSortBy] = useState('-createdAt');
+  const [pageSize] = useState(10);
+
+  // Stats
   const [stats, setStats] = useState({
-    totalApplicants: 0,
-    activeApplicants: 0,
-    totalApplications: 0,
-    pendingApplications: 0
+    total: 0,
+    pending: 0,
+    reviewed: 0,
+    shortlisted: 0,
+    interview: 0,
+    accepted: 0,
+    rejected: 0
   });
 
-  // Load applicants from API
+  // Check authentication
   useEffect(() => {
-    setLoading(true);
-    async function fetchApplicants() {
-      try {
-        const params: any = {
-          page: currentPage,
-          limit: pageSize,
-          search: searchTerm || undefined
-        };
-        const res = await userAPI.getApplicants(params);
-        let users = res.users || res;
-        // Filter by status if needed
-        if (statusFilter.length > 0) {
-          users = users.filter((u: any) => statusFilter.includes(u.status));
-        }
-        // For each applicant, fetch their applications
-        const applicantsWithApps = await Promise.all(
-          users.map(async (user: any) => {
-            let applications = [];
-            try {
-              const appRes = await applicationAPI.getApplicationsByApplicant(
-                user._id
-              );
-              applications = appRes.applications || appRes;
-            } catch {}
-            return { ...user, applications };
-          })
-        );
-        setApplicants(applicantsWithApps);
-        setTotalPages(res.totalPages || 1);
-        setTotalApplicants(res.total || applicantsWithApps.length);
+    const checkAuth = () => {
+      if (!authAPI.isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
 
-        // Calculate stats
-        const totalApplications = applicantsWithApps.reduce(
-          (acc: number, applicant: any) =>
-            acc + (applicant.applications?.length || 0),
-          0
-        );
-        const activeApplicants = applicantsWithApps.filter(
-          (applicant: any) => applicant.status === 'active'
-        ).length;
-        const pendingApplications = applicantsWithApps.reduce(
-          (acc: number, applicant: any) =>
-            acc + (applicant.applications?.length || 0),
-          0
-        );
-
-        setStats({
-          totalApplicants: applicantsWithApps.length,
-          activeApplicants,
-          totalApplications,
-          pendingApplications
-        });
-      } catch (error) {
+      const user = authAPI.getCurrentUser();
+      if (user && user.role !== 'admin') {
         toast({
-          title: 'Error',
-          description: 'Failed to load applicants',
+          title: 'Access Denied',
+          description: 'You do not have permission to access this page',
           variant: 'destructive'
         });
-      } finally {
-        setLoading(false);
+        router.push('/dashboard');
+        return;
       }
-    }
-    fetchApplicants();
-  }, [searchTerm, statusFilter, currentPage, pageSize, toast]);
+    };
 
-  // Status badge
-  const getStatusBadge = (status: string) => {
+    checkAuth();
+  }, [router, toast]);
+
+  // Load applicants
+  const loadApplicants = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: currentPage,
+        limit: pageSize
+      };
+
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+
+      if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+
+      const response = await applicationAPI.getAdminApplications(params);
+
+      setApplicants(response.applications || []);
+      setTotalPages(response.totalPages || 1);
+      setTotalApplicants(response.total || 0);
+
+      // Calculate stats
+      calculateStats(response.applications || []);
+    } catch (error) {
+      console.error('Error loading applicants:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load applicants',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate statistics
+  const calculateStats = (apps: Applicant[]) => {
+    const statusCounts = apps.reduce((acc: any, app) => {
+      acc[app.status] = (acc[app.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    setStats({
+      total: apps.length,
+      pending: statusCounts['pending'] || 0,
+      reviewed: statusCounts['reviewed'] || 0,
+      shortlisted: statusCounts['shortlisted'] || 0,
+      interview: statusCounts['interview_scheduled'] || 0,
+      accepted: statusCounts['accepted'] || 0,
+      rejected: statusCounts['rejected'] || 0
+    });
+  };
+
+  // Load data on mount and when filters change
+  useEffect(() => {
+    loadApplicants();
+  }, [currentPage, searchTerm, statusFilter]);
+
+  // Export all applicants
+  const handleExportApplicants = async () => {
+    try {
+      const params: any = {};
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const blob = await applicationAPI.exportAllApplicants(params, 'csv');
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `applicants-${
+        new Date().toISOString().split('T')[0]
+      }.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Success',
+        description: 'Applicants exported successfully'
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export applicants',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  // Get status badge variant
+  const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'applied':
-        return <Badge variant="secondary">Applied</Badge>;
-      case 'interview':
-        return (
-          <Badge variant="outline" className="text-blue-700 border-blue-300">
-            Interview
-          </Badge>
-        );
-      case 'hired':
-        return (
-          <Badge variant="default" className="bg-green-600 text-white">
-            Hired
-          </Badge>
-        );
+      case 'pending':
+        return 'secondary';
+      case 'reviewed':
+        return 'default';
+      case 'shortlisted':
+        return 'default';
+      case 'interview_scheduled':
+        return 'default';
+      case 'accepted':
+        return 'default';
       case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
+        return 'destructive';
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return 'outline';
+    }
+  };
+
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'text-yellow-600';
+      case 'reviewed':
+        return 'text-blue-600';
+      case 'shortlisted':
+        return 'text-purple-600';
+      case 'interview_scheduled':
+        return 'text-indigo-600';
+      case 'accepted':
+        return 'text-green-600';
+      case 'rejected':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
@@ -211,950 +279,361 @@ export default function AdminApplicantsPage() {
     });
   };
 
-  // Bulk actions
-  const handleBulkAction = () => {
-    if (!bulkAction || selectedApplicants.length === 0) return;
-
-    // Here you would implement the bulk action logic
-    console.log(
-      `Performing ${bulkAction} on ${selectedApplicants.length} applicants`
-    );
-    setSelectedApplicants([]);
-    setBulkAction('');
-  };
-
-  // Toggle applicant selection
-  const toggleApplicantSelection = (applicantId: string) => {
-    setSelectedApplicants(prev =>
-      prev.includes(applicantId)
-        ? prev.filter(id => id !== applicantId)
-        : [...prev, applicantId]
-    );
-  };
-
-  // Toggle all applicants selection
-  const toggleAllApplicants = () => {
-    if (selectedApplicants.length === applicants.length) {
-      setSelectedApplicants([]);
-    } else {
-      setSelectedApplicants(applicants.map(applicant => applicant._id));
-    }
-  };
-
-  // Filter applicants based on applied filters
-  const filteredApplicants = applicants.filter(applicant => {
-    if (dateFrom && new Date(applicant.createdAt) < dateFrom) return false;
-    if (dateTo && new Date(applicant.createdAt) > dateTo) return false;
-    return true;
-  });
-
-  // Helper to fetch company name by ID and cache it
-  const getCompanyName = async (companyId: string) => {
-    if (!companyId) return '';
-    if (companyCache[companyId]) return companyCache[companyId].name;
-    try {
-      const company = await companyAPI.getCompanyById(companyId);
-      setCompanyCache(prev => ({ ...prev, [companyId]: company }));
-      return company.name;
-    } catch {
-      return '';
-    }
-  };
-
-  // Helper to fetch company details by ID and cache it
-  const getCompany = async (companyId: string) => {
-    if (!companyId) return null;
-    if (companyCache[companyId]) return companyCache[companyId];
-    try {
-      const company = await companyAPI.getCompanyById(companyId);
-      setCompanyCache(prev => ({ ...prev, [companyId]: company }));
-      return company;
-    } catch {
-      return null;
-    }
-  };
-
-  // Helper to fetch job details by ID and cache it
-  const getJob = async (jobId: string) => {
-    if (!jobId) return null;
-    if (jobCache[jobId]) return jobCache[jobId];
-    try {
-      const job = await jobAPI.getJobById(jobId);
-      setJobCache(prev => ({ ...prev, [jobId]: job }));
-      return job;
-    } catch {
-      return null;
-    }
-  };
-
-  // Helper to render application row with all details
-  const ApplicationRow = ({ app }: { app: any }) => {
-    const [company, setCompany] = useState<any>(null);
-    const [job, setJob] = useState<any>(null);
-    useEffect(() => {
-      async function fetchDetails() {
-        if (app.jobId?.companyId) {
-          const c = await getCompany(app.jobId.companyId);
-          setCompany(c);
-        }
-        if (app.jobId?._id) {
-          const j = await getJob(app.jobId._id);
-          setJob(j);
-        }
-      }
-      fetchDetails();
-      // eslint-disable-next-line
-    }, [app.jobId]);
-    return (
-      <TableRow
-        key={app._id}
-        className="group hover:bg-blue-50/60 transition-all duration-200">
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-gray-500" />
-            <span className="font-semibold group-hover:text-brand-blue transition-colors">
-              {app.jobId?.title || (job && job.title) || '-'}
-            </span>
-            {job?.isFeatured && (
-              <Badge
-                variant="secondary"
-                className="text-xs flex items-center gap-1">
-                <Star className="h-3 w-3" />
-                Featured
-              </Badge>
-            )}
-            {job?.isUrgent && (
-              <Badge
-                variant="destructive"
-                className="text-xs flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" />
-                Urgent
-              </Badge>
-            )}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            {company?.logo && (
-              <img
-                src={company.logo}
-                alt={company.name}
-                className="h-6 w-6 rounded-full object-contain"
-              />
-            )}
-            <Building2 className="h-4 w-4 text-gray-500" />
-            <span className="group-hover:text-brand-blue transition-colors">
-              {company?.name || app.jobId?.companyId || '-'}
-            </span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-gray-500" />
-            <span className="group-hover:text-brand-blue transition-colors">
-              {job?.employmentType || '-'}
-            </span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-gray-500" />
-            <span className="group-hover:text-brand-blue transition-colors">
-              {job?.location || '-'}
-            </span>
-          </div>
-        </TableCell>
-        <TableCell>
-          {job?.salaryMax
-            ? `₱${job.salaryMin?.toLocaleString()} - ₱${job.salaryMax?.toLocaleString()}`
-            : job?.salaryMin
-            ? `₱${job.salaryMin?.toLocaleString()}`
-            : '-'}
-        </TableCell>
-        <TableCell>{getStatusBadge(app.status)}</TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4 text-gray-500" />
-            <span className="group-hover:text-brand-blue transition-colors">
-              {formatDate(app.createdAt)}
-            </span>
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    asChild
-                    className="hover:bg-brand-blue hover:text-white transition-colors">
-                    <Link href={`/jobs/${app.jobId?._id || (job && job._id)}`}>
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>View Job</TooltipContent>
-              </Tooltip>
-              {company && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      asChild
-                      className="hover:bg-brand-blue hover:text-white transition-colors">
-                      <Link href={`/companies/${company._id}`}>
-                        <Building2 className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>View Company</TooltipContent>
-                </Tooltip>
-              )}
-            </TooltipProvider>
-          </div>
-        </TableCell>
-      </TableRow>
-    );
-  };
-
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex flex-col h-full min-w-0">
       {/* Modern Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
         <div className="container flex h-20 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <User className="h-8 w-8 text-brand-blue" />
-            <h1 className="text-3xl font-bold text-gray-900">Applicants</h1>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Applicants
+              </h1>
+              <p className="text-sm text-gray-600">
+                Manage and oversee all job applicants
+              </p>
+            </div>
           </div>
+          <Button
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+            onClick={loadApplicants}
+            disabled={loading}>
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+            />
+            Refresh
+          </Button>
         </div>
       </header>
-      <main className="flex-1 overflow-auto">
+
+      <main className="flex-1 overflow-auto relative z-10">
         <div className="container py-8 space-y-8">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}>
-              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm font-medium">
-                        Total Applicants
-                      </p>
-                      <p className="text-3xl font-bold">
-                        {stats.totalApplicants}
-                      </p>
-                    </div>
-                    <Users className="h-8 w-8 text-blue-200" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Applicants
+                </CardTitle>
+                <Users className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {totalApplicants}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">All applications</p>
+              </CardContent>
+            </Card>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}>
-              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-100 text-sm font-medium">
-                        Active Applicants
-                      </p>
-                      <p className="text-3xl font-bold">
-                        {stats.activeApplicants}
-                      </p>
-                    </div>
-                    <Activity className="h-8 w-8 text-green-200" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Pending Review
+                </CardTitle>
+                <Clock className="h-4 w-4 text-yellow-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {stats.pending}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Awaiting review</p>
+              </CardContent>
+            </Card>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}>
-              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-purple-100 text-sm font-medium">
-                        Total Applications
-                      </p>
-                      <p className="text-3xl font-bold">
-                        {stats.totalApplications}
-                      </p>
-                    </div>
-                    <FileText className="h-8 w-8 text-purple-200" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Shortlisted
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {stats.shortlisted}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Top candidates</p>
+              </CardContent>
+            </Card>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}>
-              <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-orange-100 text-sm font-medium">
-                        Pending Applications
-                      </p>
-                      <p className="text-3xl font-bold">
-                        {stats.pendingApplications}
-                      </p>
-                    </div>
-                    <Clock className="h-8 w-8 text-orange-200" />
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Accepted</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.accepted}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Successful hires</p>
+              </CardContent>
+            </Card>
           </div>
 
-          <Card className="shadow-md border-0 rounded-2xl">
+          {/* Main Content */}
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-brand-blue" />
+                <Users className="h-5 w-5 text-blue-600" />
                 Manage Applicants
               </CardTitle>
               <CardDescription>
-                View, filter, and manage all applicants in the system.
+                View and manage all job applicants.{' '}
+                <span className="font-semibold text-blue-600">
+                  Total: {totalApplicants} applicants
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Enhanced Filters */}
-              <div className="space-y-6 mb-8">
-                {/* Main Search and Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="search"
-                        placeholder="Search applicants by name, email, or keyword..."
-                        className="w-full pl-10 rounded-lg border border-input bg-background shadow-sm focus-visible:ring-2 focus-visible:ring-brand-blue"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="flex items-center gap-2">
-                      <Filter className="h-4 w-4" />
-                      Filters
-                      {showFilters ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 rotate-180" />
-                      )}
-                    </Button>
+              {/* Filters */}
+              <div className="flex flex-col gap-4 mb-8">
+                {/* Search and Export */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      type="search"
+                      placeholder="Search applicants..."
+                      className="w-full pl-8 rounded-xl border border-white/50 bg-white/60 backdrop-blur-sm shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus:bg-white/80 transition-all duration-300"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                    />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      <FileText className="mr-2 h-4 w-4" /> Export
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportApplicants}
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
+                      <Download className="mr-2 h-4 w-4" />
+                      Export Applicants
                     </Button>
                   </div>
                 </div>
 
-                {/* Advanced Filters */}
-                <AnimatePresence>
-                  {showFilters && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="rounded-xl border bg-gray-50/50 p-6 space-y-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Filter className="h-4 w-4 text-brand-blue" />
-                        <span className="font-medium text-gray-700">
-                          Advanced Filters
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Status Filter */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">
-                            Status
-                          </label>
-                          <Select
-                            value={statusFilter.join(',')}
-                            onValueChange={value =>
-                              setStatusFilter(value ? value.split(',') : [])
-                            }>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="All Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">All Status</SelectItem>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="inactive">Inactive</SelectItem>
-                              <SelectItem value="applied">Applied</SelectItem>
-                              <SelectItem value="interview">
-                                Interview
-                              </SelectItem>
-                              <SelectItem value="hired">Hired</SelectItem>
-                              <SelectItem value="rejected">Rejected</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Sort By */}
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">
-                            Sort By
-                          </label>
-                          <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="-createdAt">
-                                Newest First
-                              </SelectItem>
-                              <SelectItem value="createdAt">
-                                Oldest First
-                              </SelectItem>
-                              <SelectItem value="name">Name A-Z</SelectItem>
-                              <SelectItem value="-name">Name Z-A</SelectItem>
-                              <SelectItem value="-applications">
-                                Most Applications
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      {/* Date Range */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">
-                            Date From
-                          </label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  'w-full justify-start text-left font-normal',
-                                  !dateFrom && 'text-muted-foreground'
-                                )}>
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {dateFrom ? (
-                                  format(dateFrom, 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <CalendarComponent
-                                mode="single"
-                                selected={dateFrom}
-                                onSelect={setDateFrom}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-700">
-                            Date To
-                          </label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  'w-full justify-start text-left font-normal',
-                                  !dateTo && 'text-muted-foreground'
-                                )}>
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {dateTo ? (
-                                  format(dateTo, 'PPP')
-                                ) : (
-                                  <span>Pick a date</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <CalendarComponent
-                                mode="single"
-                                selected={dateTo}
-                                onSelect={setDateTo}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
-                      </div>
-
-                      {/* Clear Filters */}
-                      <div className="flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setStatusFilter([]);
-                            setDateFrom(undefined);
-                            setDateTo(undefined);
-                          }}
-                          className="flex items-center gap-2">
-                          <X className="h-4 w-4" />
-                          Clear All Filters
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Bulk Actions */}
-                {selectedApplicants.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <span className="text-sm font-medium text-blue-700">
-                      {selectedApplicants.length} applicant(s) selected
+                {/* Filter Controls */}
+                <div className="flex flex-wrap gap-4 items-center rounded-xl bg-gray-50 p-4 border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Filters:
                     </span>
-                    <Select value={bulkAction} onValueChange={setBulkAction}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Choose action..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="activate">
-                          Activate Applicants
-                        </SelectItem>
-                        <SelectItem value="deactivate">
-                          Deactivate Applicants
-                        </SelectItem>
-                        <SelectItem value="delete">
-                          Delete Applicants
-                        </SelectItem>
-                        <SelectItem value="export">Export Selected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleBulkAction} disabled={!bulkAction}>
-                      Apply Action
-                    </Button>
+                  </div>
+
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px] bg-white border-gray-300 hover:bg-gray-50 transition-all duration-300">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="reviewed">Reviewed</SelectItem>
+                      <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                      <SelectItem value="interview_scheduled">
+                        Interview Scheduled
+                      </SelectItem>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {(searchTerm || statusFilter !== 'all') && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedApplicants([])}>
-                      Clear Selection
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('all');
+                      }}
+                      className="text-gray-600 hover:text-gray-900">
+                      Clear Filters
                     </Button>
-                  </motion.div>
-                )}
+                  )}
+                </div>
               </div>
+
               {/* Applicants Table */}
-              <div className="rounded-xl border overflow-x-auto bg-white shadow-sm">
-                <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b">
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedApplicants.length === applicants.length &&
-                            applicants.length > 0
-                          }
-                          onChange={toggleAllApplicants}
-                          className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
-                        />
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-brand-blue" />
-                          Applicant
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-brand-blue" />
-                          Email
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-brand-blue" />
-                          Status
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-4 w-4 text-brand-blue" />
-                          Applied
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-brand-blue" />
-                          Jobs Applied
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-brand-blue" />
-                          Resume
-                        </div>
-                      </TableHead>
-                      <TableHead>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-brand-blue" />
-                          PDS
-                        </div>
-                      </TableHead>
-                      <TableHead className="w-[80px]">
-                        <div className="flex items-center gap-2">
-                          <Eye className="h-4 w-4 text-brand-blue" />
-                          Actions
-                        </div>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-12">
-                          <div className="flex flex-col items-center gap-2">
-                            <Loader2 className="h-6 w-6 animate-spin text-brand-blue" />
-                            <span className="text-muted-foreground">
-                              Loading applicants...
-                            </span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredApplicants.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} className="text-center py-12">
-                          <div className="flex flex-col items-center gap-2">
-                            <User className="h-8 w-8 text-gray-300" />
-                            <span className="text-muted-foreground">
-                              No applicants found
-                            </span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredApplicants.map((applicant, idx) => (
-                        <>
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+                  </div>
+                ) : applicants.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <AlertTriangle className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-lg font-medium text-gray-900">
+                      No applicants found
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {searchTerm || statusFilter !== 'all'
+                        ? 'Try adjusting your filters'
+                        : 'No applicants have applied yet'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50/50 hover:bg-gray-50">
+                          <TableHead className="font-semibold text-gray-700">
+                            Applicant
+                          </TableHead>
+                          <TableHead className="font-semibold text-gray-700">
+                            Job Position
+                          </TableHead>
+                          <TableHead className="font-semibold text-gray-700">
+                            Contact
+                          </TableHead>
+                          <TableHead className="font-semibold text-gray-700">
+                            Applied Date
+                          </TableHead>
+                          <TableHead className="font-semibold text-gray-700">
+                            Status
+                          </TableHead>
+                          <TableHead className="font-semibold text-gray-700 text-right">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {applicants.map(applicant => (
                           <TableRow
                             key={applicant._id}
-                            className={
-                              'transition-all duration-200 group ' +
-                              (idx % 2 === 0 ? 'bg-gray-50/50' : '') +
-                              ' hover:bg-blue-50/60 hover:shadow-sm cursor-pointer ' +
-                              (selectedApplicants.includes(applicant._id)
-                                ? 'bg-blue-100/80'
-                                : '')
-                            }>
+                            className="group hover:bg-blue-50/50 transition-colors duration-200">
                             <TableCell>
-                              <input
-                                type="checkbox"
-                                checked={selectedApplicants.includes(
-                                  applicant._id
-                                )}
-                                onChange={() =>
-                                  toggleApplicantSelection(applicant._id)
-                                }
-                                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-blue-600 flex items-center justify-center text-white font-semibold text-lg">
-                                  {applicant.name?.charAt(0) ||
-                                    applicant.firstName?.charAt(0) ||
-                                    applicant.lastName?.charAt(0) ||
-                                    applicant.email?.charAt(0) ||
-                                    '?'}
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold shadow-md">
+                                  {applicant.applicantId.firstName[0]}
+                                  {applicant.applicantId.lastName[0]}
                                 </div>
-                                <User className="h-4 w-4 text-gray-500" />
-                                <span className="group-hover:text-brand-blue transition-colors">
-                                  {applicant.name ||
-                                    `${applicant.firstName || ''} ${
-                                      applicant.lastName || ''
-                                    }`.trim() ||
-                                    applicant.email ||
-                                    'Applicant'}
-                                </span>
+                                <div>
+                                  <div className="font-medium text-gray-900">
+                                    {applicant.applicantId.firstName}{' '}
+                                    {applicant.applicantId.lastName}
+                                  </div>
+                                  <div className="text-sm text-gray-600 flex items-center gap-1">
+                                    <Mail className="h-3 w-3" />
+                                    {applicant.applicantId.email}
+                                  </div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-gray-500" />
-                                <span className="group-hover:text-brand-blue transition-colors">
-                                  {applicant.email}
-                                </span>
+                              <div className="flex flex-col">
+                                <div className="font-medium text-gray-900">
+                                  {applicant.jobId.title}
+                                </div>
+                                {applicant.jobId.companyId && (
+                                  <div className="text-sm text-gray-600 flex items-center gap-1">
+                                    <Briefcase className="h-3 w-3" />
+                                    {applicant.jobId.companyId.name}
+                                  </div>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              {getStatusBadge(applicant.status)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <CalendarIcon className="h-4 w-4 text-gray-500" />
-                                <span className="group-hover:text-brand-blue transition-colors">
-                                  {applicant.createdAt
-                                    ? formatDate(applicant.createdAt)
-                                    : '-'}
-                                </span>
+                              <div className="flex flex-col gap-1 text-sm">
+                                {applicant.applicantId.phone && (
+                                  <div className="flex items-center gap-1 text-gray-600">
+                                    <Phone className="h-3 w-3" />
+                                    {applicant.applicantId.phone}
+                                  </div>
+                                )}
+                                {applicant.jobId.location && (
+                                  <div className="flex items-center gap-1 text-gray-600">
+                                    <MapPin className="h-3 w-3" />
+                                    {applicant.jobId.location}
+                                  </div>
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-gray-500" />
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs px-2 py-1 group-hover:border-brand-blue group-hover:text-brand-blue transition-colors">
-                                  {applicant.applications?.length || 0} Jobs
-                                </Badge>
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(applicant.createdAt)}
                               </div>
                             </TableCell>
                             <TableCell>
-                              {applicant.resume ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-green-700 border-green-300 flex items-center gap-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Yes
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="text-gray-400 border-gray-200 flex items-center gap-1">
-                                  <XCircle className="h-3 w-3" />
-                                  No
-                                </Badge>
-                              )}
+                              <Badge
+                                variant={getStatusBadgeVariant(
+                                  applicant.status
+                                )}
+                                className={`${getStatusColor(
+                                  applicant.status
+                                )} capitalize`}>
+                                {applicant.status.replace('_', ' ')}
+                              </Badge>
                             </TableCell>
-                            <TableCell>
-                              {applicant.pds ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-blue-700 border-blue-300 flex items-center gap-1">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Yes
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="text-gray-400 border-gray-200 flex items-center gap-1">
-                                  <XCircle className="h-3 w-3" />
-                                  No
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="hover:bg-purple-100 hover:text-purple-700 transition-colors"
+                                  asChild>
+                                  <Link
+                                    href={`/dashboard/admin/ranking?jobId=${applicant.jobId._id}`}>
+                                    <Eye className="h-4 w-4" />
+                                  </Link>
+                                </Button>
+                                {applicant.resumeId && (
                                   <Button
                                     variant="ghost"
-                                    size="icon"
-                                    className="hover:bg-brand-blue hover:text-white transition-colors">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Actions</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem asChild>
-                                    <Link
-                                      href={`/dashboard/admin/applicants/${applicant._id}`}
-                                      className="flex items-center gap-2">
-                                      <Eye className="h-4 w-4" />
-                                      View Details
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem asChild>
+                                    size="sm"
+                                    className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                    asChild>
                                     <a
-                                      href={`mailto:${applicant.email}`}
+                                      href={applicant.resumeId.fileUrl}
                                       target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2">
-                                      <Mail className="h-4 w-4" />
-                                      Send Email
+                                      rel="noopener noreferrer">
+                                      <FileText className="h-4 w-4" />
                                     </a>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  {applicant.status !== 'hired' && (
-                                    <DropdownMenuItem className="text-green-600 flex items-center gap-2">
-                                      <CheckCircle className="h-4 w-4" />
-                                      Mark as Hired
-                                    </DropdownMenuItem>
-                                  )}
-                                  {applicant.status !== 'rejected' && (
-                                    <DropdownMenuItem className="text-destructive flex items-center gap-2">
-                                      <XCircle className="h-4 w-4" />
-                                      Mark as Rejected
-                                    </DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      setExpandedApplicant(
-                                        expandedApplicant === applicant._id
-                                          ? null
-                                          : applicant._id
-                                      )
-                                    }
-                                    className="flex items-center gap-2">
-                                    {expandedApplicant === applicant._id
-                                      ? 'Hide Applications'
-                                      : 'Show Applications'}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
-                          {/* Collapsible Applications Section */}
-                          {expandedApplicant === applicant._id &&
-                            applicant.applications?.length > 0 && (
-                              <TableRow>
-                                <TableCell colSpan={9} className="bg-blue-50">
-                                  <div className="p-4">
-                                    <div className="font-semibold mb-2 text-brand-blue flex items-center gap-2">
-                                      <FileText className="h-5 w-5" />
-                                      Applications:
-                                    </div>
-                                    <Table className="border rounded-xl">
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <FileText className="h-4 w-4 text-brand-blue" />
-                                              Job Title
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <Building2 className="h-4 w-4 text-brand-blue" />
-                                              Company
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <Briefcase className="h-4 w-4 text-brand-blue" />
-                                              Type
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <MapPin className="h-4 w-4 text-brand-blue" />
-                                              Location
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <Target className="h-4 w-4 text-brand-blue" />
-                                              Salary
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <CheckCircle className="h-4 w-4 text-brand-blue" />
-                                              Status
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <CalendarIcon className="h-4 w-4 text-brand-blue" />
-                                              Date Applied
-                                            </div>
-                                          </TableHead>
-                                          <TableHead>
-                                            <div className="flex items-center gap-2">
-                                              <Eye className="h-4 w-4 text-brand-blue" />
-                                              Actions
-                                            </div>
-                                          </TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {applicant.applications.map(
-                                          (app: any) => (
-                                            <ApplicationRow
-                                              key={app._id}
-                                              app={app}
-                                            />
-                                          )
-                                        )}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
-                        </>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-8">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * pageSize + 1} to{' '}
-                    {Math.min(currentPage * pageSize, totalApplicants)} of{' '}
-                    {totalApplicants} results
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="hover:bg-brand-blue hover:text-white transition-colors">
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => {
-                        const page = i + 1;
-                        return (
+                        ))}
+                      </TableBody>
+                    </Table>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50/50 px-6 py-4">
+                        <div className="text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </div>
+                        <div className="flex gap-2">
                           <Button
-                            key={page}
-                            variant={
-                              currentPage === page ? 'default' : 'outline'
-                            }
+                            variant="outline"
                             size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className={
-                              currentPage === page
-                                ? 'bg-brand-blue text-white'
-                                : 'hover:bg-brand-blue hover:text-white transition-colors'
-                            }>
-                            {page}
+                            onClick={() =>
+                              setCurrentPage(prev => Math.max(1, prev - 1))
+                            }
+                            disabled={currentPage === 1}
+                            className="bg-white hover:bg-gray-50">
+                            Previous
                           </Button>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="hover:bg-brand-blue hover:text-white transition-colors">
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setCurrentPage(prev =>
+                                Math.min(totalPages, prev + 1)
+                              )
+                            }
+                            disabled={currentPage === totalPages}
+                            className="bg-white hover:bg-gray-50">
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
