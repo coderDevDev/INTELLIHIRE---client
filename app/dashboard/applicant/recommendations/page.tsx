@@ -95,6 +95,8 @@ interface RecommendationFilters {
   category: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 export default function JobRecommendationsPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -103,6 +105,7 @@ export default function JobRecommendationsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<RecommendationFilters>({
     minMatchScore: 70,
     location: 'all',
@@ -135,6 +138,31 @@ export default function JobRecommendationsPage() {
     checkAuth();
   }, [router, toast]);
 
+  // Check which jobs user has already applied to
+  const checkAppliedJobs = async () => {
+    if (!authAPI.isAuthenticated()) return;
+
+    try {
+      const currentUser = authAPI.getCurrentUser();
+      if (!currentUser?.id) return;
+
+      const response = await fetch(
+        `${API_URL}/applications?applicantId=${currentUser.id}`,
+        {
+          headers: { Authorization: `Bearer ${authAPI.getToken()}` }
+        }
+      );
+
+      const data = await response.json();
+      if (data.applications) {
+        const jobIds = new Set(data.applications.map((app: any) => app.jobId._id || app.jobId));
+        setAppliedJobs(jobIds);
+      }
+    } catch (error) {
+      console.error('Error checking applied jobs:', error);
+    }
+  };
+
   // Load job recommendations
   const loadRecommendations = async () => {
     try {
@@ -152,6 +180,9 @@ export default function JobRecommendationsPage() {
 
       const response = await jobAPI.getJobRecommendations(params);
       setRecommendations(response.recommendations || []);
+      
+      // Check applied jobs after loading recommendations
+      await checkAppliedJobs();
     } catch (error) {
       console.error('Error loading recommendations:', error);
 

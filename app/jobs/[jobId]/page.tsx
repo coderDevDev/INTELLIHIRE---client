@@ -27,10 +27,14 @@ import {
   FileText
 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 export default function JobDetailsPage() {
   const { jobId } = useParams();
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,7 +46,32 @@ export default function JobDetailsPage() {
       setLoading(false);
     }
     fetchJob();
+    checkApplicationStatus();
   }, [jobId]);
+
+  const checkApplicationStatus = async () => {
+    if (!authAPI.isAuthenticated()) return;
+    
+    try {
+      const currentUser = authAPI.getCurrentUser();
+      if (!currentUser?.id || !jobId) return;
+
+      const response = await fetch(
+        `${API_URL}/applications?jobId=${jobId}&applicantId=${currentUser.id}`,
+        {
+          headers: { Authorization: `Bearer ${authAPI.getToken()}` }
+        }
+      );
+
+      const data = await response.json();
+      if (data.applications && data.applications.length > 0) {
+        setHasApplied(true);
+        setApplicationStatus(data.applications[0].status);
+      }
+    } catch (error) {
+      console.error('Error checking application status:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -208,12 +237,52 @@ export default function JobDetailsPage() {
                 <span>{job.applicationCount || 0} applied</span>
               </div>
             </div>
-            <Button
-              className="w-full mb-8 text-lg py-4"
-              size="lg"
-              onClick={handleApply}>
-              Apply Now
-            </Button>
+            {hasApplied ? (
+              <div className="w-full mb-8">
+                <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <h3 className="text-lg font-bold text-green-900">
+                      Already Applied
+                    </h3>
+                  </div>
+                  <p className="text-green-700 mb-3">
+                    You have already submitted an application for this position.
+                  </p>
+                  {applicationStatus && (
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-sm text-green-600">Current Status:</span>
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                        applicationStatus === 'applied' ? 'bg-blue-100 text-blue-700' :
+                        applicationStatus === 'screening' ? 'bg-yellow-100 text-yellow-700' :
+                        applicationStatus === 'interview' ? 'bg-purple-100 text-purple-700' :
+                        applicationStatus === 'offered' ? 'bg-green-100 text-green-700' :
+                        applicationStatus === 'hired' ? 'bg-green-200 text-green-800' :
+                        applicationStatus === 'rejected' ? 'bg-red-100 text-red-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {applicationStatus.charAt(0).toUpperCase() + applicationStatus.slice(1)}
+                      </span>
+                    </div>
+                  )}
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mt-4 bg-white border-green-500 text-green-700 hover:bg-green-50">
+                    <Link href="/dashboard/applicant/applications">
+                      View Application Details
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                className="w-full mb-8 text-lg py-4"
+                size="lg"
+                onClick={handleApply}>
+                Apply Now
+              </Button>
+            )}
             <div className="space-y-6">
               <div>
                 <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -140,7 +141,10 @@ interface RankingStats {
   recentRankings: ApplicantRanking[];
 }
 
-export default function ApplicantRankingPage() {
+function ApplicantRankingPageContent() {
+  const searchParams = useSearchParams();
+  const jobIdFromUrl = searchParams.get('jobId');
+
   // State management
   const [activeTab, setActiveTab] = useState('job-rankings');
   const [rankings, setRankings] = useState<ApplicantRanking[]>([]);
@@ -148,6 +152,7 @@ export default function ApplicantRankingPage() {
   const [stats, setStats] = useState<RankingStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [autoRecalculated, setAutoRecalculated] = useState(false);
 
   // Filters
   const [selectedJob, setSelectedJob] = useState<string>('');
@@ -209,7 +214,14 @@ export default function ApplicantRankingPage() {
       const response = await applicantRankingAPI.getAvailableJobs();
       if (response.success) {
         setJobs(response.jobs);
-        if (response.jobs.length > 0 && !selectedJob) {
+
+        // If jobId is provided in URL, auto-select that job
+        if (
+          jobIdFromUrl &&
+          response.jobs.some((j: Job) => j._id === jobIdFromUrl)
+        ) {
+          setSelectedJob(jobIdFromUrl);
+        } else if (response.jobs.length > 0 && !selectedJob) {
           setSelectedJob(response.jobs[0]._id);
         }
       }
@@ -236,6 +248,21 @@ export default function ApplicantRankingPage() {
         setRankings(response.rankings);
         setTotalPages(response.totalPages);
         setTotal(response.total);
+
+        // Auto-recalculate if no rankings exist but job came from URL
+        if (
+          response.rankings.length === 0 &&
+          jobIdFromUrl &&
+          !autoRecalculated
+        ) {
+          setAutoRecalculated(true);
+          toast.info(
+            'No rankings found. Calculating rankings automatically...'
+          );
+          setTimeout(() => {
+            handleRecalculateRankings();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Error loading job rankings:', error);
@@ -1872,5 +1899,25 @@ export default function ApplicantRankingPage() {
           style={{ animationDelay: '4s' }}></div>
       </div>
     </div>
+  );
+}
+
+export default function ApplicantRankingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+              <p className="text-gray-600 font-medium">
+                Loading ranking data...
+              </p>
+            </div>
+          </div>
+        </div>
+      }>
+      <ApplicantRankingPageContent />
+    </Suspense>
   );
 }

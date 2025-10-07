@@ -21,6 +21,17 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -41,7 +52,19 @@ import {
   Search,
   Filter,
   Download,
-  Briefcase
+  Briefcase,
+  Eye,
+  Users,
+  Calendar,
+  MapPin,
+  Building,
+  Target,
+  Edit3,
+  Trash2,
+  FileText,
+  Star,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { jobAPI, categoryAPI, authAPI } from '@/lib/api-service';
@@ -81,6 +104,9 @@ export default function JobPostingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(10);
+  const [applicationCounts, setApplicationCounts] = useState<
+    Record<string, number>
+  >({});
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -88,6 +114,11 @@ export default function JobPostingsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('-postedDate');
+
+  // Delete confirmation modal state
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
+  const [deleteJobTitle, setDeleteJobTitle] = useState<string>('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Categories for filter
   const [categories, setCategories] = useState<
@@ -117,6 +148,39 @@ export default function JobPostingsPage() {
     checkAuth();
   }, [router, toast]);
 
+  // Load real application counts for all jobs
+  const loadApplicationCounts = async (jobIds: string[]) => {
+    try {
+      // Fetch applications and count them by jobId
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/applications?limit=1000`,
+        {
+          headers: {
+            Authorization: `Bearer ${authAPI.getToken()}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const applications = data.applications || [];
+
+        // Count applications per job
+        const counts: Record<string, number> = {};
+        applications.forEach((app: any) => {
+          const jobId = app.jobId?._id || app.jobId;
+          if (jobId) {
+            counts[jobId] = (counts[jobId] || 0) + 1;
+          }
+        });
+
+        setApplicationCounts(counts);
+      }
+    } catch (error) {
+      console.error('Error loading application counts:', error);
+    }
+  };
+
   // Load jobs data
   const loadJobs = async () => {
     try {
@@ -138,9 +202,16 @@ export default function JobPostingsPage() {
 
       const response = await jobAPI.getAdminJobs(params);
 
-      setJobs(response.jobs || []);
+      const jobsData = response.jobs || [];
+      setJobs(jobsData);
       setTotalJobs(response.total || 0);
       setTotalPages(response.totalPages || 1);
+
+      // Load real application counts
+      const jobIds = jobsData.map((job: Job) => job._id);
+      if (jobIds.length > 0) {
+        await loadApplicationCounts(jobIds);
+      }
     } catch (error) {
       console.error('Error loading jobs:', error);
       toast({
@@ -197,17 +268,27 @@ export default function JobPostingsPage() {
     }
   };
 
+  // Open delete confirmation modal
+  const openDeleteModal = (jobId: string, jobTitle: string) => {
+    setDeleteJobId(jobId);
+    setDeleteJobTitle(jobTitle);
+    setShowDeleteModal(true);
+  };
+
   // Handle job deletion
-  const handleDeleteJob = async (jobId: string) => {
-    if (!confirm('Are you sure you want to delete this job posting?')) return;
+  const handleDeleteJob = async () => {
+    if (!deleteJobId) return;
 
     try {
-      await jobAPI.deleteJob(jobId);
+      await jobAPI.deleteJob(deleteJobId);
       toast({
         title: 'Success',
         description: 'Job posting deleted successfully'
       });
       loadJobs(); // Reload jobs to reflect changes
+      setShowDeleteModal(false);
+      setDeleteJobId(null);
+      setDeleteJobTitle('');
     } catch (error) {
       toast({
         title: 'Error',
@@ -276,7 +357,7 @@ export default function JobPostingsPage() {
       </header>
       <main className="flex-1 overflow-auto relative z-10">
         <div className="container py-8 space-y-8">
-          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-lg hover:-translate-y-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-blue-600" />
@@ -316,7 +397,7 @@ export default function JobPostingsPage() {
                 </div>
 
                 {/* Filter Controls */}
-                <div className="flex flex-wrap gap-4 items-center rounded-xl bg-white/40 backdrop-blur-sm p-4 border border-white/50 shadow-sm">
+                <div className="flex flex-wrap gap-4 items-center rounded-xl bg-gray-50 p-4 border border-gray-200 shadow-sm">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">
@@ -325,7 +406,7 @@ export default function JobPostingsPage() {
                   </div>
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[150px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
+                    <SelectTrigger className="w-[150px] bg-white border-gray-300 hover:bg-gray-50 transition-all duration-300">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -340,7 +421,7 @@ export default function JobPostingsPage() {
                   <Select
                     value={categoryFilter}
                     onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[180px] bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 transition-all duration-300">
+                    <SelectTrigger className="w-[180px] bg-white border-gray-300 hover:bg-gray-50 transition-all duration-300">
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -388,43 +469,18 @@ export default function JobPostingsPage() {
               </div>
 
               {/* Jobs Table */}
-              <div className="rounded-xl border border-white/50 overflow-x-auto bg-white/60 backdrop-blur-sm shadow-lg">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-white/50">
-                    <TableRow className="hover:bg-white/60">
-                      <TableHead className="text-gray-700 font-semibold">
-                        Job Title
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Company
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Category
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Location
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Type
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Posted
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Expires
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Applications
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Views
-                      </TableHead>
-                      <TableHead className="text-gray-700 font-semibold">
-                        Status
-                      </TableHead>
-                      <TableHead className="w-[80px] text-gray-700 font-semibold">
-                        Actions
-                      </TableHead>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Job Title</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Posted</TableHead>
+                      <TableHead>Applicants</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -452,122 +508,149 @@ export default function JobPostingsPage() {
                       </TableRow>
                     ) : (
                       jobs.map((job, idx) => (
-                        <TableRow
-                          key={job._id}
-                          className={`hover:bg-white/60 transition-colors duration-200 ${
-                            idx % 2 === 0 ? 'bg-white/30' : 'bg-white/20'
-                          }`}>
+                        <TableRow key={job._id}>
                           <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              {job.title}
-                              {job.isFeatured && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Featured
-                                </Badge>
-                              )}
-                              {job.isUrgent && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs">
-                                  Urgent
-                                </Badge>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900">
+                                  {job.title}
+                                </p>
+                                {job.isFeatured && (
+                                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                                )}
+                                {job.isUrgent && (
+                                  <Badge className="bg-red-100 text-red-700 border-red-200 text-xs px-1.5 py-0">
+                                    Urgent
+                                  </Badge>
+                                )}
+                              </div>
+                              {job.categoryId?.name && (
+                                <p className="text-xs text-gray-500">
+                                  {job.categoryId.name}
+                                </p>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>{job.companyId?.name || 'N/A'}</TableCell>
-                          <TableCell>{job.categoryId?.name || 'N/A'}</TableCell>
-                          <TableCell>{job.location}</TableCell>
-                          <TableCell>{job.employmentType}</TableCell>
-                          <TableCell>{formatDate(job.postedDate)}</TableCell>
                           <TableCell>
-                            <span
-                              className={
-                                isExpired(job.expiryDate)
-                                  ? 'text-red-500 font-semibold'
-                                  : ''
-                              }>
-                              {formatDate(job.expiryDate)}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm">
+                                {job.companyId?.name || 'N/A'}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell>{job.applicationCount || 0}</TableCell>
-                          <TableCell>{job.viewCount || 0}</TableCell>
                           <TableCell>
-                            <Badge variant={getStatusBadgeVariant(job.status)}>
-                              {job.status.charAt(0).toUpperCase() +
-                                job.status.slice(1)}
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm">{job.location}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-white/60">
+                              {job.employmentType}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Actions</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/dashboard/admin/jobs/${job._id}`}>
-                                    View Details
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/dashboard/admin/jobs/${job._id}/edit`}>
-                                    Edit Job
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/dashboard/admin/jobs/${job._id}/applications`}>
-                                    View Applicants ({job.applicationCount || 0}
-                                    )
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {job.status === 'active' ? (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(job._id, 'paused')
-                                    }>
-                                    Pause Job
-                                  </DropdownMenuItem>
-                                ) : job.status === 'paused' ? (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(job._id, 'active')
-                                    }>
-                                    Activate Job
-                                  </DropdownMenuItem>
-                                ) : null}
-                                {job.status !== 'closed' && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(job._id, 'closed')
-                                    }
-                                    className="text-orange-600">
-                                    Close Job
-                                  </DropdownMenuItem>
-                                )}
-                                {job.status === 'closed' && (
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleStatusChange(job._id, 'active')
-                                    }
-                                    className="text-green-600">
-                                    Reopen Job
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteJob(job._id)}
-                                  className="text-destructive">
-                                  Delete Job
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4 text-gray-400" />
+                              <span className="text-xs text-gray-600">
+                                {formatDate(job.postedDate)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              asChild
+                              className="hover:bg-blue-50"
+                              title="View Ranked Applicants">
+                              <Link
+                                href={`/dashboard/admin/ranking?jobId=${job._id}`}>
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-blue-600" />
+                                  <span className="text-sm font-semibold text-blue-600">
+                                    {applicationCounts[job._id] || 0}
+                                  </span>
+                                </div>
+                              </Link>
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                job.status === 'active'
+                                  ? 'bg-green-100 text-green-800 border-green-200'
+                                  : job.status === 'draft'
+                                  ? 'bg-gray-100 text-gray-800 border-gray-200'
+                                  : job.status === 'paused'
+                                  ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                                  : 'bg-red-100 text-red-800 border-red-200'
+                              }>
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className={`h-2 w-2 rounded-full ${
+                                    job.status === 'active'
+                                      ? 'bg-green-500'
+                                      : job.status === 'draft'
+                                      ? 'bg-gray-500'
+                                      : job.status === 'paused'
+                                      ? 'bg-yellow-500'
+                                      : 'bg-red-500'
+                                  }`}></div>
+                                {job.status.charAt(0).toUpperCase() +
+                                  job.status.slice(1)}
+                              </div>
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                title="View Details">
+                                <Link href={`/dashboard/admin/jobs/${job._id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                title="Edit Job"
+                                className="bg-blue-50 hover:bg-blue-100 border-blue-200">
+                                <Link
+                                  href={`/dashboard/admin/jobs/${job._id}/edit`}>
+                                  <Edit3 className="h-4 w-4 text-blue-600" />
+                                </Link>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                asChild
+                                title={`View ${
+                                  applicationCounts[job._id] || 0
+                                } Ranked Applicants`}
+                                className="bg-green-50 hover:bg-green-100 border-green-200">
+                                <Link
+                                  href={`/dashboard/admin/ranking?jobId=${job._id}`}>
+                                  <FileText className="h-4 w-4 text-green-600" />
+                                </Link>
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  openDeleteModal(job._id, job.title)
+                                }
+                                title="Delete Job"
+                                className="bg-red-50 hover:bg-red-100 border-red-200">
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -632,6 +715,43 @@ export default function JobPostingsPage() {
           </Card>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <AlertDialogContent className="bg-white/95 backdrop-blur-sm border border-gray-200">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="h-5 w-5" />
+              Delete Job Posting
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
+              Are you sure you want to delete the job posting{' '}
+              <span className="font-semibold text-gray-900">
+                "{deleteJobTitle}"
+              </span>
+              ? This action cannot be undone and will permanently remove the job
+              posting and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeleteJobId(null);
+                setDeleteJobTitle('');
+              }}
+              className="bg-gray-100 hover:bg-gray-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteJob}
+              className="bg-red-600 hover:bg-red-700 text-white">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Job Posting
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
