@@ -90,7 +90,8 @@ export default function AnalyticsDashboard() {
       setLoading(true);
 
       // Fetch real data from APIs
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const [jobsRes, applicationsRes, usersRes] = await Promise.all([
         jobAPI.getAdminJobs({ limit: 1000 }),
         applicationAPI.getAdminApplications({ limit: 1000 }),
