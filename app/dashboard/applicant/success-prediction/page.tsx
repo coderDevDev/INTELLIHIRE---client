@@ -66,7 +66,13 @@ import {
   Image
 } from 'lucide-react';
 import Link from 'next/link';
-import { authAPI, userAPI, applicationAPI, jobAPI } from '@/lib/api-service';
+import {
+  authAPI,
+  userAPI,
+  applicationAPI,
+  jobAPI,
+  documentAPI
+} from '@/lib/api-service';
 import { toast } from 'sonner';
 
 interface SuccessPrediction {
@@ -997,9 +1003,3 @@ export default function SuccessPredictionPage() {
     </div>
   );
 }
-
-
-
-
-
-

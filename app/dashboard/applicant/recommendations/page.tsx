@@ -47,9 +47,10 @@ import {
   User
 } from 'lucide-react';
 import Link from 'next/link';
-import { jobAPI, authAPI } from '@/lib/api-service';
+import { jobAPI, authAPI, documentAPI } from '@/lib/api-service';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 
 interface JobRecommendation {
   _id: string;
@@ -58,6 +59,7 @@ interface JobRecommendation {
     _id: string;
     name: string;
     logo?: string;
+    isGovernment?: boolean;
   };
   categoryId: {
     _id: string;
@@ -106,6 +108,7 @@ export default function JobRecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
+  const [userDocuments, setUserDocuments] = useState<any[]>([]);
   const [filters, setFilters] = useState<RecommendationFilters>({
     minMatchScore: 70,
     location: 'all',
@@ -155,7 +158,9 @@ export default function JobRecommendationsPage() {
 
       const data = await response.json();
       if (data.applications) {
-        const jobIds = new Set(data.applications.map((app: any) => app.jobId._id || app.jobId));
+        const jobIds = new Set(
+          data.applications.map((app: any) => app.jobId._id || app.jobId)
+        );
         setAppliedJobs(jobIds);
       }
     } catch (error) {
@@ -180,7 +185,7 @@ export default function JobRecommendationsPage() {
 
       const response = await jobAPI.getJobRecommendations(params);
       setRecommendations(response.recommendations || []);
-      
+
       // Check applied jobs after loading recommendations
       await checkAppliedJobs();
     } catch (error) {
@@ -320,22 +325,83 @@ export default function JobRecommendationsPage() {
     }
   }, [user, filters]);
 
-  // Handle job application
-  const handleApply = async (jobId: string) => {
-    try {
-      // Mock application - replace with actual API call
-      toast({
-        title: 'Application Submitted',
-        description: 'Your application has been submitted successfully!',
-        variant: 'default'
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to submit application',
-        variant: 'destructive'
-      });
+  // Load user documents once when user is authenticated
+  useEffect(() => {
+    if (user) {
+      loadUserDocuments();
     }
+  }, [user]);
+
+  // Load user documents for validation
+  const loadUserDocuments = async () => {
+    if (!authAPI.isAuthenticated()) return;
+
+    try {
+      const docs = await documentAPI.getMyDocuments();
+      setUserDocuments(docs || []);
+    } catch (error) {
+      console.error('Error loading user documents:', error);
+      setUserDocuments([]);
+    }
+  };
+
+  // Handle job application with document validation
+  const handleApply = async (jobId: string) => {
+    // Check if already applied
+    if (appliedJobs.has(jobId)) {
+      sonnerToast.error('You have already applied for this position');
+      return;
+    }
+
+    // Check authentication
+    if (!authAPI.isAuthenticated()) {
+      sonnerToast.error('Please login to apply for this job');
+      router.push(`/login?redirect=/jobs/${jobId}/apply`);
+      return;
+    }
+
+    // Get job details to check if it's a government job
+    const job = recommendations.find(j => j._id === jobId);
+    if (!job) {
+      sonnerToast.error('Job not found');
+      return;
+    }
+
+    // Check document requirements based on job type
+    const isGovernmentJob = (job.companyId as any)?.isGovernment || false;
+    const hasPDS = userDocuments.some(doc => doc.type === 'pds');
+    const hasResume = userDocuments.some(doc => doc.type === 'resume');
+
+    if (isGovernmentJob && !hasPDS) {
+      sonnerToast.error(
+        'Government jobs require a PDS (Personal Data Sheet). Please upload your PDS first.',
+        {
+          action: {
+            label: 'Upload PDS',
+            onClick: () => router.push('/dashboard/applicant/documents')
+          },
+          duration: 6000
+        }
+      );
+      return;
+    }
+
+    if (!isGovernmentJob && !hasResume) {
+      sonnerToast.error(
+        'This job requires a Resume/CV. Please upload your resume first.',
+        {
+          action: {
+            label: 'Upload Resume',
+            onClick: () => router.push('/dashboard/applicant/documents')
+          },
+          duration: 6000
+        }
+      );
+      return;
+    }
+
+    // Navigate to application page
+    router.push(`/jobs/${jobId}/apply`);
   };
 
   // Handle save job
@@ -809,11 +875,20 @@ export default function JobRecommendationsPage() {
                               <ArrowRight className="h-4 w-4 ml-2" />
                             </Link>
                           </Button>
-                          <Button
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
-                            onClick={() => handleApply(job._id)}>
-                            Apply Now
-                          </Button>
+                          {appliedJobs.has(job._id) ? (
+                            <Button
+                              disabled
+                              className="bg-gray-400 cursor-not-allowed shadow-lg">
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Applied
+                            </Button>
+                          ) : (
+                            <Button
+                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                              onClick={() => handleApply(job._id)}>
+                              Apply Now
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>

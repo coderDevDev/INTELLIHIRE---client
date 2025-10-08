@@ -152,7 +152,7 @@ export function MainHeader() {
           {user ? (
             <>
               {/* Enhanced Notifications */}
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="relative rounded-full h-10 w-10 hover:bg-blue-50 hover:text-blue-600 transition-all duration-300 group"
@@ -163,7 +163,7 @@ export function MainHeader() {
                     {notifications}
                   </Badge>
                 )}
-              </Button>
+              </Button> */}
 
               {/* Enhanced User Menu */}
               <DropdownMenu>
@@ -260,7 +260,7 @@ export function MainHeader() {
                       </span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  {/* <DropdownMenuItem asChild>
                     <Link
                       href="/dashboard/applicant/analytics"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
@@ -271,9 +271,9 @@ export function MainHeader() {
                         Analytics
                       </span>
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuSeparator className="bg-gradient-to-r from-gray-200 to-gray-300" />
-                  <DropdownMenuItem asChild>
+                  {/* <DropdownMenuItem asChild>
                     <Link
                       href="/dashboard/applicant/settings"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
@@ -284,8 +284,8 @@ export function MainHeader() {
                         Settings
                       </span>
                     </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  </DropdownMenuItem> */}
+                  {/* <DropdownMenuItem asChild>
                     <Link
                       href="/help"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
@@ -296,7 +296,7 @@ export function MainHeader() {
                         Help & Support
                       </span>
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuSeparator className="bg-gradient-to-r from-gray-200 to-gray-300" />
                   <DropdownMenuItem
                     onClick={() => {
@@ -536,11 +536,11 @@ export function MainHeader() {
       )}
 
       {/* Notification Center */}
-      <NotificationCenter
+      {/* <NotificationCenter
         isOpen={notificationCenterOpen}
         onClose={() => setNotificationCenterOpen(false)}
         userId={user?.id}
-      />
+      /> */}
     </header>
   );
 }

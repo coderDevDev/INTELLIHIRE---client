@@ -52,12 +52,15 @@ import {
   Trash2,
   Save,
   X,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  FileText
 } from 'lucide-react';
 import Link from 'next/link';
-import { authAPI, careerPathAPI } from '@/lib/api-service';
+import { authAPI, careerPathAPI, documentAPI } from '@/lib/api-service';
 import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 
 interface CareerPath {
   _id: string;
@@ -140,6 +143,8 @@ export default function CareerPathPage() {
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [hasRequiredDocuments, setHasRequiredDocuments] = useState(false);
   const [careerPaths, setCareerPaths] = useState<CareerPath[]>([]);
   const [userGoals, setUserGoals] = useState<CareerGoal[]>([]);
   const [insights, setInsights] = useState<CareerInsight[]>([]);
@@ -147,9 +152,9 @@ export default function CareerPathPage() {
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Check authentication on component mount
+  // Check authentication and documents on component mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       if (!authAPI.isAuthenticated()) {
         router.push('/login');
         return;
@@ -166,6 +171,37 @@ export default function CareerPathPage() {
         return;
       }
       setUser(currentUser);
+
+      // Check for uploaded documents
+      try {
+        const docs = await documentAPI.getMyDocuments();
+        setDocuments(docs || []);
+
+        const hasPDS = (docs || []).some((doc: any) => doc.type === 'pds');
+        const hasResume = (docs || []).some(
+          (doc: any) => doc.type === 'resume'
+        );
+        const hasRequired = hasPDS || hasResume;
+
+        setHasRequiredDocuments(hasRequired);
+
+        if (!hasRequired) {
+          sonnerToast.error(
+            'Career path predictions require your PDS or Resume data.',
+            {
+              action: {
+                label: 'Upload Documents',
+                onClick: () => router.push('/dashboard/applicant/documents')
+              },
+              duration: 10000
+            }
+          );
+        }
+      } catch (error) {
+        console.error('Error loading documents:', error);
+        setDocuments([]);
+        setHasRequiredDocuments(false);
+      }
     };
 
     checkAuth();
@@ -481,8 +517,11 @@ export default function CareerPathPage() {
     max: number;
     currency: string;
   }) => {
+    if (!salary || salary.min === undefined || salary.max === undefined) {
+      return 'Salary not specified';
+    }
     return `${
-      salary.currency
+      salary.currency || '₱'
     } ${salary.min.toLocaleString()} - ${salary.max.toLocaleString()}`;
   };
 
@@ -589,6 +628,53 @@ export default function CareerPathPage() {
 
       <main className="flex-1 overflow-auto relative z-10">
         <div className="container py-8 space-y-8">
+          {/* Document Required Alert */}
+          {!hasRequiredDocuments && (
+            <Card className="bg-orange-50/80 backdrop-blur-xl border border-orange-200/50 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <AlertCircle className="h-6 w-6 text-orange-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-orange-900 mb-2">
+                      Documents Required for Career Path Predictions
+                    </h3>
+                    <p className="text-sm text-orange-800 leading-relaxed mb-4">
+                      To generate accurate career path recommendations and
+                      predictions, please upload at least one of the following
+                      documents:
+                      <strong> PDS (Personal Data Sheet)</strong> or{' '}
+                      <strong>Resume/CV</strong>. These documents help us
+                      analyze your skills, experience, and education to provide
+                      personalized career guidance.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        asChild
+                        className="bg-orange-600 hover:bg-orange-700 text-white">
+                        <Link href="/dashboard/applicant/documents">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Documents Now
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="bg-white border-orange-300">
+                        <Link href="/dashboard/applicant/pds-template">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Get PDS Template
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Career Overview Stats */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">

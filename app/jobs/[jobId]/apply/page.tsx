@@ -37,10 +37,14 @@ import {
   ArrowLeft,
   Loader2,
   Eye,
-  Download
+  Download,
+  AlertCircle,
+  Info,
+  FileSpreadsheet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { ResumeModal } from '@/components/resume-modal';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // A. The application's pdsId (linked Document, preferred if present)
@@ -52,6 +56,13 @@ const getPdsDownloadUrl = (pdsFile: string) => {
   // Remove 'api' from API_URL if present, to get the base URL
   const baseUrl = API_URL.replace(/\/api$/, '');
   return `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
+};
+
+const getFileDownloadUrl = (filePath: string) => {
+  if (!filePath) return '#';
+  const cleanPath = filePath.replace(/^\/+/, '');
+  const baseUrl = API_URL.replace(/\/api$/, '');
+  return `${baseUrl}/${cleanPath.replace(/\\/g, '/')}`;
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -368,14 +379,21 @@ export default function JobApplyPage() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [resume, setResume] = useState<File | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [coverLetter, setCoverLetter] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [resumeId, setResumeId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [existingApp, setExistingApp] = useState<any>(null);
+  const [resumeModal, setResumeModal] = useState<{
+    open: boolean;
+    data: any | null;
+    metadata: any | null;
+  }>({
+    open: false,
+    data: null,
+    metadata: null
+  });
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -383,82 +401,123 @@ export default function JobApplyPage() {
       router.replace(`/login?redirect=/jobs/${jobId}/apply`);
       return;
     }
-    // Fetch full user profile from backend
-    async function fetchUser() {
+
+    async function loadData() {
       const localUser = authAPI.getCurrentUser();
 
-      console.log({ localUser });
-      if (localUser?.id) {
-        const userProfile = await userAPI.getUserById(localUser.id);
-        setUser(userProfile);
-      }
-    }
-    fetchUser();
-    // Fetch job info
-    async function fetchJob() {
+      if (!localUser?.id || !jobId || typeof jobId !== 'string') return;
+
       setLoading(true);
-      if (!jobId || typeof jobId !== 'string') return;
-      const res = await jobAPI.getJobById(jobId);
-      setJob(res);
-      setLoading(false);
-    }
-    fetchJob();
-    async function checkExistingApplication() {
-      const localUser = authAPI.getCurrentUser();
-      if (localUser?.id && jobId) {
-        const res = await fetch(
-          `${API_URL}/applications?jobId=${jobId}&applicantId=${localUser.id}`,
-          {
-            headers: { Authorization: `Bearer ${authAPI.getToken()}` }
-          }
-        );
-        const data = await res.json();
-        if (data.applications && data.applications.length > 0) {
-          setExistingApp(data.applications[0]);
+
+      try {
+        // Fetch user, job, documents, and check existing application in parallel
+        const [userProfile, jobData, documentsData, applicationsRes] =
+          await Promise.all([
+            userAPI.getUserById(localUser.id),
+            jobAPI.getJobById(jobId),
+            documentAPI.getMyDocuments(),
+            fetch(
+              `${API_URL}/applications?jobId=${jobId}&applicantId=${localUser.id}`,
+              {
+                headers: { Authorization: `Bearer ${authAPI.getToken()}` }
+              }
+            ).then(res => res.json())
+          ]);
+
+        setUser(userProfile);
+        setJob(jobData);
+        setDocuments(documentsData || []);
+
+        if (
+          applicationsRes.applications &&
+          applicationsRes.applications.length > 0
+        ) {
+          setExistingApp(applicationsRes.applications[0]);
         } else {
           setExistingApp(null);
         }
+      } catch (error) {
+        console.error('Error loading application data:', error);
+      } finally {
+        setLoading(false);
       }
     }
-    checkExistingApplication();
-  }, [jobId, router]);
 
-  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setResume(e.target.files[0]);
-      setResumeId(null); // Reset resumeId so we know to upload on submit
-      setError(null);
-    }
-  };
+    loadData();
+  }, [jobId, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+
     try {
-      // 1. Upload resume if a file is selected and not already uploaded
-      let resumeDocId = resumeId;
-      if (resume && !resumeId) {
-        const data = await documentAPI.uploadDocument(resume, 'resume');
-        resumeDocId = data._id || data.document?._id;
-        setResumeId(resumeDocId);
-      }
-      if (!resumeDocId) {
-        setError('Please upload your resume.');
+      const isGovernmentJob = job.companyId?.isGovernment || false;
+
+      // Find uploaded documents
+      const pdsDoc = documents.find(doc => doc.type === 'pds');
+      const resumeDoc = documents.find(doc => doc.type === 'resume');
+
+      // Validate required documents based on job type
+      if (isGovernmentJob && !pdsDoc) {
+        toast.error(
+          'Government jobs require a PDS. Please upload your PDS first.'
+        );
+        setError('Government jobs require a PDS (Personal Data Sheet).');
         setSubmitting(false);
         return;
       }
-      // 2. Submit application
+
+      if (!isGovernmentJob && !resumeDoc) {
+        toast.error(
+          'This job requires a Resume/CV. Please upload your resume first.',
+          {
+            action: {
+              label: 'Upload Resume',
+              onClick: () => router.push('/dashboard/applicant/documents')
+            },
+            duration: 6000
+          }
+        );
+        setError('Please upload your Resume/CV in the Documents page.');
+        setSubmitting(false);
+        return;
+      }
+
+      // Submit application with appropriate document
       const payload: any = {
-        jobId,
-        resumeId: resumeDocId
+        jobId
       };
-      if (user && user.pdsFileId) payload.pdsId = user.pdsFileId;
+
+      if (isGovernmentJob) {
+        // For government jobs, use PDS (required) and resume if available
+        payload.pdsId = pdsDoc._id;
+
+        // Include resume if available, but it's not required for government jobs
+        if (resumeDoc) {
+          payload.resumeId = resumeDoc._id;
+        }
+      } else {
+        // For non-government jobs, use resume (required) and PDS if available
+        payload.resumeId = resumeDoc._id;
+
+        // Include PDS if available, but it's not required for non-government jobs
+        if (pdsDoc) {
+          payload.pdsId = pdsDoc._id;
+        }
+      }
+
       if (coverLetter) payload.coverLetter = coverLetter;
+
       await applicationAPI.submitApplication(payload);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'Error submitting application');
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Error submitting application';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -530,6 +589,289 @@ export default function JobApplyPage() {
               </Button>
             </div>
           </motion.div>
+        </main>
+      </div>
+    );
+  }
+
+  // Check if user has required documents
+  const isGovernmentJob = job?.companyId?.isGovernment || false;
+  const hasPDS = documents.some(doc => doc.type === 'pds');
+  const hasResume = documents.some(doc => doc.type === 'resume');
+  const hasRequiredDocument = isGovernmentJob ? hasPDS : hasResume;
+  const missingDocument = isGovernmentJob
+    ? 'PDS (Personal Data Sheet)'
+    : 'Resume/CV';
+
+  // If missing required documents, show document required screen
+  if (!hasRequiredDocument && !loading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <MainHeader />
+        <main className="flex-1 relative bg-gradient-to-br from-gray-50 via-white to-blue-50">
+          {/* Background Blobs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-20 left-10 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl animate-float"></div>
+            <div
+              className="absolute top-40 right-20 w-72 h-72 bg-red-300/15 rounded-full blur-3xl animate-float"
+              style={{ animationDelay: '2s' }}></div>
+            <div
+              className="absolute bottom-20 left-1/4 w-80 h-80 bg-yellow-300/20 rounded-full blur-3xl animate-float"
+              style={{ animationDelay: '4s' }}></div>
+          </div>
+
+          <div className="container relative z-10 py-8 md:py-12">
+            <div className="max-w-3xl mx-auto px-4 md:px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}>
+                {/* Alert Card */}
+                <Card className="bg-white/80 backdrop-blur-xl border border-orange-200 shadow-2xl rounded-3xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+                        <AlertCircle className="h-8 w-8 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl mb-2">
+                          Document Required
+                        </CardTitle>
+                        <p className="text-orange-100">
+                          Please upload required documents to apply for this
+                          position
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-6">
+                    {/* Job Info */}
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <h3 className="font-semibold text-gray-900 mb-4">
+                        Job Details
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Briefcase className="h-5 w-5 text-gray-500" />
+                          <div>
+                            <p className="text-sm text-gray-500">Position</p>
+                            <p className="font-semibold text-gray-900">
+                              {job?.title}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Building className="h-5 w-5 text-gray-500" />
+                          <div>
+                            <p className="text-sm text-gray-500">Company</p>
+                            <p className="font-semibold text-gray-900">
+                              {job?.companyId?.name}
+                            </p>
+                          </div>
+                        </div>
+                        {isGovernmentJob && (
+                          <div className="flex items-center gap-2 mt-3">
+                            <Badge className="bg-blue-100 text-blue-700 border-0">
+                              <Building className="h-3 w-3 mr-1" />
+                              Government Position
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Required Document Info */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-6">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-6 w-6 text-orange-600 mt-0.5 shrink-0" />
+                        <div>
+                          <h3 className="font-semibold text-orange-900 mb-2">
+                            Missing Required Document
+                          </h3>
+                          <p className="text-sm text-orange-800 mb-4">
+                            {isGovernmentJob ? (
+                              <>
+                                This is a{' '}
+                                <strong>government job position</strong> and
+                                requires a{' '}
+                                <strong>PDS (Personal Data Sheet)</strong> to
+                                apply. The PDS is an official Civil Service
+                                Commission form that contains your complete
+                                personal, educational, and professional
+                                information.
+                              </>
+                            ) : (
+                              <>
+                                This position requires a{' '}
+                                <strong>Resume/CV</strong> to apply. Please
+                                upload your professional resume to proceed with
+                                your application.
+                              </>
+                            )}
+                          </p>
+
+                          {/* What you need */}
+                          <div className="bg-white rounded-lg p-4 mb-4">
+                            <p className="text-sm font-semibold text-gray-900 mb-3">
+                              What you need to do:
+                            </p>
+                            <div className="space-y-2">
+                              {isGovernmentJob ? (
+                                <>
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs shrink-0">
+                                      1
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      Download the PDS template (PDF or Excel
+                                      format)
+                                    </p>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs shrink-0">
+                                      2
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      Complete all sections of the PDS form
+                                    </p>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs shrink-0">
+                                      3
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      Save/export as PDF and upload to
+                                      InteliHire
+                                    </p>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs shrink-0">
+                                      1
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      Prepare your Resume/CV (PDF, DOC, or DOCX
+                                      format)
+                                    </p>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-xs shrink-0">
+                                      2
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      Upload your resume to the Documents page
+                                    </p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <Button
+                              asChild
+                              className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg">
+                              <Link href="/dashboard/applicant/documents">
+                                <Upload className="h-4 w-4 mr-2" />
+                                Upload {missingDocument}
+                              </Link>
+                            </Button>
+                            {isGovernmentJob && (
+                              <Button
+                                asChild
+                                variant="outline"
+                                className="flex-1 bg-white/60 backdrop-blur-sm border-orange-300">
+                                <Link href="/dashboard/applicant/pds-template">
+                                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                                  Get PDS Template
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Document Status */}
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <h3 className="font-semibold text-gray-900 mb-4">
+                        Your Documents
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText
+                              className={`h-5 w-5 ${
+                                hasPDS ? 'text-green-600' : 'text-gray-400'
+                              }`}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                PDS
+                              </p>
+                              <p
+                                className={`text-xs ${
+                                  hasPDS ? 'text-green-700' : 'text-gray-500'
+                                }`}>
+                                {hasPDS ? 'Uploaded' : 'Not uploaded'}
+                              </p>
+                            </div>
+                          </div>
+                          {hasPDS ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-gray-400" />
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <FileText
+                              className={`h-5 w-5 ${
+                                hasResume ? 'text-green-600' : 'text-gray-400'
+                              }`}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                Resume/CV
+                              </p>
+                              <p
+                                className={`text-xs ${
+                                  hasResume ? 'text-green-700' : 'text-gray-500'
+                                }`}>
+                                {hasResume ? 'Uploaded' : 'Not uploaded'}
+                              </p>
+                            </div>
+                          </div>
+                          {hasResume ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back Button */}
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="bg-white/60 backdrop-blur-sm border-white/50">
+                        <Link href={`/jobs/${job._id}`}>
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back to Job Details
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </div>
         </main>
       </div>
     );
@@ -775,43 +1117,234 @@ export default function JobApplyPage() {
                               </ul>
                             </div>
                           )}
-                        {/* Uploaded PDS/Resume */}
+                        {/* Document Being Used */}
                         <div className="border-t my-4" />
-                        <div className="flex items-center gap-2 mb-2">
-                          <Upload className="h-4 w-4 text-blue-400" />
+                        <div className="flex items-center gap-2 mb-3">
+                          <Upload className="h-4 w-4 text-blue-600" />
                           <span className="font-semibold text-blue-900">
-                            Uploaded Documents
+                            Document for Application
                           </span>
                         </div>
-                        <div className="text-xs text-gray-700 mb-2">
-                          The PDS or resume you upload will be used in your
-                          application.
-                        </div>
-                        <div className="flex flex-col gap-1 text-xs">
-                          {user.pdsFile && (
-                            <div>
-                              <span className="font-medium">PDS:</span>{' '}
-                              <a
-                                href={getPdsDownloadUrl(user.pdsFile)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 underline">
-                                View Uploaded PDS
-                              </a>
+
+                        {(() => {
+                          const isGovernmentJob =
+                            job?.companyId?.isGovernment || false;
+                          const pdsDoc = documents.find(
+                            doc => doc.type === 'pds'
+                          );
+                          const resumeDoc = documents.find(
+                            doc => doc.type === 'resume'
+                          );
+                          const docToUse = isGovernmentJob ? pdsDoc : resumeDoc;
+                          const docType = isGovernmentJob ? 'PDS' : 'Resume/CV';
+
+                          if (!docToUse) {
+                            return (
+                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-3">
+                                <div className="flex items-start gap-2">
+                                  <AlertCircle className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+                                  <div className="text-xs">
+                                    <p className="font-semibold text-orange-900 mb-1">
+                                      {docType} Required
+                                    </p>
+                                    <p className="text-orange-700">
+                                      This {isGovernmentJob ? 'government' : ''}{' '}
+                                      position requires a {docType}.{' '}
+                                      <Link
+                                        href="/dashboard/applicant/documents"
+                                        className="text-orange-900 underline font-medium">
+                                        Upload your {docType} →
+                                      </Link>
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-3">
+                              {/* Info Banner */}
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div className="flex items-start gap-2">
+                                  <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                                  <div className="text-xs">
+                                    <p className="font-semibold text-blue-900 mb-1">
+                                      {isGovernmentJob
+                                        ? '🏛️ Government Position'
+                                        : '💼 Private Sector Position'}
+                                    </p>
+                                    <p className="text-blue-700">
+                                      Your <strong>{docType}</strong> will be
+                                      submitted with this application.
+                                      {isGovernmentJob
+                                        ? ' Government jobs require PDS (Personal Data Sheet).'
+                                        : ' You can also upload your PDS as optional supporting document.'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Document Card */}
+                              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div
+                                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                        isGovernmentJob
+                                          ? 'bg-blue-100'
+                                          : 'bg-green-100'
+                                      }`}>
+                                      {isGovernmentJob ? (
+                                        <FileText className="h-5 w-5 text-blue-600" />
+                                      ) : (
+                                        <Briefcase className="h-5 w-5 text-green-600" />
+                                      )}
+                                    </div>
+                                    <div>
+                                      <h4 className="text-sm font-semibold text-gray-900">
+                                        {docType}
+                                      </h4>
+                                      <p className="text-xs text-gray-500">
+                                        {docToUse.title ||
+                                          `${docType} Document`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    className={`${
+                                      isGovernmentJob
+                                        ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                        : 'bg-green-100 text-green-700 border-green-200'
+                                    }`}>
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Will be used
+                                  </Badge>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => {
+                                      window.open(
+                                        getFileDownloadUrl(docToUse.fileUrl),
+                                        '_blank'
+                                      );
+                                    }}>
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Download Raw
+                                  </Button>
+
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs"
+                                    onClick={() => {
+                                      window.open(
+                                        getFileDownloadUrl(docToUse.fileUrl),
+                                        '_blank'
+                                      );
+                                    }}>
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View Raw PDF
+                                  </Button>
+
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    size="sm"
+                                    className="text-xs bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                                    onClick={async () => {
+                                      try {
+                                        toast.info(
+                                          'Loading ATS-compliant resume...'
+                                        );
+                                        const savedResume =
+                                          await documentAPI.getSavedResume(
+                                            docToUse._id
+                                          );
+                                        setResumeModal({
+                                          open: true,
+                                          data: savedResume.resume,
+                                          metadata: savedResume.metadata
+                                        });
+                                        toast.success(
+                                          'Resume loaded successfully!'
+                                        );
+                                      } catch (error: any) {
+                                        if (error.response?.status === 404) {
+                                          toast.info(
+                                            'Resume is still being processed by AI. Please wait a moment and try again.',
+                                            { duration: 5000 }
+                                          );
+                                        } else {
+                                          toast.error(
+                                            `Failed to load ATS-compliant resume: ${
+                                              error.response?.data?.message ||
+                                              error.message
+                                            }`
+                                          );
+                                        }
+                                      }
+                                    }}>
+                                    <Star className="h-3 w-3 mr-1" />
+                                    View ATS Resume
+                                  </Button>
+                                </div>
+
+                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                  <p className="text-xs text-gray-500">
+                                    <strong>Uploaded:</strong>{' '}
+                                    {new Date(
+                                      docToUse.createdAt
+                                    ).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Optional: Show other document if available */}
+                              {!isGovernmentJob && pdsDoc && (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                  <div className="flex items-start gap-2">
+                                    <Info className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                                    <div className="text-xs text-gray-600">
+                                      <p className="font-medium">
+                                        Optional: PDS Available
+                                      </p>
+                                      <p className="mt-1">
+                                        You also have a PDS on file which can be
+                                        included as supporting documentation.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {isGovernmentJob && resumeDoc && (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                  <div className="flex items-start gap-2">
+                                    <Info className="h-4 w-4 text-gray-500 mt-0.5 shrink-0" />
+                                    <div className="text-xs text-gray-600">
+                                      <p className="font-medium">
+                                        Optional: Resume/CV Available
+                                      </p>
+                                      <p className="mt-1">
+                                        You also have a Resume/CV on file which
+                                        can be included as supporting
+                                        documentation.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                          {resume && (
-                            <div>
-                              <span className="font-medium">Resume:</span>{' '}
-                              {resume.name}
-                            </div>
-                          )}
-                          {!user.pdsFile && !resume && (
-                            <div className="text-gray-400">
-                              No PDS or resume uploaded yet.
-                            </div>
-                          )}
-                        </div>
+                          );
+                        })()}
                         <div className="mt-6 flex justify-end">
                           <Button
                             variant="outline"
@@ -837,31 +1370,11 @@ export default function JobApplyPage() {
                         Application Form
                       </CardTitle>
                       <p className="text-sm text-gray-600">
-                        Upload your resume and add a cover letter
+                        Add a cover letter to strengthen your application
                       </p>
                     </CardHeader>
                     <CardContent className="p-6">
                       <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                          <Label className="block text-sm font-medium mb-2 flex items-center gap-2">
-                            <Upload className="h-4 w-4 text-blue-600" />
-                            Resume (PDF, DOCX)
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              onChange={handleResumeChange}
-                              ref={fileInputRef}
-                              className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                            />
-                            {resume && (
-                              <Badge className="bg-green-100 text-green-700">
-                                {resume.name}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
                         <div>
                           <Label className="block text-sm font-medium mb-2 flex items-center gap-2">
                             <FileText className="h-4 w-4 text-blue-600" />
@@ -923,6 +1436,16 @@ export default function JobApplyPage() {
           </div>
         </div>
       </main>
+
+      {/* Resume Modal */}
+      <ResumeModal
+        isOpen={resumeModal.open}
+        onClose={() =>
+          setResumeModal({ open: false, data: null, metadata: null })
+        }
+        resumeData={resumeModal.data}
+        metadata={resumeModal.metadata}
+      />
     </div>
   );
 }

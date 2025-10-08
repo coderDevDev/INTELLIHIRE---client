@@ -229,7 +229,10 @@ export function ResumeModal({
                   ATS-Compliant Resume
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-xs sm:text-sm text-gray-600">
-                  AI-generated resume from your PDS data •{' '}
+                  {metadata?.sourceType === 'uploaded_resume'
+                    ? '🤖 AI-optimized from your uploaded resume'
+                    : '🤖 AI-generated from your PDS data'}{' '}
+                  •{' '}
                   {metadata?.generatedAt
                     ? new Date(metadata.generatedAt).toLocaleDateString()
                     : 'Just now'}

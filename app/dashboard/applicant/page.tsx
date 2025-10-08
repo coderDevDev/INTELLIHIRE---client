@@ -29,7 +29,12 @@ import {
   RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
-import { authAPI, userAPI, applicationAPI } from '@/lib/api-service';
+import {
+  authAPI,
+  userAPI,
+  applicationAPI,
+  documentAPI
+} from '@/lib/api-service';
 import { useEffect, useState } from 'react';
 import { AIJobRecommendations } from '@/components/ai-job-recommendations';
 
@@ -37,6 +42,7 @@ export default function ApplicantDashboard() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [applications, setApplications] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     applications: 0,
@@ -57,25 +63,31 @@ export default function ApplicantDashboard() {
 
     setLoading(true);
     try {
-      // Fetch user profile and applications in parallel
-      const [profileData, applicationsData] = await Promise.all([
+      // Fetch user profile, applications, and documents in parallel
+      const [profileData, applicationsData, documentsData] = await Promise.all([
         userAPI.getUserById(user.id),
-        applicationAPI.getMyApplications()
+        applicationAPI.getMyApplications(),
+        documentAPI.getMyDocuments()
       ]);
 
       setProfile(profileData);
       setApplications(applicationsData.applications || []);
+      setDocuments(documentsData || []);
 
-      // Calculate statistics
-      const documents = [profileData.resumeFile, profileData.pdsFile].filter(
-        Boolean
-      ).length;
+      // Calculate statistics based on actual uploaded documents
+      const uploadedDocs = documentsData || [];
+      const hasPDS = uploadedDocs.some((doc: any) => doc.type === 'pds');
+      const hasResume = uploadedDocs.some((doc: any) => doc.type === 'resume');
+      const documentCount = (hasPDS ? 1 : 0) + (hasResume ? 1 : 0);
 
-      const profileCompletion = calculateProfileCompletion(profileData);
+      const profileCompletion = calculateProfileCompletion(profileData, {
+        hasPDS,
+        hasResume
+      });
 
       setStats({
         applications: applicationsData.applications?.length || 0,
-        documents,
+        documents: documentCount,
         matches: 0, // This would come from job matching service
         profileCompletion
       });
@@ -86,7 +98,10 @@ export default function ApplicantDashboard() {
     }
   };
 
-  const calculateProfileCompletion = (profileData: any) => {
+  const calculateProfileCompletion = (
+    profileData: any,
+    docs: { hasPDS: boolean; hasResume: boolean }
+  ) => {
     const fields = [
       profileData.firstName,
       profileData.lastName,
@@ -98,8 +113,8 @@ export default function ApplicantDashboard() {
       profileData.experience?.length > 0,
       profileData.education?.length > 0,
       profileData.certification?.length > 0,
-      profileData.pdsFile,
-      profileData.resumeFile
+      docs.hasPDS,
+      docs.hasResume
     ];
 
     const completedFields = fields.filter(Boolean).length;
@@ -206,10 +221,16 @@ export default function ApplicantDashboard() {
               : 'Incomplete'
         };
       case 'documents':
+        const hasPDS = documents.some(doc => doc.type === 'pds');
+        const hasResume = documents.some(doc => doc.type === 'resume');
+        const hasRequiredDocs = hasPDS && hasResume;
         return {
-          completed: !!(profile.pdsFile || profile.resumeFile),
-          label:
-            profile.pdsFile || profile.resumeFile ? 'Complete' : 'Incomplete'
+          completed: hasRequiredDocs,
+          label: hasRequiredDocs
+            ? 'Complete'
+            : hasPDS || hasResume
+            ? 'Partial'
+            : 'Incomplete'
         };
       default:
         return { completed: false, label: 'Incomplete' };
@@ -608,36 +629,45 @@ export default function ApplicantDashboard() {
                     const documentsStatus =
                       getProfileSectionStatus('documents');
                     return (
-                      <div
-                        className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
-                          documentsStatus.completed
-                            ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50'
-                            : 'bg-white/40 border-white/50 hover:bg-white/60'
-                        }`}>
-                        {documentsStatus.completed ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-gray-400" />
-                        )}
-                        <div>
-                          <p
-                            className={`text-sm font-medium ${
-                              documentsStatus.completed
-                                ? 'text-green-900'
-                                : 'text-gray-700'
-                            }`}>
-                            Documents
-                          </p>
-                          <p
-                            className={`text-xs ${
-                              documentsStatus.completed
-                                ? 'text-green-700'
-                                : 'text-gray-500'
-                            }`}>
-                            {documentsStatus.label}
-                          </p>
+                      <Link href="/dashboard/applicant/documents">
+                        <div
+                          className={`flex items-center gap-3 p-3 rounded-xl border backdrop-blur-sm transition-all duration-300 cursor-pointer ${
+                            documentsStatus.completed
+                              ? 'bg-green-50/80 border-green-200/50 hover:bg-green-50 hover:scale-[1.02]'
+                              : 'bg-white/40 border-white/50 hover:bg-white/60 hover:shadow-md hover:scale-[1.02]'
+                          }`}>
+                          {documentsStatus.completed ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-orange-500" />
+                          )}
+                          <div className="flex-1">
+                            <p
+                              className={`text-sm font-medium ${
+                                documentsStatus.completed
+                                  ? 'text-green-900'
+                                  : 'text-gray-700'
+                              }`}>
+                              Documents (PDS & Resume)
+                            </p>
+                            <p
+                              className={`text-xs ${
+                                documentsStatus.completed
+                                  ? 'text-green-700'
+                                  : documentsStatus.label === 'Partial'
+                                  ? 'text-orange-600'
+                                  : 'text-gray-500'
+                              }`}>
+                              {documentsStatus.label === 'Incomplete'
+                                ? 'Click to upload required documents'
+                                : documentsStatus.label === 'Partial'
+                                ? 'Upload missing document'
+                                : documentsStatus.label}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
                         </div>
-                      </div>
+                      </Link>
                     );
                   })()}
                 </div>

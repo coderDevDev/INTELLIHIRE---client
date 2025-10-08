@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { authAPI, userAPI } from '@/lib/api-service';
+import { authAPI, userAPI, documentAPI } from '@/lib/api-service';
+import Link from 'next/link';
 import {
   Mail,
   Phone,
@@ -36,7 +37,11 @@ import {
   Clock,
   Globe,
   Shield,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  ArrowRight,
+  FileSpreadsheet,
+  ExternalLink
 } from 'lucide-react';
 import {
   Tooltip,
@@ -80,6 +85,7 @@ export default function ApplicantProfilePage() {
   const [avatar, setAvatar] = useState<string>(DEFAULT_AVATAR);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [experience, setExperience] = useState<any[]>([]);
   const [showExpModal, setShowExpModal] = useState(false);
   const [editingExp, setEditingExp] = useState<any | null>(null);
@@ -120,14 +126,25 @@ export default function ApplicantProfilePage() {
       if (!user?.id) return;
       setLoading(true);
       try {
-        const data = await userAPI.getUserById(user.id);
-        setProfile(data);
-        setAvatar(data.profilePicture || DEFAULT_AVATAR);
-        setExperience(Array.isArray(data.experience) ? data.experience : []);
-        setEducation(Array.isArray(data.education) ? data.education : []);
-        setCertification(
-          Array.isArray(data.certification) ? data.certification : []
+        const [profileData, documentsData] = await Promise.all([
+          userAPI.getUserById(user.id),
+          documentAPI.getMyDocuments()
+        ]);
+
+        setProfile(profileData);
+        setAvatar(profileData.profilePicture || DEFAULT_AVATAR);
+        setExperience(
+          Array.isArray(profileData.experience) ? profileData.experience : []
         );
+        setEducation(
+          Array.isArray(profileData.education) ? profileData.education : []
+        );
+        setCertification(
+          Array.isArray(profileData.certification)
+            ? profileData.certification
+            : []
+        );
+        setDocuments(documentsData || []);
       } catch (err) {
         toast.error('Failed to load profile');
       } finally {
@@ -209,7 +226,10 @@ export default function ApplicantProfilePage() {
       )
     : '-';
 
-  // Calculate profile completion percentage
+  // Calculate profile completion percentage based on uploaded documents
+  const hasPDS = documents.some(doc => doc.type === 'pds');
+  const hasResume = documents.some(doc => doc.type === 'resume');
+
   const profileFields = [
     profile.firstName,
     profile.lastName,
@@ -221,7 +241,8 @@ export default function ApplicantProfilePage() {
     experience.length > 0,
     education.length > 0,
     certification.length > 0,
-    profile.pdsFile
+    hasPDS,
+    hasResume
   ];
   const completedFields = profileFields.filter(Boolean).length;
   const completionPercentage = Math.round(
@@ -628,47 +649,105 @@ export default function ApplicantProfilePage() {
               {/* Documents Card */}
               <Card className="border-0 shadow-md">
                 <CardHeader>
-                  <CardTitle className="text-lg">Documents</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Resume Download */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-brand-blue" />
-                      <div>
-                        <p className="font-medium text-sm">Resume</p>
-                        <p className="text-xs text-gray-500">
-                          Download your resume
-                        </p>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Documents</CardTitle>
                     <Button variant="outline" size="sm" asChild>
-                      <a href={user?.resume || '#'} download={!!user?.resume}>
-                        <Download className="h-4 w-4" />
-                      </a>
+                      <Link href="/dashboard/applicant/documents">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Manage
+                      </Link>
                     </Button>
                   </div>
-
-                  {/* PDS Template */}
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="font-medium text-sm">PDS Template</p>
-                        <p className="text-xs text-gray-500">
-                          Download template
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Document Status Alert */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-900 mb-1">
+                          Upload Required Documents
                         </p>
+                        <p className="text-xs text-blue-700 mb-3">
+                          You need to upload both PDS and Resume to apply for
+                          jobs. Government jobs require PDS, while private
+                          sector jobs require Resume/CV.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="bg-white">
+                          <Link href="/dashboard/applicant/documents">
+                            <ArrowRight className="h-3 w-3 mr-2" />
+                            Go to Documents Page
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <a
-                        href="https://lto.gov.ph/wp-content/uploads/2023/11/CS_Form_No._212_Revised-2017_Personal-Data-Sheet.pdf"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download>
-                        <Download className="h-4 w-4" />
-                      </a>
-                    </Button>
+                  </div>
+
+                  {/* PDS Templates */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-semibold text-gray-700">
+                        PDS Templates
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/dashboard/applicant/pds-template">
+                          View All
+                          <ExternalLink className="h-3 w-3 ml-2" />
+                        </Link>
+                      </Button>
+                    </div>
+
+                    {/* PDF Version */}
+                    <div className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-red-600" />
+                        <div>
+                          <p className="font-medium text-sm text-gray-900">
+                            PDF Version
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            CS Form 212 (2017)
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href="https://lto.gov.ph/wp-content/uploads/2023/11/CS_Form_No._212_Revised-2017_Personal-Data-Sheet.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+
+                    {/* Excel Version */}
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-100 rounded-lg hover:bg-green-100 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <FileSpreadsheet className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-sm text-gray-900">
+                            Excel Version
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            CS Form 212 (2025)
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href="https://csc.gov.ph/downloads/category/540-csc-form-212-revised-2025-personal-data-sheet?download=3404:cs-form-no-212-revised-2025-personal-data-sheet"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
 
                   {/* PDS Upload */}

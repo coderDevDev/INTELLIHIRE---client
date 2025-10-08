@@ -42,7 +42,9 @@ import {
   BookOpen,
   Target,
   Award,
-  Heart
+  Heart,
+  FileSpreadsheet,
+  ArrowRight
 } from 'lucide-react';
 import {
   Tooltip,
@@ -937,6 +939,117 @@ export default function DocumentsPage() {
                             className="text-red-500 hover:text-red-700">
                             <Trash2 className="h-4 w-4" />
                           </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              try {
+                                const resumeDoc = documents.find(
+                                  doc => doc.type === 'resume'
+                                );
+                                if (resumeDoc) {
+                                  console.log(
+                                    'Resume Document found:',
+                                    resumeDoc
+                                  );
+                                  console.log('Document ID:', resumeDoc.id);
+                                  console.log(
+                                    'Document source:',
+                                    resumeDoc.source
+                                  );
+
+                                  // Check if this is a documents API document
+                                  if (resumeDoc.source === 'documents') {
+                                    toast.info(
+                                      'Loading ATS-compliant resume...'
+                                    );
+
+                                    try {
+                                      // Try to get existing saved resume
+                                      const savedResume =
+                                        await documentAPI.getSavedResume(
+                                          resumeDoc.id
+                                        );
+                                      console.log(
+                                        'Found saved resume:',
+                                        savedResume
+                                      );
+                                      console.log('Resume data structure:', {
+                                        hasResume: !!savedResume.resume,
+                                        hasMetadata: !!savedResume.metadata,
+                                        resumeKeys: savedResume.resume
+                                          ? Object.keys(savedResume.resume)
+                                          : [],
+                                        metadataKeys: savedResume.metadata
+                                          ? Object.keys(savedResume.metadata)
+                                          : []
+                                      });
+
+                                      // Open resume modal with saved data
+                                      console.log(
+                                        'Setting resume modal state...'
+                                      );
+                                      setResumeModal({
+                                        open: true,
+                                        data: savedResume.resume,
+                                        metadata: savedResume.metadata
+                                      });
+                                      console.log('Resume modal state set:', {
+                                        open: true,
+                                        data: !!savedResume.resume,
+                                        metadata: !!savedResume.metadata
+                                      });
+
+                                      toast.success(
+                                        'ATS-compliant resume loaded successfully!'
+                                      );
+                                    } catch (savedResumeError: any) {
+                                      // If no saved resume found, it might still be processing
+                                      if (
+                                        savedResumeError.response?.status ===
+                                        404
+                                      ) {
+                                        console.log(
+                                          'No saved resume found yet. Resume might still be processing...'
+                                        );
+                                        toast.info(
+                                          'Resume is still being processed by AI. Please wait a moment and try again.',
+                                          { duration: 5000 }
+                                        );
+                                      } else {
+                                        throw savedResumeError;
+                                      }
+                                    }
+                                  } else {
+                                    toast.error(
+                                      'Please upload resume through the documents system first'
+                                    );
+                                  }
+                                } else {
+                                  toast.error('No resume document found');
+                                }
+                              } catch (error: any) {
+                                console.error(
+                                  'Error loading/viewing resume:',
+                                  error
+                                );
+                                console.error(
+                                  'Error details:',
+                                  error.response?.data
+                                );
+                                toast.error(
+                                  `Failed to load ATS-compliant resume: ${
+                                    error.response?.data?.message ||
+                                    error.message
+                                  }`
+                                );
+                              }
+                            }}
+                            className="text-blue-500 hover:text-blue-700">
+                            <FileUp className="h-4 w-4 mr-2" />
+                            View ATS Resume
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -1165,6 +1278,58 @@ export default function DocumentsPage() {
                 </CardContent>
               </Card>
 
+              {/* PDS Templates */}
+              <Card className="group hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg font-semibold">
+                      PDS Templates
+                    </CardTitle>
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href="/dashboard/applicant/pds-template">
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Download official CSC Form 212
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {/* PDF Template */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start bg-red-50 border-red-200 hover:bg-red-100 text-gray-900"
+                    asChild>
+                    <a
+                      href="https://lto.gov.ph/wp-content/uploads/2023/11/CS_Form_No._212_Revised-2017_Personal-Data-Sheet.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download>
+                      <FileText className="h-4 w-4 mr-2 text-red-600" />
+                      PDF Template (2017)
+                      <Download className="h-4 w-4 ml-auto" />
+                    </a>
+                  </Button>
+
+                  {/* Excel Template */}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start bg-green-50 border-green-200 hover:bg-green-100 text-gray-900"
+                    asChild>
+                    <a
+                      href="https://csc.gov.ph/downloads/category/540-csc-form-212-revised-2025-personal-data-sheet?download=3404:cs-form-no-212-revised-2025-personal-data-sheet"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download>
+                      <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                      Excel Template (2025)
+                      <Download className="h-4 w-4 ml-auto" />
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Quick Actions */}
               <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
                 <CardHeader>
@@ -1173,19 +1338,6 @@ export default function DocumentsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    asChild>
-                    <a
-                      href="https://lto.gov.ph/wp-content/uploads/2023/11/CS_Form_No._212_Revised-2017_Personal-Data-Sheet.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer">
-                      <Download className="h-4 w-4 mr-2" />
-                      Download PDS Template
-                      <ExternalLink className="h-4 w-4 ml-auto" />
-                    </a>
-                  </Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -1202,6 +1354,16 @@ export default function DocumentsPage() {
                     <Link href="/jobs">
                       <Briefcase className="h-4 w-4 mr-2" />
                       Browse Jobs
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild>
+                    <Link href="/dashboard/applicant/pds-template">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View PDS Templates
+                      <ArrowRight className="h-4 w-4 ml-auto" />
                     </Link>
                   </Button>
                 </CardContent>

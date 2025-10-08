@@ -571,7 +571,7 @@ export default function AdminApplicantsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="hover:bg-purple-100 hover:text-purple-700 transition-colors"
+                                  className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
                                   asChild>
                                   <Link
                                     href={`/dashboard/admin/ranking?jobId=${applicant.jobId._id}`}>

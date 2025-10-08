@@ -357,6 +357,52 @@
   @apply bg-gray-400;
 }
 
+/* Sidebar Transitions */
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.sidebar-enter {
+  animation: slideInFromLeft 0.3s ease-out forwards;
+}
+
+.sidebar-exit {
+  animation: slideOutToLeft 0.3s ease-out forwards;
+}
+
+/* Smooth width transitions for sidebar collapse */
+.sidebar-transition {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced focus ring for accessibility */
+.focus-visible-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white;
+}
+
+/* Skip to main content link for accessibility */
+.skip-link {
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-blue-600 focus:rounded-lg focus:shadow-lg;
+}
+
 /* Mobile-Specific Enhancements */
 @media (max-width: 768px) {
   /* Touch-friendly button sizes */

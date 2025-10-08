@@ -177,6 +177,7 @@ function ApplicantRankingPageContent() {
   const [resumeData, setResumeData] = useState<any>(null);
   const [resumeMetadata, setResumeMetadata] = useState<any>(null);
   const [loadingResume, setLoadingResume] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Status update form
   const [statusUpdateData, setStatusUpdateData] = useState({

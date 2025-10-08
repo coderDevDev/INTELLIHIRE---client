@@ -50,7 +50,8 @@ import {
   jobAPI,
   categoryAPI,
   authAPI,
-  applicationAPI
+  applicationAPI,
+  documentAPI
 } from '@/lib/api-service';
 // import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -65,6 +66,7 @@ interface Job {
     _id: string;
     name: string;
     logo?: string;
+    isGovernment?: boolean;
   };
   location: string;
   employmentType: string;
@@ -126,6 +128,7 @@ export function ModernJobsPage() {
   const [userApplications, setUserApplications] = useState<Set<string>>(
     new Set()
   );
+  const [userDocuments, setUserDocuments] = useState<any[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     category: [],
@@ -182,6 +185,17 @@ export function ModernJobsPage() {
           localStorage.getItem('recentlyViewedJobs') || '[]'
         );
         setRecentlyViewed(viewed.slice(0, 5));
+
+        // Load user documents if authenticated
+        if (authAPI.isAuthenticated()) {
+          try {
+            const docs = await documentAPI.getMyDocuments();
+            setUserDocuments(docs || []);
+          } catch (error) {
+            console.error('Error loading user documents:', error);
+            setUserDocuments([]);
+          }
+        }
 
         // Load AI-powered job recommendations
         try {
@@ -428,11 +442,54 @@ export function ModernJobsPage() {
     setSimilarJobs([]);
   };
 
-  const handleApplyNow = (job: Job) => {
+  const handleApplyNow = async (job: Job) => {
+    // Check if already applied
     if (userApplications.has(job._id)) {
       toast.error('You have already applied for this position');
       return;
     }
+
+    // Check if user is authenticated
+    if (!authAPI.isAuthenticated()) {
+      toast.error('Please login to apply for this job');
+      router.push(`/login?redirect=/jobs/${job._id}/apply`);
+      return;
+    }
+
+    // Check if required documents are uploaded
+    const isGovernmentJob = job.companyId?.isGovernment || false;
+    const hasPDS = userDocuments.some(doc => doc.type === 'pds');
+    const hasResume = userDocuments.some(doc => doc.type === 'resume');
+
+    if (isGovernmentJob && !hasPDS) {
+      toast.error(
+        'Government jobs require a PDS (Personal Data Sheet). Please upload your PDS first.',
+        {
+          action: {
+            label: 'Upload PDS',
+            onClick: () => router.push('/dashboard/applicant/documents')
+          },
+          duration: 6000
+        }
+      );
+      return;
+    }
+
+    if (!isGovernmentJob && !hasResume) {
+      toast.error(
+        'This job requires a Resume/CV. Please upload your resume first.',
+        {
+          action: {
+            label: 'Upload Resume',
+            onClick: () => router.push('/dashboard/applicant/documents')
+          },
+          duration: 6000
+        }
+      );
+      return;
+    }
+
+    // All checks passed, proceed to application
     closeJobDetails();
     router.push(`/jobs/${job._id}/apply`);
   };

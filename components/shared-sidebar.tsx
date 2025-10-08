@@ -66,7 +66,11 @@ import {
   Globe,
   Monitor,
   Smartphone,
-  Tablet
+  Tablet,
+  Menu,
+  X,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -84,6 +88,8 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
   const [user, setUser] = useState<any>(null);
   const [notifications, setNotifications] = useState(0);
   const [systemStatus, setSystemStatus] = useState('operational');
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
@@ -97,7 +103,22 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
     } else {
       setNotifications(2);
     }
-  }, [role]);
+
+    // Handle keyboard navigation
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileOpen) {
+        setIsMobileOpen(false);
+      }
+      // Toggle sidebar with Ctrl/Cmd + B
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        setIsCollapsed(!isCollapsed);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [role, isMobileOpen, isCollapsed]);
 
   // Admin routes
   const adminRoutes = [
@@ -167,28 +188,28 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
     //   active: pathname === '/dashboard/admin/pds-templates',
     //   description: 'Download PDS templates'
     // },
-    {
-      label: 'Messages',
-      icon: MessageSquare,
-      href: '/dashboard/admin/messages',
-      active: pathname === '/dashboard/admin/messages',
-      description: 'Communications',
-      badge: notifications.toString()
-    },
+    // {
+    //   label: 'Messages',
+    //   icon: MessageSquare,
+    //   href: '/dashboard/admin/messages',
+    //   active: pathname === '/dashboard/admin/messages',
+    //   description: 'Communications',
+    //   badge: notifications.toString()
+    // },
     {
       label: 'Analytics',
       icon: BarChart,
       href: '/dashboard/admin/analytics',
       active: pathname === '/dashboard/admin/analytics',
       description: 'System analytics'
-    },
-    {
-      label: 'Settings',
-      icon: Settings,
-      href: '/dashboard/admin/settings',
-      active: pathname === '/dashboard/admin/settings',
-      description: 'System settings'
     }
+    // {
+    //   label: 'Settings',
+    //   icon: Settings,
+    //   href: '/dashboard/admin/settings',
+    //   active: pathname === '/dashboard/admin/settings',
+    //   description: 'System settings'
+    // }
   ];
 
   // Applicant routes
@@ -212,8 +233,8 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       icon: Briefcase,
       href: '/dashboard/applicant/applications',
       active: pathname === '/dashboard/applicant/applications',
-      description: 'Track applications',
-      badge: '3'
+      description: 'Track applications'
+      // badge: '3'
     },
     {
       label: 'Documents',
@@ -236,14 +257,14 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       href: '/dashboard/applicant/career-path',
       active: pathname === '/dashboard/applicant/career-path',
       description: 'Career predictions'
-    },
-    {
-      label: 'Success Prediction',
-      icon: Target,
-      href: '/dashboard/applicant/success-prediction',
-      active: pathname === '/dashboard/applicant/success-prediction',
-      description: 'Application success rate'
     }
+    // {
+    //   label: 'Success Prediction',
+    //   icon: Target,
+    //   href: '/dashboard/applicant/success-prediction',
+    //   active: pathname === '/dashboard/applicant/success-prediction',
+    //   description: 'Application success rate'
+    // }
     // {
     //   label: 'Job Matches',
     //   icon: Search,
@@ -282,16 +303,16 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       icon: Briefcase,
       href: '/dashboard/employer/jobs',
       active: pathname === '/dashboard/employer/jobs',
-      description: 'Manage job postings',
-      badge: '8'
+      description: 'Manage job postings'
+      // badge: '8'
     },
     {
       label: 'Applications',
       icon: Users,
       href: '/dashboard/employer/applications',
       active: pathname === '/dashboard/employer/applications',
-      description: 'Review applications',
-      badge: '24'
+      description: 'Review applications'
+      // badge: '24'
     },
     {
       label: 'Applicant Ranking',
@@ -319,8 +340,8 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       icon: MessageSquare,
       href: '/dashboard/employer/messages',
       active: pathname === '/dashboard/employer/messages',
-      description: 'Communications',
-      badge: notifications.toString()
+      description: 'Communications'
+      // badge: notifications.toString()
     },
     {
       label: 'Analytics',
@@ -363,24 +384,24 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       ];
     } else if (role === 'applicant') {
       return [
-        {
-          label: 'Resume Conversion',
-          icon: FileCheck,
-          href: '/dashboard/applicant/resume-conversion',
-          active: pathname === '/dashboard/applicant/resume-conversion'
-        },
-        {
-          label: 'Settings',
-          icon: Settings,
-          href: '/dashboard/applicant/settings',
-          active: pathname === '/dashboard/applicant/settings'
-        },
-        {
-          label: 'Help & Support',
-          icon: HelpCircle,
-          href: '/dashboard/applicant/help',
-          active: pathname === '/dashboard/applicant/help'
-        }
+        // {
+        //   label: 'Resume Conversion',
+        //   icon: FileCheck,
+        //   href: '/dashboard/applicant/resume-conversion',
+        //   active: pathname === '/dashboard/applicant/resume-conversion'
+        // },
+        // {
+        //   label: 'Settings',
+        //   icon: Settings,
+        //   href: '/dashboard/applicant/settings',
+        //   active: pathname === '/dashboard/applicant/settings'
+        // },
+        // {
+        //   label: 'Help & Support',
+        //   icon: HelpCircle,
+        //   href: '/dashboard/applicant/help',
+        //   active: pathname === '/dashboard/applicant/help'
+        // }
       ];
     } else {
       return [
@@ -457,278 +478,361 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-80 bg-white/90 backdrop-blur-xl border-r border-white/50 shadow-xl relative overflow-hidden">
-      {/* Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-40 h-40 bg-blue-300/10 rounded-full blur-3xl animate-float"></div>
-        <div
-          className="absolute top-32 left-10 w-32 h-32 bg-purple-300/8 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: '2s' }}></div>
-        <div
-          className="absolute bottom-20 right-20 w-36 h-36 bg-pink-300/6 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: '4s' }}></div>
-        <div
-          className="absolute bottom-40 left-20 w-28 h-28 bg-green-300/5 rounded-full blur-3xl animate-float"
-          style={{ animationDelay: '6s' }}></div>
-      </div>
+    <>
+      {/* Mobile Menu Toggle Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="fixed top-4 left-4 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-0 shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300"
+        aria-label="Toggle mobile menu"
+        aria-expanded={isMobileOpen}>
+        {isMobileOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
+      </Button>
 
-      {/* Header */}
-      <div className="p-6 border-b border-white/50 relative z-10">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-            <Briefcase className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <span className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-              InteliHire
-            </span>
-            <p className="text-sm text-gray-500 font-medium">
-              {getRoleTitle()}
-            </p>
-          </div>
-        </Link>
-      </div>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setIsMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* User Profile Section */}
-      {(role === 'applicant' || role === 'employer') && (
-        <div className="p-6 border-b border-white/50 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'flex flex-col h-full bg-white/90 backdrop-blur-xl border-r border-white/50 shadow-xl relative overflow-hidden transition-all duration-300 ease-in-out',
+          // Desktop behavior
+          'hidden lg:flex',
+          isCollapsed ? 'lg:w-20' : 'lg:w-80',
+          // Mobile behavior
+          'lg:relative lg:translate-x-0',
+          // Mobile menu
+          'fixed inset-y-0 left-0 z-40',
+          isMobileOpen ? 'translate-x-0 w-80' : '-translate-x-full w-0'
+        )}
+        role="navigation"
+        aria-label={`${getRoleTitle()} navigation`}>
+        {/* Header */}
+        <div className="p-6 border-b border-white/50 relative z-10 flex items-center justify-between">
+          <Link
+            href="/"
+            className={cn(
+              'flex items-center gap-3 group',
+              isCollapsed && 'justify-center w-full'
+            )}>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 shrink-0">
+              <Briefcase className="h-7 w-7 text-white" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate text-lg">
-                {user?.firstName
-                  ? `${user.firstName} ${user.lastName}`
-                  : 'User'}
-              </p>
-              <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+            {!isCollapsed && (
+              <div className="transition-opacity duration-300">
+                <span className="font-bold text-2xl bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  InteliHire
+                </span>
+                <p className="text-sm text-gray-500 font-medium">
+                  {getRoleTitle()}
+                </p>
+              </div>
+            )}
+          </Link>
+
+          {/* Desktop Collapse Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className={cn(
+              'hidden lg:flex shrink-0 h-8 w-8 bg-white/60 border-0 hover:bg-white/80 hover:scale-110 transition-all duration-300',
+              isCollapsed && 'absolute top-6 right-6'
+            )}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+            {isCollapsed ? (
+              <ChevronsRight className="h-4 w-4" />
+            ) : (
+              <ChevronsLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* User Profile Section */}
+        {(role === 'applicant' || role === 'employer') && !isCollapsed && (
+          <div className="p-6 border-b border-white/50 relative z-10 transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0">
+                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 truncate text-lg">
+                  {user?.firstName
+                    ? `${user.firstName} ${user.lastName}`
+                    : 'User'}
+                </p>
+                <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+              </div>
+              {/* <Button
+                variant="ghost"
+                size="sm"
+                className="relative bg-white/60 backdrop-blur-sm border-0 hover:bg-white/80 hover:scale-110 transition-all duration-300 shrink-0">
+                <Bell className="h-5 w-5" />
+                {notifications > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">
+                    {notifications}
+                  </Badge>
+                )}
+              </Button> */}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative bg-white/60 backdrop-blur-sm hover:bg-white/80">
-              <Bell className="h-5 w-5" />
-              {notifications > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">
+
+            {/* Profile Completion */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Profile Completion
+                </span>
+                <span className="text-sm text-gray-500 font-semibold">
+                  {getProfileCompletion()}%
+                </span>
+              </div>
+              <div className="w-full bg-white/60 backdrop-blur-sm rounded-full h-3 shadow-inner">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-md"
+                  style={{ width: `${getProfileCompletion()}%` }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Collapsed User Profile */}
+        {(role === 'applicant' || role === 'employer') && isCollapsed && (
+          <div className="p-3 border-b border-white/50 relative z-10 flex justify-center">
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg cursor-pointer hover:scale-110 transition-transform">
+                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              </div>
+              {/* {notifications > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-[10px] bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">
                   {notifications}
                 </Badge>
-              )}
-            </Button>
-          </div>
-
-          {/* Profile Completion */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Profile Completion
-              </span>
-              <span className="text-sm text-gray-500 font-semibold">
-                {getProfileCompletion()}%
-              </span>
-            </div>
-            <div className="w-full bg-white/60 backdrop-blur-sm rounded-full h-3 border border-white/50">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm"
-                style={{ width: `${getProfileCompletion()}%` }}></div>
+              )} */}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Admin Status Section */}
-      {role === 'admin' && (
-        <div className="p-6 border-b border-white/50 relative z-10">
-          <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/50">
-            <div className="flex items-center gap-2">
-              {getSystemStatusIcon()}
-              <span className={`text-sm font-medium ${getSystemStatusColor()}`}>
-                System {systemStatus}
-              </span>
-            </div>
-            <div className="ml-auto text-xs text-gray-500">
-              All systems operational
+        {/* Admin Status Section */}
+        {role === 'admin' && !isCollapsed && (
+          <div className="p-6 border-b border-white/50 relative z-10 transition-all duration-300">
+            <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                {getSystemStatusIcon()}
+                <span
+                  className={`text-sm font-medium ${getSystemStatusColor()}`}>
+                  System {systemStatus}
+                </span>
+              </div>
+              <div className="ml-auto text-xs text-gray-500">
+                All systems operational
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Navigation */}
-      <div className="flex-1 py-4 overflow-auto relative z-10">
-        <nav className="space-y-1 px-4">
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-              Main Navigation
-            </h3>
-            {routes.map(route => (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  'group flex items-center gap-4 rounded-xl px-4 py-4 text-sm font-medium transition-all duration-300 relative overflow-hidden',
-                  route.active
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-[1.02]'
-                    : 'text-gray-700 hover:bg-white/60 hover:text-gray-900 hover:shadow-md backdrop-blur-sm hover:scale-[1.01]'
-                )}>
-                <div
+        {/* Collapsed Admin Status */}
+        {role === 'admin' && isCollapsed && (
+          <div className="p-3 border-b border-white/50 relative z-10 flex justify-center">
+            <div className="cursor-pointer">{getSystemStatusIcon()}</div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex-1 py-4 overflow-auto relative z-10 custom-scrollbar">
+          <nav className={cn('space-y-1', isCollapsed ? 'px-2' : 'px-4')}>
+            <div className="mb-6">
+              {routes.map(route => (
+                <Link
+                  key={route.href}
+                  href={route.href}
                   className={cn(
-                    'flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300',
+                    'group flex items-center rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden',
+                    isCollapsed ? 'justify-center p-3 my-2' : 'gap-4 px-4 py-3',
                     route.active
-                      ? 'bg-white/20 text-white shadow-md'
-                      : 'bg-white/60 backdrop-blur-sm text-gray-600 group-hover:bg-blue-500 group-hover:text-white group-hover:shadow-md'
-                  )}>
-                  <route.icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-semibold">
-                      {route.label}
-                    </span>
-                    {route.badge && (
-                      <Badge
-                        variant={route.active ? 'secondary' : 'default'}
-                        className={cn(
-                          'ml-auto text-xs font-semibold',
-                          route.active
-                            ? 'bg-white/20 text-white border-white/30'
-                            : 'bg-blue-100 text-blue-600 border-blue-200'
-                        )}>
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-[1.02]'
+                      : 'text-gray-700 hover:bg-white/60 hover:text-gray-900 backdrop-blur-sm hover:scale-[1.01]'
+                  )}
+                  onClick={() => setIsMobileOpen(false)}
+                  aria-label={route.label}
+                  aria-current={route.active ? 'page' : undefined}>
+                  <div
+                    className={cn(
+                      'flex items-center justify-center rounded-xl transition-all duration-300 shrink-0',
+                      isCollapsed ? 'w-10 h-10' : 'w-10 h-10',
+                      route.active
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/60 backdrop-blur-sm text-gray-600 group-hover:bg-blue-500 group-hover:text-white'
+                    )}>
+                    <route.icon className="h-5 w-5" />
+                    {route.badge && isCollapsed && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-[10px] bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg">
                         {route.badge}
                       </Badge>
                     )}
                   </div>
-                  {route.description && (
-                    <p
-                      className={cn(
-                        'text-xs truncate mt-1',
-                        route.active ? 'text-blue-100' : 'text-gray-500'
-                      )}>
-                      {route.description}
-                    </p>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-semibold">
+                          {route.label}
+                        </span>
+                        {route.badge && (
+                          <Badge
+                            variant={route.active ? 'secondary' : 'default'}
+                            className={cn(
+                              'ml-auto text-xs font-semibold',
+                              route.active
+                                ? 'bg-white/20 text-white border-0'
+                                : 'bg-blue-100 text-blue-600 border-0'
+                            )}>
+                            {route.badge}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   )}
-                </div>
-                {role === 'applicant' && (
-                  <ChevronRight
-                    className={cn(
-                      'h-4 w-4 transition-transform duration-300',
-                      route.active
-                        ? 'text-white'
-                        : 'text-gray-400 group-hover:text-gray-600'
-                    )}
-                  />
-                )}
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
 
-          <Separator className="my-6 bg-white/50" />
+            <Separator className="my-8 bg-white/50" />
 
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-              {role === 'admin' ? 'System' : 'Account'}
-            </h3>
-            {secondaryRoutes.map(route => (
-              <Link
-                key={route.href}
-                href={route.href}
-                className={cn(
-                  'group flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300 relative overflow-hidden',
-                  route.active
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-white/60 hover:text-gray-900 hover:shadow-md backdrop-blur-sm'
-                )}>
-                <div
+            <div className="mb-6">
+              {secondaryRoutes.map(route => (
+                <Link
+                  key={route.href}
+                  href={route.href}
                   className={cn(
-                    'flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300',
+                    'group flex items-center rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden',
+                    isCollapsed ? 'justify-center p-3 my-2' : 'gap-4 px-4 py-3',
                     route.active
-                      ? 'bg-white/20 text-white'
-                      : 'bg-white/60 backdrop-blur-sm text-gray-600 group-hover:bg-blue-500 group-hover:text-white'
-                  )}>
-                  <route.icon className="h-4 w-4" />
-                </div>
-                <span className="truncate">{route.label}</span>
-              </Link>
-            ))}
-          </div>
-        </nav>
-      </div>
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-white/60 hover:text-gray-900 backdrop-blur-sm'
+                  )}
+                  onClick={() => setIsMobileOpen(false)}
+                  aria-label={route.label}
+                  aria-current={route.active ? 'page' : undefined}>
+                  <div
+                    className={cn(
+                      'flex items-center justify-center rounded-lg transition-all duration-300 shrink-0',
+                      isCollapsed ? 'w-8 h-8' : 'w-8 h-8',
+                      route.active
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white/60 backdrop-blur-sm text-gray-600 group-hover:bg-blue-500 group-hover:text-white'
+                    )}>
+                    <route.icon className="h-4 w-4" />
+                  </div>
+                  {!isCollapsed && (
+                    <span className="truncate">{route.label}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </nav>
+        </div>
 
-      {/* Quick Actions for Applicant */}
-      {role === 'applicant' && (
-        <div className="p-4 border-t border-white/50 relative z-10">
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">
-              Quick Actions
-            </h3>
+        {/* Quick Actions for Applicant */}
+        {role === 'applicant' && !isCollapsed && (
+          <div className="p-4 border-t border-white/50 relative z-10 transition-all duration-300">
             <div className="grid grid-cols-2 gap-2">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 asChild
-                className="text-xs bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
-                <Link href="/jobs" className="flex items-center gap-1">
+                className="text-xs bg-white/60 backdrop-blur-sm border-0 hover:bg-white/80 hover:scale-[1.02] transition-all duration-300">
+                <Link
+                  href="/jobs"
+                  className="flex items-center gap-1"
+                  onClick={() => setIsMobileOpen(false)}>
                   <Search className="h-3 w-3" />
                   Find Jobs
                 </Link>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 asChild
-                className="text-xs bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
+                className="text-xs bg-white/60 backdrop-blur-sm border-0 hover:bg-white/80 hover:scale-[1.02] transition-all duration-300">
                 <Link
                   href="/dashboard/applicant/documents"
-                  className="flex items-center gap-1">
+                  className="flex items-center gap-1"
+                  onClick={() => setIsMobileOpen(false)}>
                   <FileText className="h-3 w-3" />
                   Documents
                 </Link>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 asChild
-                className="text-xs bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
+                className="text-xs bg-white/60 backdrop-blur-sm border-0 hover:bg-white/80 hover:scale-[1.02] transition-all duration-300">
                 <Link
                   href="/dashboard/applicant/pds-template"
-                  className="flex items-center gap-1">
+                  className="flex items-center gap-1"
+                  onClick={() => setIsMobileOpen(false)}>
                   <Download className="h-3 w-3" />
                   PDS Template
                 </Link>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 asChild
-                className="text-xs bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
+                className="text-xs bg-white/60 backdrop-blur-sm border-0 hover:bg-white/80 hover:scale-[1.02] transition-all duration-300">
                 <Link
                   href="/dashboard/applicant/profile"
-                  className="flex items-center gap-1">
+                  className="flex items-center gap-1"
+                  onClick={() => setIsMobileOpen(false)}>
                   <User className="h-3 w-3" />
                   Profile
                 </Link>
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Logout Button */}
-      <div className="p-6 border-t border-white/50 relative z-10">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 bg-white/60 backdrop-blur-sm hover:bg-white/80 hover:shadow-md transition-all duration-300 text-gray-700 hover:text-red-600 hover:bg-red-50/80"
-          asChild>
-          <Link href="/login">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Link>
-        </Button>
+        {/* Logout Button */}
+        <div
+          className={cn(
+            'border-t border-white/50 relative z-10 transition-all duration-300',
+            isCollapsed ? 'p-3' : 'p-6'
+          )}>
+          <Button
+            variant="ghost"
+            className={cn(
+              'bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 text-gray-700 hover:text-red-600 hover:bg-red-50/80',
+              isCollapsed
+                ? 'w-full justify-center p-3'
+                : 'w-full justify-start gap-3'
+            )}
+            asChild>
+            <Link
+              href="/login"
+              onClick={() => setIsMobileOpen(false)}
+              aria-label="Logout">
+              <LogOut className="h-4 w-4" />
+              {!isCollapsed && <span>Logout</span>}
+            </Link>
+          </Button>
 
-        {/* Version */}
-        <div className="text-xs text-gray-400 text-center mt-3 font-medium">
-          v1.0.0 • InteliHire
+          {/* Version */}
+          {!isCollapsed && (
+            <div className="text-xs text-gray-400 text-center mt-3 font-medium">
+              v1.0.0 • InteliHire
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
