@@ -44,6 +44,7 @@ Added `export const dynamic = 'force-dynamic'` to:
 ## 📋 Next Steps
 
 1. **Commit and push** these changes:
+
    ```bash
    git add .
    git commit -m "Add force-dynamic to skip static generation for dynamic routes"
