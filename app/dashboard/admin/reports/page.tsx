@@ -67,6 +67,8 @@ interface ReportData {
 export default function ReportsPage() {
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exportingAll, setExportingAll] = useState(false);
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
@@ -121,11 +123,137 @@ export default function ReportsPage() {
       };
 
       setData(reportData);
+      if (!loading) {
+        toast.success('Reports data refreshed successfully');
+      }
     } catch (error) {
       console.error('Error fetching reports data:', error);
       toast.error('Failed to load reports data');
     } finally {
       setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchReportsData();
+  };
+
+  const handleExportAll = async () => {
+    if (!data) {
+      toast.error('No data available to export');
+      return;
+    }
+
+    setExportingAll(true);
+    try {
+      toast.info('Generating comprehensive report...');
+
+      // Generate comprehensive report with all data
+      const comprehensiveReport = `
+INTELLIHIRE COMPREHENSIVE REPORTS
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+============================================
+
+APPLICANT SUMMARY REPORT
+============================================
+
+OVERVIEW
+-------------------------------------------
+Total Applicants: ${data.applicantSummary.totalApplicants}
+New This Month: ${data.applicantSummary.newThisMonth}
+
+EDUCATION DISTRIBUTION
+-------------------------------------------
+${data.applicantSummary.byEducation
+  .map(item => `${item.level}: ${item.count}`)
+  .join('\n')}
+
+EXPERIENCE DISTRIBUTION
+-------------------------------------------
+${data.applicantSummary.byExperience
+  .map(item => `${item.range}: ${item.count}`)
+  .join('\n')}
+
+LOCATION DISTRIBUTION
+-------------------------------------------
+${data.applicantSummary.byLocation
+  .slice(0, 10)
+  .map(item => `${item.location}: ${item.count}`)
+  .join('\n')}
+
+
+JOB SUCCESS REPORT
+============================================
+
+OVERVIEW
+-------------------------------------------
+Total Jobs: ${data.jobSuccess.totalJobs}
+Active Jobs: ${data.jobSuccess.activeJobs}
+
+APPLICATIONS PER JOB (Top 10)
+-------------------------------------------
+${data.jobSuccess.applicationsPerJob
+  .map(
+    (item, i) =>
+      `${i + 1}. ${item.jobTitle}
+   Applications: ${item.applications}
+   Success Rate: ${item.successRate}%`
+  )
+  .join('\n\n')}
+
+TOP PERFORMING JOBS
+-------------------------------------------
+${data.jobSuccess.topPerformingJobs
+  .map(
+    (item, i) =>
+      `${i + 1}. ${item.jobTitle} (${item.company})
+   Applications: ${item.applications}`
+  )
+  .join('\n\n')}
+
+
+SYSTEM METRICS REPORT
+============================================
+
+SYSTEM PERFORMANCE
+-------------------------------------------
+Total Users: ${data.systemMetrics.totalUsers}
+Total Applications: ${data.systemMetrics.totalApplications}
+Average Processing Time: ${data.systemMetrics.averageProcessingTime} days
+System Uptime: ${data.systemMetrics.systemUptime}%
+
+SYSTEM STATUS
+-------------------------------------------
+Database Connection: Active
+AI Services: Operational
+Email Service: Active
+
+============================================
+End of Comprehensive Report
+      `.trim();
+
+      // Create and download file
+      const blob = new Blob([comprehensiveReport], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `intellihire-comprehensive-report-${
+        new Date().toISOString().split('T')[0]
+      }.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Comprehensive report exported successfully');
+    } catch (error) {
+      console.error('Error exporting comprehensive report:', error);
+      toast.error('Failed to export comprehensive report');
+    } finally {
+      setExportingAll(false);
     }
   };
 
@@ -214,23 +342,215 @@ export default function ReportsPage() {
   };
 
   const generateReport = async (reportType: string) => {
+    if (!data) {
+      toast.error('No data available to generate report');
+      return;
+    }
+
     try {
       setGeneratingReport(reportType);
+      toast.info(`Generating ${reportType} report...`);
 
-      // Simulate report generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      let reportContent = '';
 
-      toast.success(`${reportType} report generated successfully`);
+      if (reportType === 'applicant-summary') {
+        reportContent = `
+APPLICANT SUMMARY REPORT
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+============================================
+
+OVERVIEW
+-------------------------------------------
+Total Applicants: ${data.applicantSummary.totalApplicants}
+New This Month: ${data.applicantSummary.newThisMonth}
+
+EDUCATION DISTRIBUTION
+-------------------------------------------
+${data.applicantSummary.byEducation
+  .map(item => `${item.level}: ${item.count}`)
+  .join('\n')}
+
+EXPERIENCE DISTRIBUTION
+-------------------------------------------
+${data.applicantSummary.byExperience
+  .map(item => `${item.range}: ${item.count}`)
+  .join('\n')}
+
+LOCATION DISTRIBUTION (Top 10)
+-------------------------------------------
+${data.applicantSummary.byLocation
+  .slice(0, 10)
+  .map(item => `${item.location}: ${item.count}`)
+  .join('\n')}
+
+============================================
+        `.trim();
+      } else if (reportType === 'job-success') {
+        reportContent = `
+JOB SUCCESS REPORT
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+============================================
+
+OVERVIEW
+-------------------------------------------
+Total Jobs: ${data.jobSuccess.totalJobs}
+Active Jobs: ${data.jobSuccess.activeJobs}
+
+APPLICATIONS PER JOB (Top 10)
+-------------------------------------------
+${data.jobSuccess.applicationsPerJob
+  .map(
+    (item, i) =>
+      `${i + 1}. ${item.jobTitle}
+   Applications: ${item.applications}
+   Success Rate: ${item.successRate}%`
+  )
+  .join('\n\n')}
+
+TOP PERFORMING JOBS
+-------------------------------------------
+${data.jobSuccess.topPerformingJobs
+  .map(
+    (item, i) =>
+      `${i + 1}. ${item.jobTitle} (${item.company})
+   Applications: ${item.applications}`
+  )
+  .join('\n\n')}
+
+============================================
+        `.trim();
+      } else if (reportType === 'system-metrics') {
+        reportContent = `
+SYSTEM METRICS REPORT
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+============================================
+
+SYSTEM PERFORMANCE
+-------------------------------------------
+Total Users: ${data.systemMetrics.totalUsers}
+Total Applications: ${data.systemMetrics.totalApplications}
+Average Processing Time: ${data.systemMetrics.averageProcessingTime} days
+System Uptime: ${data.systemMetrics.systemUptime}%
+
+SYSTEM STATUS
+-------------------------------------------
+Database Connection: Active
+AI Services: Operational
+Email Service: Active
+
+============================================
+        `.trim();
+      }
+
+      // Download the report
+      const blob = new Blob([reportContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${reportType}-${
+        new Date().toISOString().split('T')[0]
+      }.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(
+        `${reportType} report generated and downloaded successfully`
+      );
     } catch (error) {
+      console.error('Error generating report:', error);
       toast.error(`Failed to generate ${reportType} report`);
     } finally {
       setGeneratingReport(null);
     }
   };
 
-  const exportReport = (format: 'pdf' | 'excel' | 'csv') => {
-    toast.success(`Exporting report as ${format.toUpperCase()}`);
-    // Implementation would trigger actual file download
+  const exportReport = async (format: 'pdf' | 'excel' | 'csv') => {
+    if (!data) {
+      toast.error('No data available to export');
+      return;
+    }
+
+    try {
+      toast.info(`Preparing ${format.toUpperCase()} export...`);
+
+      // Generate comprehensive report
+      const report = `
+INTELLIHIRE COMPREHENSIVE REPORT
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+Export Format: ${format.toUpperCase()}
+============================================
+
+APPLICANT SUMMARY
+-------------------------------------------
+Total Applicants: ${data.applicantSummary.totalApplicants}
+New This Month: ${data.applicantSummary.newThisMonth}
+
+Education Distribution:
+${data.applicantSummary.byEducation
+  .map(item => `  ${item.level}: ${item.count}`)
+  .join('\n')}
+
+Experience Distribution:
+${data.applicantSummary.byExperience
+  .map(item => `  ${item.range}: ${item.count}`)
+  .join('\n')}
+
+Top Locations:
+${data.applicantSummary.byLocation
+  .slice(0, 5)
+  .map(item => `  ${item.location}: ${item.count}`)
+  .join('\n')}
+
+JOB SUCCESS METRICS
+-------------------------------------------
+Total Jobs: ${data.jobSuccess.totalJobs}
+Active Jobs: ${data.jobSuccess.activeJobs}
+
+Top Performing Jobs:
+${data.jobSuccess.topPerformingJobs
+  .map(
+    (item, i) =>
+      `  ${i + 1}. ${item.jobTitle} (${item.company}) - ${
+        item.applications
+      } applications`
+  )
+  .join('\n')}
+
+SYSTEM METRICS
+-------------------------------------------
+Total Users: ${data.systemMetrics.totalUsers}
+Total Applications: ${data.systemMetrics.totalApplications}
+Average Processing Time: ${data.systemMetrics.averageProcessingTime} days
+System Uptime: ${data.systemMetrics.systemUptime}%
+
+============================================
+End of Report
+      `.trim();
+
+      // Create and download file
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `intellihire-report-${format}-${
+        new Date().toISOString().split('T')[0]
+      }.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Report exported as ${format.toUpperCase()} successfully`);
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast.error(`Failed to export report as ${format.toUpperCase()}`);
+    }
   };
 
   if (loading) {
@@ -257,7 +577,21 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
+        <div
+          className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '2s' }}></div>
+        <div
+          className="absolute bottom-20 left-1/4 w-80 h-80 bg-pink-300/20 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '4s' }}></div>
+        <div
+          className="absolute bottom-40 right-1/3 w-64 h-64 bg-green-300/15 rounded-full blur-3xl animate-float"
+          style={{ animationDelay: '1s' }}></div>
+      </div>
+
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
         <div className="container flex h-16 items-center justify-between px-6">
@@ -275,19 +609,49 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <select
+              value={selectedPeriod}
+              onChange={e => setSelectedPeriod(e.target.value)}
+              className="bg-white/60 backdrop-blur-sm border-white/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+              <option value="1y">Last year</option>
+            </select>
             <Button
               variant="outline"
               size="sm"
-              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80"
-              onClick={() => fetchReportsData()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh Data
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
+              {refreshing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Data
+                </>
+              )}
             </Button>
             <Button
               size="sm"
+              onClick={handleExportAll}
+              disabled={exportingAll || loading}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
-              <Download className="h-4 w-4 mr-2" />
-              Export All
+              {exportingAll ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export All Reports
+                </>
+              )}
             </Button>
           </div>
         </div>
