@@ -150,7 +150,7 @@ export default function CareerPathPage() {
   const [insights, setInsights] = useState<CareerInsight[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLevel, setSelectedLevel] = useState('all');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('paths');
 
   // Check authentication and documents on component mount
   useEffect(() => {
@@ -615,13 +615,13 @@ export default function CareerPathPage() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button
+            {/* <Button
               size="sm"
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
               onClick={() => setActiveTab('goals')}>
               <Plus className="h-4 w-4 mr-2" />
               Set Goal
-            </Button>
+            </Button> */}
           </div>
         </div>
       </header>
@@ -676,7 +676,7 @@ export default function CareerPathPage() {
           )}
 
           {/* Career Overview Stats */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-700">
@@ -755,19 +755,19 @@ export default function CareerPathPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
 
           {/* Main Content Tabs */}
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 bg-white/60 backdrop-blur-sm border border-white/50 shadow-lg">
-              <TabsTrigger
+            <TabsList className="grid w-full grid-cols-1 bg-white/60 backdrop-blur-sm border border-white/50 shadow-lg">
+              {/* <TabsTrigger
                 value="overview"
                 className="data-[state=active]:bg-white/80">
                 Overview
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger
                 value="paths"
                 className="data-[state=active]:bg-white/80">
@@ -784,177 +784,6 @@ export default function CareerPathPage() {
                 Insights
               </TabsTrigger> */}
             </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid ">
-                {/* Recommended Career Paths */}
-                <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Star className="h-5 w-5 text-yellow-600" />
-                      Recommended for You
-                    </CardTitle>
-                    <CardDescription>
-                      Career paths that match your profile and goals
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {careerPaths
-                      .filter(path => path.isRecommended)
-                      .slice(0, 3)
-                      .map(path => (
-                        <div
-                          key={path._id}
-                          className="p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 shadow-sm hover:shadow-md transition-all duration-300">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold text-gray-900">
-                                {path.title}
-                              </h4>
-                              <p className="text-sm text-gray-600">
-                                {path.category}
-                              </p>
-                            </div>
-                            <Badge
-                              className={`text-xs ${getDifficultyColor(
-                                path.difficulty
-                              )}`}>
-                              {path.difficulty}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {path.estimatedDuration} months
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              {formatSalary(path.averageSalary)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <TrendingUp className="h-3 w-3" />
-                              {path.growthPotential}% growth
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Badge
-                              className={`text-xs ${getDemandColor(
-                                path.jobMarketDemand
-                              )}`}>
-                              {path.jobMarketDemand} Demand
-                            </Badge>
-                            <Button
-                              size="sm"
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                              onClick={() => handleStartCareerPath(path._id)}>
-                              Start Path
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                  </CardContent>
-                </Card>
-
-                {/* Career Goals Progress */}
-                {/* <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Target className="h-5 w-5 text-green-600" />
-                      Goal Progress
-                    </CardTitle>
-                    <CardDescription>
-                      Track your career goal achievements
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {userGoals.slice(0, 3).map(goal => (
-                      <div
-                        key={goal._id}
-                        className="p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 shadow-sm">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="font-semibold text-gray-900">
-                              {goal.title}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Target:{' '}
-                              {new Date(goal.targetDate).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={
-                              goal.status === 'Completed'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                            className="text-xs">
-                            {goal.status}
-                          </Badge>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Progress</span>
-                            <span className="font-medium text-gray-900">
-                              {goal.progress}%
-                            </span>
-                          </div>
-                          <Progress value={goal.progress} className="h-2" />
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card> */}
-              </div>
-
-              {/* Recent Insights */}
-              {/* <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5 text-orange-600" />
-                    Recent Insights
-                  </CardTitle>
-                  <CardDescription>
-                    Personalized career insights and recommendations
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {insights.slice(0, 4).map((insight, index) => (
-                      <div
-                        key={index}
-                        className="p-4 rounded-xl bg-white/40 backdrop-blur-sm border border-white/50 shadow-sm hover:shadow-md transition-all duration-300">
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`p-2 rounded-lg ${
-                              insight.impact === 'High'
-                                ? 'bg-red-100 text-red-600'
-                                : insight.impact === 'Medium'
-                                ? 'bg-yellow-100 text-yellow-600'
-                                : 'bg-green-100 text-green-600'
-                            }`}>
-                            {getInsightIcon(insight.type)}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900 mb-1">
-                              {insight.title}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {insight.description}
-                            </p>
-                            {insight.actionable && (
-                              <div className="text-xs text-blue-600 font-medium">
-                                💡 {insight.recommendation}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card> */}
-            </TabsContent>
 
             {/* Career Paths Tab */}
             <TabsContent value="paths" className="space-y-6">
