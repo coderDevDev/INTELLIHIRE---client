@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { jobAPI, categoryAPI, companyAPI } from '@/lib/api-service';
+
+// Required for static export
+export async function generateStaticParams() {
+  return [];
+}
 import { JobCardGrid, JobCard } from '@/components/job-card-grid';
 import { MainHeader } from '@/components/main-header';
 

@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+
+// Required for static export
+export async function generateStaticParams() {
+  return [];
+}
 import {
   Card,
   CardContent,

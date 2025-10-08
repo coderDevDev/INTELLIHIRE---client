@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { jobAPI, authAPI } from '@/lib/api-service';
+
+// Required for static export
+export async function generateStaticParams() {
+  return [];
+}
 import { MainHeader } from '@/components/main-header';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -34,7 +39,9 @@ export default function JobDetailsPage() {
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [hasApplied, setHasApplied] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(
+    null
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -51,7 +58,7 @@ export default function JobDetailsPage() {
 
   const checkApplicationStatus = async () => {
     if (!authAPI.isAuthenticated()) return;
-    
+
     try {
       const currentUser = authAPI.getCurrentUser();
       if (!currentUser?.id || !jobId) return;
@@ -251,17 +258,27 @@ export default function JobDetailsPage() {
                   </p>
                   {applicationStatus && (
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-sm text-green-600">Current Status:</span>
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
-                        applicationStatus === 'applied' ? 'bg-blue-100 text-blue-700' :
-                        applicationStatus === 'screening' ? 'bg-yellow-100 text-yellow-700' :
-                        applicationStatus === 'interview' ? 'bg-purple-100 text-purple-700' :
-                        applicationStatus === 'offered' ? 'bg-green-100 text-green-700' :
-                        applicationStatus === 'hired' ? 'bg-green-200 text-green-800' :
-                        applicationStatus === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {applicationStatus.charAt(0).toUpperCase() + applicationStatus.slice(1)}
+                      <span className="text-sm text-green-600">
+                        Current Status:
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                          applicationStatus === 'applied'
+                            ? 'bg-blue-100 text-blue-700'
+                            : applicationStatus === 'screening'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : applicationStatus === 'interview'
+                            ? 'bg-purple-100 text-purple-700'
+                            : applicationStatus === 'offered'
+                            ? 'bg-green-100 text-green-700'
+                            : applicationStatus === 'hired'
+                            ? 'bg-green-200 text-green-800'
+                            : applicationStatus === 'rejected'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                        {applicationStatus.charAt(0).toUpperCase() +
+                          applicationStatus.slice(1)}
                       </span>
                     </div>
                   )}

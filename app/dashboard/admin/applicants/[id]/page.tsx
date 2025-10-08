@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { userAPI, applicationAPI } from '@/lib/api-service';
+
+// Required for static export
+export async function generateStaticParams() {
+  // Return empty array for static export - pages will be generated on demand
+  return [];
+}
 import {
   Card,
   CardContent,
