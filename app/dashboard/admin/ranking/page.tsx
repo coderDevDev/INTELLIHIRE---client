@@ -178,6 +178,7 @@ function ApplicantRankingPageContent() {
   const [resumeMetadata, setResumeMetadata] = useState<any>(null);
   const [loadingResume, setLoadingResume] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [adjustingRanking, setAdjustingRanking] = useState(false);
 
   // Status update form
   const [statusUpdateData, setStatusUpdateData] = useState({
@@ -335,7 +336,10 @@ function ApplicantRankingPageContent() {
   const handleAdjustRanking = async () => {
     if (!selectedRanking) return;
 
+    setAdjustingRanking(true);
     try {
+      toast.info('Adjusting ranking...');
+
       const response = await applicantRankingAPI.adjustRanking(
         selectedRanking._id,
         adjustmentData
@@ -348,7 +352,9 @@ function ApplicantRankingPageContent() {
       }
     } catch (error) {
       console.error('Error adjusting ranking:', error);
-      toast.error('Failed to adjust ranking');
+      toast.error('Failed to adjust ranking. Please try again.');
+    } finally {
+      setAdjustingRanking(false);
     }
   };
 
@@ -561,7 +567,10 @@ function ApplicantRankingPageContent() {
   const handleStatusUpdate = async () => {
     if (!selectedRanking) return;
 
+    setUpdatingStatus(true);
     try {
+      toast.info('Updating application status...');
+
       // Update application status
       const applicationResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/applications/${selectedRanking.applicationId._id}/status`,
@@ -609,7 +618,7 @@ function ApplicantRankingPageContent() {
 
       if (rankingResponse.success) {
         toast.success(
-          'Status updated successfully - Applicant will be notified'
+          'Status updated successfully - Applicant will be notified via email'
         );
         setShowStatusModal(false);
         loadJobRankings();
@@ -618,7 +627,9 @@ function ApplicantRankingPageContent() {
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      toast.error('Failed to update status');
+      toast.error('Failed to update status. Please try again.');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -1562,6 +1573,7 @@ function ApplicantRankingPageContent() {
                         overallScore: parseInt(e.target.value) || 0
                       }))
                     }
+                    disabled={adjustingRanking}
                   />
                 </div>
 
@@ -1577,6 +1589,7 @@ function ApplicantRankingPageContent() {
                         manualAdjustmentReason: e.target.value
                       }))
                     }
+                    disabled={adjustingRanking}
                   />
                 </div>
 
@@ -1592,6 +1605,7 @@ function ApplicantRankingPageContent() {
                         adminNotes: e.target.value
                       }))
                     }
+                    disabled={adjustingRanking}
                   />
                 </div>
               </div>
@@ -1599,10 +1613,26 @@ function ApplicantRankingPageContent() {
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => setShowAdjustModal(false)}>
+                  onClick={() => setShowAdjustModal(false)}
+                  disabled={adjustingRanking}>
                   Cancel
                 </Button>
-                <Button onClick={handleAdjustRanking}>Save Adjustments</Button>
+                <Button
+                  onClick={handleAdjustRanking}
+                  disabled={adjustingRanking}
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+                  {adjustingRanking ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Adjusting...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Adjustments
+                    </>
+                  )}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -1637,8 +1667,9 @@ function ApplicantRankingPageContent() {
                   <Label htmlFor="application-status">Application Status</Label>
                   <Select
                     value={statusUpdateData.applicationStatus}
-                    onValueChange={handleApplicationStatusChange}>
-                    <SelectTrigger>
+                    onValueChange={handleApplicationStatusChange}
+                    disabled={updatingStatus}>
+                    <SelectTrigger disabled={updatingStatus}>
                       <SelectValue placeholder="Select application status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1796,6 +1827,7 @@ function ApplicantRankingPageContent() {
                     }
                     rows={4}
                     className="mt-2"
+                    disabled={updatingStatus}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     💬 This message will be visible to the applicant. You can
@@ -1822,6 +1854,7 @@ function ApplicantRankingPageContent() {
                             interviewDate: e.target.value
                           }))
                         }
+                        disabled={updatingStatus}
                       />
                     </div>
 
@@ -1839,6 +1872,7 @@ function ApplicantRankingPageContent() {
                             interviewLocation: e.target.value
                           }))
                         }
+                        disabled={updatingStatus}
                       />
                     </div>
 
@@ -1851,8 +1885,9 @@ function ApplicantRankingPageContent() {
                             ...prev,
                             interviewType: value
                           }))
-                        }>
-                        <SelectTrigger>
+                        }
+                        disabled={updatingStatus}>
+                        <SelectTrigger disabled={updatingStatus}>
                           <SelectValue placeholder="Select interview type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1881,6 +1916,7 @@ function ApplicantRankingPageContent() {
                         }))
                       }
                       rows={3}
+                      disabled={updatingStatus}
                     />
                   </div>
                 )}
@@ -1889,14 +1925,25 @@ function ApplicantRankingPageContent() {
               <DialogFooter>
                 <Button
                   variant="outline"
-                  onClick={() => setShowStatusModal(false)}>
+                  onClick={() => setShowStatusModal(false)}
+                  disabled={updatingStatus}>
                   Cancel
                 </Button>
                 <Button
                   onClick={handleStatusUpdate}
+                  disabled={updatingStatus}
                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
-                  <Save className="mr-2 h-4 w-4" />
-                  Update Status
+                  {updatingStatus ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Update Status
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
