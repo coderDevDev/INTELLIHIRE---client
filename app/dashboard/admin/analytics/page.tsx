@@ -38,6 +38,7 @@ import {
   Activity
 } from 'lucide-react';
 import { jobAPI, userAPI, applicationAPI } from '@/lib/api-service';
+import { toast } from 'sonner';
 
 interface AnalyticsData {
   overview: {
@@ -78,6 +79,7 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
   const [selectedTab, setSelectedTab] = useState('overview');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -87,110 +89,350 @@ export default function AnalyticsDashboard() {
     try {
       setLoading(true);
 
-      // Simulate API calls - in real implementation, these would be actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Fetch real data from APIs
+      const [jobsRes, applicationsRes, usersRes] = await Promise.all([
+        jobAPI.getAdminJobs({ limit: 1000 }),
+        applicationAPI.getAdminApplications({ limit: 1000 }),
+        fetch(
+          `${
+            process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+          }/users`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          }
+        ).then(res => res.json())
+      ]);
 
-      // Mock data - replace with actual API calls
-      const mockData: AnalyticsData = {
+      const jobs = jobsRes.jobs || [];
+      const applications = applicationsRes.applications || [];
+      const users = usersRes.users || [];
+
+      // Calculate overview stats
+      const totalJobs = jobs.length;
+      const activeJobs = jobs.filter((j: any) => j.status === 'active').length;
+      const inactiveJobs = totalJobs - activeJobs;
+      const totalApplicants = users.filter(
+        (u: any) => u.role === 'applicant'
+      ).length;
+      const totalApplications = applications.length;
+
+      // Get unique companies from jobs
+      const uniqueCompanies = new Set(
+        jobs.map((j: any) => j.companyId?._id || j.companyId).filter(Boolean)
+      );
+      const totalCompanies = uniqueCompanies.size;
+
+      // Application status counts
+      const statusCounts: Record<string, number> = {
+        applied: 0,
+        screening: 0,
+        interview: 0,
+        offered: 0,
+        hired: 0,
+        rejected: 0,
+        withdrawn: 0
+      };
+      applications.forEach((app: any) => {
+        statusCounts[app.status] = (statusCounts[app.status] || 0) + 1;
+      });
+
+      // Jobs by category
+      const categoryCount: Record<string, number> = {};
+      jobs.forEach((job: any) => {
+        const category = job.categoryId?.name || 'Uncategorized';
+        categoryCount[category] = (categoryCount[category] || 0) + 1;
+      });
+      const byCategory = Object.entries(categoryCount)
+        .map(([category, count]) => ({
+          category,
+          count,
+          percentage: (count / totalJobs) * 100
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Jobs by location
+      const locationCount: Record<string, number> = {};
+      jobs.forEach((job: any) => {
+        const location = job.location?.split(',')[0]?.trim() || 'Unknown';
+        locationCount[location] = (locationCount[location] || 0) + 1;
+      });
+      const byLocation = Object.entries(locationCount)
+        .map(([location, count]) => ({
+          location,
+          count,
+          percentage: (count / totalJobs) * 100
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Jobs by employment type
+      const typeCount: Record<string, number> = {};
+      jobs.forEach((job: any) => {
+        const type = job.employmentType || 'Unknown';
+        typeCount[type] = (typeCount[type] || 0) + 1;
+      });
+      const byEmploymentType = Object.entries(typeCount)
+        .map(([type, count]) => ({
+          type,
+          count,
+          percentage: (count / totalJobs) * 100
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // Jobs by salary range
+      const salaryRanges = [
+        { min: 0, max: 25000, label: '₱0 - ₱25,000' },
+        { min: 25000, max: 40000, label: '₱25,000 - ₱40,000' },
+        { min: 40000, max: 60000, label: '₱40,000 - ₱60,000' },
+        { min: 60000, max: 100000, label: '₱60,000 - ₱100,000' },
+        { min: 100000, max: Infinity, label: '₱100,000+' }
+      ];
+      const salaryCount: Record<string, number> = {};
+      jobs.forEach((job: any) => {
+        const salary = job.salaryMin || 0;
+        const range = salaryRanges.find(r => salary >= r.min && salary < r.max);
+        if (range) {
+          salaryCount[range.label] = (salaryCount[range.label] || 0) + 1;
+        }
+      });
+      const bySalaryRange = salaryRanges
+        .map(r => ({
+          range: r.label,
+          count: salaryCount[r.label] || 0,
+          percentage: ((salaryCount[r.label] || 0) / totalJobs) * 100
+        }))
+        .filter(r => r.count > 0);
+
+      // Applications by month (last 6 months)
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      const monthCount: Record<string, number> = {};
+      applications.forEach((app: any) => {
+        const date = new Date(app.createdAt);
+        const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        monthCount[monthKey] = (monthCount[monthKey] || 0) + 1;
+      });
+      const byMonth = Object.entries(monthCount)
+        .map(([month, count]) => ({ month, count }))
+        .slice(-6); // Last 6 months
+
+      // Applications by job (top 5)
+      const jobAppCount: Record<
+        string,
+        { jobTitle: string; company: string; count: number }
+      > = {};
+      applications.forEach((app: any) => {
+        const jobId = app.jobId?._id;
+        if (jobId && app.jobId?.title) {
+          if (!jobAppCount[jobId]) {
+            jobAppCount[jobId] = {
+              jobTitle: app.jobId.title,
+              company: app.jobId.companyId?.name || 'Unknown',
+              count: 0
+            };
+          }
+          jobAppCount[jobId].count += 1;
+        }
+      });
+      const byJob = Object.values(jobAppCount)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Application status distribution
+      const totalApps = applications.length;
+      const byStatus = Object.entries(statusCounts)
+        .filter(([status]) => status !== 'withdrawn')
+        .map(([status, count]) => ({
+          status: status.charAt(0).toUpperCase() + status.slice(1),
+          count,
+          percentage: (count / totalApps) * 100
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // Trends (last 6 months)
+      const jobsByMonth: Record<string, number> = {};
+      const usersByMonth: Record<string, number> = {};
+      jobs.forEach((job: any) => {
+        const date = new Date(job.postedDate || job.createdAt);
+        const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        jobsByMonth[monthKey] = (jobsByMonth[monthKey] || 0) + 1;
+      });
+      users.forEach((user: any) => {
+        const date = new Date(user.createdAt);
+        const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+        usersByMonth[monthKey] = (usersByMonth[monthKey] || 0) + 1;
+      });
+
+      const jobPostingsTrend = Object.entries(jobsByMonth)
+        .map(([month, count]) => ({ month: month.split(' ')[0], count }))
+        .slice(-6);
+      const userRegistrationsTrend = Object.entries(usersByMonth)
+        .map(([month, count]) => ({ month: month.split(' ')[0], count }))
+        .slice(-6);
+
+      const analyticsData: AnalyticsData = {
         overview: {
-          totalJobs: 156,
-          totalApplicants: 1247,
-          totalApplications: 3421,
-          totalCompanies: 89,
-          activeJobs: 98,
-          inactiveJobs: 58,
-          pendingApplications: 1234,
-          approvedApplications: 1876,
-          rejectedApplications: 311
+          totalJobs,
+          totalApplicants,
+          totalApplications,
+          totalCompanies,
+          activeJobs,
+          inactiveJobs,
+          pendingApplications: statusCounts.applied + statusCounts.screening,
+          approvedApplications: statusCounts.offered + statusCounts.hired,
+          rejectedApplications: statusCounts.rejected
         },
         jobStats: {
-          byCategory: [
-            { category: 'Information Technology', count: 45, percentage: 28.8 },
-            { category: 'Healthcare', count: 32, percentage: 20.5 },
-            { category: 'Education', count: 28, percentage: 17.9 },
-            { category: 'Finance', count: 24, percentage: 15.4 },
-            { category: 'Government', count: 27, percentage: 17.3 }
-          ],
-          byLocation: [
-            { location: 'Manila', count: 67, percentage: 42.9 },
-            { location: 'Cebu', count: 34, percentage: 21.8 },
-            { location: 'Davao', count: 28, percentage: 17.9 },
-            { location: 'Iloilo', count: 19, percentage: 12.2 },
-            { location: 'Others', count: 8, percentage: 5.1 }
-          ],
-          byEmploymentType: [
-            { type: 'Full-time', count: 89, percentage: 57.1 },
-            { type: 'Part-time', count: 34, percentage: 21.8 },
-            { type: 'Contract', count: 23, percentage: 14.7 },
-            { type: 'Internship', count: 10, percentage: 6.4 }
-          ],
-          bySalaryRange: [
-            { range: '₱15,000 - ₱25,000', count: 45, percentage: 28.8 },
-            { range: '₱25,000 - ₱40,000', count: 38, percentage: 24.4 },
-            { range: '₱40,000 - ₱60,000', count: 32, percentage: 20.5 },
-            { range: '₱60,000+', count: 25, percentage: 16.0 },
-            { range: 'Not specified', count: 16, percentage: 10.3 }
-          ]
+          byCategory,
+          byLocation,
+          byEmploymentType,
+          bySalaryRange
         },
         applicationStats: {
-          byStatus: [
-            { status: 'Pending', count: 1234, percentage: 36.1 },
-            { status: 'Approved', count: 1876, percentage: 54.8 },
-            { status: 'Rejected', count: 311, percentage: 9.1 }
-          ],
-          byMonth: [
-            { month: 'Jan', count: 234 },
-            { month: 'Feb', count: 287 },
-            { month: 'Mar', count: 312 },
-            { month: 'Apr', count: 298 },
-            { month: 'May', count: 345 },
-            { month: 'Jun', count: 378 }
-          ],
-          byJob: [
-            {
-              jobTitle: 'Software Developer',
-              count: 156,
-              company: 'Tech Corp'
-            },
-            { jobTitle: 'Nurse', count: 134, company: 'City Hospital' },
-            { jobTitle: 'Teacher', count: 98, company: 'Public School' },
-            { jobTitle: 'Accountant', count: 87, company: 'Finance Inc' },
-            { jobTitle: 'Engineer', count: 76, company: 'Construction Co' }
-          ]
+          byStatus,
+          byMonth,
+          byJob
         },
         trends: {
-          jobPostings: [
-            { month: 'Jan', count: 12 },
-            { month: 'Feb', count: 18 },
-            { month: 'Mar', count: 22 },
-            { month: 'Apr', count: 19 },
-            { month: 'May', count: 25 },
-            { month: 'Jun', count: 28 }
-          ],
-          applications: [
-            { month: 'Jan', count: 234 },
-            { month: 'Feb', count: 287 },
-            { month: 'Mar', count: 312 },
-            { month: 'Apr', count: 298 },
-            { month: 'May', count: 345 },
-            { month: 'Jun', count: 378 }
-          ],
-          userRegistrations: [
-            { month: 'Jan', count: 45 },
-            { month: 'Feb', count: 52 },
-            { month: 'Mar', count: 67 },
-            { month: 'Apr', count: 58 },
-            { month: 'May', count: 73 },
-            { month: 'Jun', count: 81 }
-          ]
+          jobPostings: jobPostingsTrend,
+          applications: byMonth,
+          userRegistrations: userRegistrationsTrend
         }
       };
 
-      setData(mockData);
+      setData(analyticsData);
+      toast.success('Analytics data loaded successfully');
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!data) {
+      toast.error('No data to export');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Generate comprehensive analytics report
+      const report = `
+INTELLIHIRE ANALYTICS REPORT
+Generated: ${new Date().toLocaleString()}
+Period: ${selectedPeriod}
+============================================
+
+OVERVIEW STATISTICS
+-------------------------------------------
+Total Jobs: ${data.overview.totalJobs}
+Active Jobs: ${data.overview.activeJobs}
+Inactive Jobs: ${data.overview.inactiveJobs}
+Total Applicants: ${data.overview.totalApplicants}
+Total Applications: ${data.overview.totalApplications}
+Total Companies: ${data.overview.totalCompanies}
+
+APPLICATION STATUS BREAKDOWN
+-------------------------------------------
+Pending: ${data.overview.pendingApplications}
+Approved: ${data.overview.approvedApplications}
+Rejected: ${data.overview.rejectedApplications}
+
+JOBS BY CATEGORY
+-------------------------------------------
+${data.jobStats.byCategory
+  .map(cat => `${cat.category}: ${cat.count} (${cat.percentage.toFixed(1)}%)`)
+  .join('\n')}
+
+JOBS BY LOCATION
+-------------------------------------------
+${data.jobStats.byLocation
+  .map(loc => `${loc.location}: ${loc.count} (${loc.percentage.toFixed(1)}%)`)
+  .join('\n')}
+
+JOBS BY EMPLOYMENT TYPE
+-------------------------------------------
+${data.jobStats.byEmploymentType
+  .map(type => `${type.type}: ${type.count} (${type.percentage.toFixed(1)}%)`)
+  .join('\n')}
+
+JOBS BY SALARY RANGE
+-------------------------------------------
+${data.jobStats.bySalaryRange
+  .map(
+    range => `${range.range}: ${range.count} (${range.percentage.toFixed(1)}%)`
+  )
+  .join('\n')}
+
+APPLICATIONS BY STATUS
+-------------------------------------------
+${data.applicationStats.byStatus
+  .map(
+    status =>
+      `${status.status}: ${status.count} (${status.percentage.toFixed(1)}%)`
+  )
+  .join('\n')}
+
+TOP JOBS BY APPLICATION COUNT
+-------------------------------------------
+${data.applicationStats.byJob
+  .map(
+    (job, i) =>
+      `${i + 1}. ${job.jobTitle} (${job.company}): ${job.count} applications`
+  )
+  .join('\n')}
+
+MONTHLY TRENDS
+-------------------------------------------
+Applications:
+${data.applicationStats.byMonth.map(m => `${m.month}: ${m.count}`).join('\n')}
+
+Job Postings:
+${data.trends.jobPostings.map(m => `${m.month}: ${m.count}`).join('\n')}
+
+User Registrations:
+${data.trends.userRegistrations.map(m => `${m.month}: ${m.count}`).join('\n')}
+
+============================================
+End of Report
+      `.trim();
+
+      // Create and download file
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `analytics-report-${
+        new Date().toISOString().split('T')[0]
+      }.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Analytics report exported successfully');
+    } catch (error) {
+      console.error('Error exporting analytics:', error);
+      toast.error('Failed to export analytics report');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -414,9 +656,20 @@ export default function AnalyticsDashboard() {
             </Button>
             <Button
               size="sm"
+              onClick={handleExport}
+              disabled={exporting}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+              {exporting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Report
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -429,34 +682,48 @@ export default function AnalyticsDashboard() {
             <StatCard
               title="Total Jobs"
               value={data.overview.totalJobs}
-              change="+12%"
-              changeType="increase"
               icon={Briefcase}
               color="blue"
             />
             <StatCard
               title="Total Applicants"
               value={data.overview.totalApplicants}
-              change="+8%"
-              changeType="increase"
               icon={Users}
               color="green"
             />
             <StatCard
               title="Total Applications"
               value={data.overview.totalApplications}
-              change="+15%"
-              changeType="increase"
               icon={FileText}
               color="purple"
             />
             <StatCard
               title="Active Companies"
               value={data.overview.totalCompanies}
-              change="+5%"
-              changeType="increase"
               icon={Building}
               color="orange"
+            />
+          </div>
+
+          {/* Additional Stats Row */}
+          <div className="grid gap-6 md:grid-cols-3">
+            <StatCard
+              title="Active Jobs"
+              value={data.overview.activeJobs}
+              icon={CheckCircle}
+              color="green"
+            />
+            <StatCard
+              title="Pending Applications"
+              value={data.overview.pendingApplications}
+              icon={Clock}
+              color="orange"
+            />
+            <StatCard
+              title="Hired"
+              value={data.overview.approvedApplications}
+              icon={Award}
+              color="purple"
             />
           </div>
 

@@ -248,7 +248,7 @@ export function MainHeader() {
                       </span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  {/* <DropdownMenuItem asChild>
                     <Link
                       href="/dashboard/applicant/applications"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
@@ -259,7 +259,7 @@ export function MainHeader() {
                         My Applications
                       </span>
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   {/* <DropdownMenuItem asChild>
                     <Link
                       href="/dashboard/applicant/analytics"

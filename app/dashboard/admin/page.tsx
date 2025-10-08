@@ -481,37 +481,6 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">
-                Quick Actions
-              </CardTitle>
-              <CardDescription>Common administrative tasks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
-                  asChild>
-                  <Link href="/dashboard/admin/applications">
-                    <FileText className="h-6 w-6 text-purple-600" />
-                    <span>View Applications</span>
-                  </Link>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2 bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-lg transition-all duration-300"
-                  asChild>
-                  <Link href="/dashboard/admin/settings">
-                    <Settings className="h-6 w-6 text-orange-600" />
-                    <span>System Settings</span>
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </main>
     </div>
