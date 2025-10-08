@@ -90,6 +90,7 @@ export default function AnalyticsDashboard() {
       setLoading(true);
 
       // Fetch real data from APIs
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const [jobsRes, applicationsRes, usersRes] = await Promise.all([
         jobAPI.getAdminJobs({ limit: 1000 }),
         applicationAPI.getAdminApplications({ limit: 1000 }),
@@ -99,7 +100,7 @@ export default function AnalyticsDashboard() {
           }/users`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
+              Authorization: `Bearer ${token}`
             }
           }
         ).then(res => res.json())

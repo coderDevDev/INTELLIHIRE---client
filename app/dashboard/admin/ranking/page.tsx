@@ -413,11 +413,13 @@ function ApplicantRankingPageContent() {
     setLoadingResume(true);
     try {
       // Fetch the applicant's latest resume using the admin endpoint
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/documents/resume/user/${applicantId}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -448,11 +450,13 @@ function ApplicantRankingPageContent() {
 
     // Fetch full application details to get interview data
     try {
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/applications/${ranking.applicationId._id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -572,13 +576,15 @@ function ApplicantRankingPageContent() {
       toast.info('Updating application status...');
 
       // Update application status
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const applicationResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/applications/${selectedRanking.applicationId._id}/status`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             status: statusUpdateData.applicationStatus,

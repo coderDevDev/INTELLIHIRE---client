@@ -9,8 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Enable static export for Capacitor
-
+  // Enable static export (uncomment for static deployment)
+  // output: 'export',
   trailingSlash: true,
   // Configure asset prefix for proper loading in Capacitor
   assetPrefix: ''

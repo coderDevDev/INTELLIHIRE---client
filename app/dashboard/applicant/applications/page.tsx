@@ -832,13 +832,14 @@ function ApplicationCard({ application }: { application: any }) {
 
     setIsWithdrawing(true);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/applications/${application._id}/withdraw`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );
@@ -1170,13 +1171,14 @@ function ApplicationsTable({
 
     setWithdrawingId(app._id);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/applications/${app._id}/withdraw`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       );

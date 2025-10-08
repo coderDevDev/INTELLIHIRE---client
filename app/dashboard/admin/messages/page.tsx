@@ -178,6 +178,9 @@ export default function AdminMessagesPage() {
   };
 
   const organizeConversations = (allMessages: Message[]) => {
+    // Check if we're in the browser before accessing localStorage
+    if (typeof window === 'undefined') return;
+    
     const currentUserId = localStorage.getItem('userId');
     const conversationMap = new Map<string, Conversation>();
 
@@ -287,6 +290,9 @@ export default function AdminMessagesPage() {
     setSelectedConversation(conversation);
 
     // Mark all unread messages in this conversation as read
+    // Check if we're in the browser before accessing localStorage
+    if (typeof window === 'undefined') return;
+    
     const currentUserId = localStorage.getItem('userId');
     const unreadMessages = conversation.messages.filter(
       msg => msg.recipientId._id === currentUserId && !msg.isRead
@@ -482,7 +488,8 @@ export default function AdminMessagesPage() {
     conv.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const currentUserId = localStorage.getItem('userId');
+  // Safe localStorage access - only in browser
+  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
 
   if (loading) {
     return (
