@@ -1,13 +1,12 @@
 'use client';
 
+// Force dynamic rendering - skip static generation
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
-// Required for static export
-export async function generateStaticParams() {
-  return [];
-}
 import {
   Card,
   CardContent,

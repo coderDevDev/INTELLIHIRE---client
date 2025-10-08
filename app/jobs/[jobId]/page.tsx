@@ -1,13 +1,12 @@
 'use client';
 
+// Force dynamic rendering - skip static generation
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { jobAPI, authAPI } from '@/lib/api-service';
 
-// Required for static export
-export async function generateStaticParams() {
-  return [];
-}
 import { MainHeader } from '@/components/main-header';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';

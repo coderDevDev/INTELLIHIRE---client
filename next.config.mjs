@@ -13,8 +13,11 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   // Configure asset prefix for proper loading
-  assetPrefix: ''
-  // Disable server-side features for static export
+  assetPrefix: '',
+  // Disable static optimization for dynamic routes
+  experimental: {
+    missingSuspenseWithCSRBailout: false
+  }
 };
 
 export default nextConfig;

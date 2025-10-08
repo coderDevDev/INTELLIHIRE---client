@@ -83,9 +83,10 @@ export async function generateStaticParams() {
 
 ## How It Works
 
-1. **Build time**: Next.js sees the function and knows these routes exist
-2. **Runtime**: When users visit `/jobs/123`, Next.js serves the generic page
-3. **Client-side**: React Router handles the dynamic content based on the URL parameter
+1. **Build time**: Next.js generates static HTML for non-dynamic routes
+2. **Runtime**: All requests serve `index.html` (thanks to `_redirects`)
+3. **Client-side**: React Router handles ALL routing, including dynamic routes
+4. **Dynamic content**: Fetched via API calls based on URL parameters
 
 ## Testing
 
