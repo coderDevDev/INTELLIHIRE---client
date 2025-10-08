@@ -9,10 +9,10 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Enable static export (uncomment for static deployment)
-  // output: 'export',
+  // Enable static export for Render.com
+  output: 'export',
   trailingSlash: true,
-  // Configure asset prefix for proper loading in Capacitor
+  // Configure asset prefix for proper loading
   assetPrefix: ''
   // Disable server-side features for static export
 };
