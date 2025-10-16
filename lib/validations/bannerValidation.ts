@@ -15,9 +15,12 @@ export const bannerFormSchema = z.object({
 
   imageUrl: z
     .string()
-    .min(1, 'Image URL is required')
-    .url('Please enter a valid image URL')
-    .trim(),
+    .trim()
+    .min(1, 'Please upload a banner image')
+    .refine(
+      val => val && (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/')),
+      'Invalid image URL'
+    ),
 
   linkUrl: z
     .string()
@@ -103,9 +106,12 @@ export const bannerFormSchemaRH = z.object({
 
   imageUrl: z
     .string()
-    .min(1, 'Image URL is required')
-    .url('Please enter a valid image URL')
-    .trim(),
+    .trim()
+    .min(1, 'Please upload a banner image')
+    .refine(
+      val => val && (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/')),
+      'Invalid image URL'
+    ),
 
   linkUrl: z
     .string()

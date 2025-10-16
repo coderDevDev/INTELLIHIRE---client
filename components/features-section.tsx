@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {
   FileText,
   Search,
@@ -8,78 +9,82 @@ import {
   Zap,
   Clock,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Bot,
+  TrendingUp,
+  MessageSquare,
+  Target
 } from 'lucide-react';
 
 export function FeaturesSection() {
   const features = [
     {
-      icon: FileText,
-      title: 'PDS Parsing',
+      icon: Bot,
+      title: 'AI-Powered PDS Parsing',
       description:
-        'Automatic extraction of data from Personal Data Sheets using advanced AI technology',
+        'Automatically extract data from CS Form No. 212 using Google Gemini & OpenAI with OCR support',
       gradient: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50',
       iconColor: 'text-blue-600'
     },
     {
-      icon: Search,
-      title: 'Smart Matching',
+      icon: Target,
+      title: 'Intelligent Ranking System',
       description:
-        'AI-powered matching of applicants with suitable job positions based on skills and experience',
+        '8-criteria PDS scoring with customizable weights. Transparent, fair, and objective evaluation',
       gradient: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
       iconColor: 'text-purple-600'
     },
     {
-      icon: BarChart4,
-      title: 'Advanced Analytics',
+      icon: TrendingUp,
+      title: 'Predictive Analytics',
       description:
-        'Comprehensive analytics and reporting for better decision making and insights',
+        'Job recommendations, career path prediction, and success probability analysis powered by AI',
       gradient: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600'
     },
     {
       icon: Briefcase,
-      title: 'Job Management',
+      title: 'Complete Job Management',
       description:
-        'Easy creation and management of job postings with intuitive tools',
+        'Post jobs, track applications, custom scoring per job, and auto-close expired postings',
       gradient: 'from-yellow-500 to-yellow-600',
       bgColor: 'bg-yellow-50',
       iconColor: 'text-yellow-600'
     },
     {
       icon: GraduationCap,
-      title: 'Education Matching',
+      title: 'Smart Matching Engine',
       description:
-        'Match candidates based on educational qualifications and certifications',
+        'Match candidates based on education, experience, skills, eligibility, and location fit',
       gradient: 'from-red-500 to-red-600',
       bgColor: 'bg-red-50',
       iconColor: 'text-red-600'
     },
     {
       icon: Award,
-      title: 'Eligibility Verification',
+      title: 'Civil Service Verification',
       description:
-        'Verify required certifications and qualifications automatically',
+        'Track eligibility (RA 1080, CS Professional, Sub-Professional) with automated verification',
       gradient: 'from-indigo-500 to-indigo-600',
       bgColor: 'bg-indigo-50',
       iconColor: 'text-indigo-600'
     },
     {
-      icon: Zap,
-      title: 'Quick Application',
+      icon: MessageSquare,
+      title: 'Conversation Messaging',
       description:
-        'Apply to multiple jobs with a single click and streamlined process',
+        'Thread-based messaging with real-time updates, email notifications, and status tracking',
       gradient: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-50',
       iconColor: 'text-orange-600'
     },
     {
-      icon: Clock,
-      title: 'Real-time Updates',
-      description: 'Get notified about application status changes instantly',
+      icon: BarChart4,
+      title: 'Comprehensive Reports',
+      description: 'Dashboard analytics, trend analysis, and exportable reports for data-driven decisions',
       gradient: 'from-teal-500 to-teal-600',
       bgColor: 'bg-teal-50',
       iconColor: 'text-teal-600'
@@ -167,11 +172,13 @@ export function FeaturesSection() {
 
         {/* Bottom CTA */}
         <div className="mt-20 text-center">
-          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
-            <Sparkles className="h-5 w-5" />
-            Explore All Features
-            <ArrowRight className="h-5 w-5" />
-          </div>
+          <Link href="/features">
+            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+              <Sparkles className="h-5 w-5" />
+              Explore All Features
+              <ArrowRight className="h-5 w-5" />
+            </div>
+          </Link>
         </div>
       </div>
     </section>

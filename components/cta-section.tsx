@@ -30,7 +30,7 @@ export function CtaSection() {
               </span>
             </h2>
 
-            <p className="max-w-[700px] text-lg md:text-xl text-blue-100 leading-relaxed">
+            <p className="max-w-[700px] mx-auto text-lg md:text-xl text-blue-100 leading-relaxed">
               Join thousands of job seekers who have found their perfect career
               match through InteliHire's AI-powered platform. Start your journey
               today and unlock endless opportunities.
@@ -76,7 +76,7 @@ export function CtaSection() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm font-semibold transition-all duration-300 px-8 py-4"
+              className="bg-white text-blue-700 hover:bg-gray-50 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 px-8 py-4"
               asChild>
               <Link href="/jobs">
                 <Briefcase className="mr-2 h-5 w-5" />

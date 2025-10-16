@@ -138,28 +138,28 @@ export function LoginForm() {
 
         <div className="relative z-10">
           <Card className="border-0 bg-transparent shadow-none">
-            <CardHeader className="text-center pb-6">
-              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full px-4 py-2 text-sm font-medium border border-blue-200 mb-4">
-                <Shield className="h-4 w-4 text-blue-600" />
+            <CardHeader className="text-center pb-4 px-4 sm:pb-6 sm:px-6">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium border border-blue-200 mb-3 sm:mb-4">
+                <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                 Secure Login Portal
               </div>
-              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Access Your Account
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="text-sm sm:text-base text-gray-600">
                 Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="px-6 pb-6">
+            <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
               <form
                     onSubmit={handleFormSubmit(onSubmit)}
-                    className="space-y-6">
+                    className="space-y-4 sm:space-y-6">
                     <div className="space-y-2">
                       <Label
                         htmlFor="email"
-                        className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-blue-600" />
+                        className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Mail className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                         Email Address
                       </Label>
                       <div className="relative group">
@@ -168,7 +168,7 @@ export function LoginForm() {
                           type="email"
                           placeholder="your@email.com"
                           {...register('email')}
-                          className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                          className={`h-10 sm:h-12 text-sm sm:text-base bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                             errors.email
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                               : ''
@@ -187,13 +187,13 @@ export function LoginForm() {
                       <div className="flex items-center justify-between">
                         <Label
                           htmlFor="password"
-                          className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-blue-600" />
+                          className="text-xs sm:text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <Lock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                           Password
                         </Label>
                         <Link
                           href="/forgot-password"
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline cursor-pointer relative z-30">
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline cursor-pointer relative z-30">
                           Forgot password?
                         </Link>
                       </div>
@@ -203,7 +203,7 @@ export function LoginForm() {
                           type={showPassword ? 'text' : 'password'}
                           placeholder="••••••••"
                           {...register('password')}
-                          className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                          className={`pr-10 sm:pr-12 h-10 sm:h-12 text-sm sm:text-base bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                             errors.password
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                               : ''
@@ -230,7 +230,7 @@ export function LoginForm() {
 
                     <Button
                       type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group"
+                      className="w-full h-11 sm:h-12 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group"
                       disabled={isLoading}>
                       {isLoading ? (
                         <div className="flex items-center gap-2">

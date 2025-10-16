@@ -44,7 +44,9 @@ import {
   RefreshCw,
   ArrowRight,
   Calendar,
-  User
+  User,
+  Upload,
+  FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import { jobAPI, authAPI, documentAPI } from '@/lib/api-service';
@@ -109,6 +111,7 @@ export default function JobRecommendationsPage() {
   const [user, setUser] = useState<any>(null);
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const [userDocuments, setUserDocuments] = useState<any[]>([]);
+  const [hasRequiredDocuments, setHasRequiredDocuments] = useState(false);
   const [filters, setFilters] = useState<RecommendationFilters>({
     minMatchScore: 70,
     location: 'all',
@@ -119,7 +122,7 @@ export default function JobRecommendationsPage() {
 
   // Check authentication on component mount
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       if (!authAPI.isAuthenticated()) {
         router.push('/login');
         return;
@@ -136,6 +139,37 @@ export default function JobRecommendationsPage() {
         return;
       }
       setUser(currentUser);
+
+      // Check for uploaded documents
+      try {
+        const docs = await documentAPI.getMyDocuments();
+        setUserDocuments(docs || []);
+
+        const hasPDS = (docs || []).some((doc: any) => doc.type === 'pds');
+        const hasResume = (docs || []).some(
+          (doc: any) => doc.type === 'resume'
+        );
+        const hasRequired = hasPDS || hasResume;
+
+        setHasRequiredDocuments(hasRequired);
+
+        if (!hasRequired) {
+          sonnerToast.error(
+            'Job recommendations require your PDS or Resume data.',
+            {
+              action: {
+                label: 'Upload Documents',
+                onClick: () => router.push('/dashboard/applicant/documents')
+              },
+              duration: 10000
+            }
+          );
+        }
+      } catch (error) {
+        console.error('Error loading documents:', error);
+        setUserDocuments([]);
+        setHasRequiredDocuments(false);
+      }
     };
 
     checkAuth();
@@ -509,6 +543,49 @@ export default function JobRecommendationsPage() {
 
       <main className="flex-1 overflow-auto relative z-10">
         <div className="container py-8 space-y-8">
+          {/* No Documents Warning */}
+          {!hasRequiredDocuments && (
+            <Card className="border-orange-200 bg-orange-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-800">
+                  <AlertCircle className="h-5 w-5" />
+                  Documents Required
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-orange-800 leading-relaxed mb-4">
+                  To receive personalized job recommendations, please upload at
+                  least one of the following documents:{' '}
+                  <strong>PDS (Personal Data Sheet)</strong> or{' '}
+                  <strong>Resume/CV</strong>. These documents help us match you
+                  with the most suitable job opportunities based on your
+                  qualifications and experience.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    size="sm"
+                    asChild
+                    className="bg-orange-600 hover:bg-orange-700 text-white">
+                    <Link href="/dashboard/applicant/documents">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Documents Now
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    asChild
+                    className="border-orange-300 text-orange-700 hover:bg-orange-100">
+                    <Link href="/dashboard/applicant/pds-template">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Fill Out PDS Form
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Recommendation Stats */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">

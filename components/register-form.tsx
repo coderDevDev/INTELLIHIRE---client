@@ -139,22 +139,22 @@ export function RegisterForm() {
         <div className="absolute inset-0 rounded-3xl"></div>
 
         <Card className="border-0 bg-transparent shadow-none">
-          <CardHeader className="text-center pb-6">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full px-4 py-2 text-sm font-medium border border-blue-200 mb-4">
-              <User className="h-4 w-4 text-blue-600" />
+          <CardHeader className="text-center pb-4 px-4 sm:pb-6 sm:px-6">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium border border-blue-200 mb-3 sm:mb-4">
+              <User className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
               Create New Account
             </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Join InteliHire
             </CardTitle>
-            <CardDescription className="text-gray-600">
+            <CardDescription className="text-sm sm:text-base text-gray-600">
               Choose your account type and create your profile
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-6 pb-6">
+          <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
             <Tabs defaultValue="applicant" onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-6">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-4 sm:mb-6">
                 <TabsTrigger
                   value="applicant"
                   className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 font-medium transition-all duration-300">
@@ -432,7 +432,7 @@ export function RegisterForm() {
 
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group"
+                    className="w-full h-11 sm:h-12 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group"
                     disabled={isLoading}>
                     {isLoading ? (
                       <div className="flex items-center gap-2">

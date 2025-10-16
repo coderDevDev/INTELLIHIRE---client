@@ -44,7 +44,8 @@ import {
   Mail,
   Phone,
   Heart,
-  Share2
+  Share2,
+  Award
 } from 'lucide-react';
 import {
   jobAPI,
@@ -83,9 +84,15 @@ interface Job {
   isFeatured?: boolean;
   isUrgent?: boolean;
   category?: string;
+  categoryId?: {
+    _id: string;
+    name: string;
+  };
   experienceLevel?: string;
   skills?: string[];
   requirements?: string;
+  eligibility?: string;
+  civilServiceEligibility?: string[];
   applicationCount?: number;
   status: string;
   // AI recommendation fields
@@ -457,7 +464,11 @@ export function ModernJobsPage() {
     }
 
     // Check if required documents are uploaded
-    const isGovernmentJob = job.companyId?.isGovernment || false;
+    const isGovernmentJob = 
+      job.companyId?.isGovernment || 
+      job.category?.toLowerCase().includes('government') ||
+      job.categoryId?.name?.toLowerCase().includes('government') || 
+      false;
     const hasPDS = userDocuments.some(doc => doc.type === 'pds');
     const hasResume = userDocuments.some(doc => doc.type === 'resume');
 
@@ -1005,7 +1016,15 @@ export function ModernJobsPage() {
                                         {job.companyId?.name}
                                       </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {(job.companyId?.isGovernment || 
+                                        job.category?.toLowerCase().includes('government') ||
+                                        job.categoryId?.name?.toLowerCase().includes('government')) && (
+                                        <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
+                                          <Award className="h-3 w-3 mr-1" />
+                                          Government
+                                        </Badge>
+                                      )}
                                       {isJobApplied(job._id) && (
                                         <Badge className="bg-green-100 text-green-700">
                                           Applied
@@ -1163,11 +1182,11 @@ export function ModernJobsPage() {
                   variant="ghost"
                   size="sm"
                   onClick={closeJobDetails}
-                  className="absolute top-4 right-4 text-white hover:bg-white/20">
+                  className="absolute top-2 right-2 z-10 text-white hover:bg-white/20">
                   <X className="h-5 w-5" />
                 </Button>
 
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 pr-12">
                   <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center overflow-hidden">
                     {selectedJob.companyId?.logo ? (
                       <img
@@ -1224,6 +1243,18 @@ export function ModernJobsPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: selectedJob.title,
+                            text: `Check out this job: ${selectedJob.title} at ${selectedJob.companyId?.name}`,
+                            url: window.location.href
+                          }).catch((err) => console.log('Error sharing:', err));
+                        } else {
+                          navigator.clipboard.writeText(window.location.href);
+                          toast.success('Link copied to clipboard!');
+                        }
+                      }}
                       className="bg-white/20 border-white/30 text-white hover:bg-white/30">
                       <Share2 className="h-4 w-4" />
                     </Button>
@@ -1297,6 +1328,78 @@ export function ModernJobsPage() {
                         </Badge>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Civil Service Eligibility - for Government Jobs */}
+                {(selectedJob.companyId?.isGovernment || 
+                  selectedJob.category?.toLowerCase().includes('government') ||
+                  selectedJob.categoryId?.name?.toLowerCase().includes('government')) && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <Award className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                          Civil Service Eligibility Required
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                          This is a government position requiring valid Civil Service eligibility
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {selectedJob.civilServiceEligibility && selectedJob.civilServiceEligibility.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Accepted Eligibilities:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedJob.civilServiceEligibility.map((eligibility, idx) => (
+                            <Badge
+                              key={idx}
+                              className="bg-blue-600 text-white hover:bg-blue-700">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {eligibility}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      selectedJob.eligibility && (
+                        <div className="bg-white/60 rounded-lg p-4">
+                          <p className="text-sm text-gray-700">
+                            <strong>Required:</strong> {selectedJob.eligibility}
+                          </p>
+                        </div>
+                      )
+                    )}
+                    
+                    {!selectedJob.civilServiceEligibility && !selectedJob.eligibility && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Common Eligibilities Accepted:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className="bg-blue-600 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            RA 1080 (Board/Bar Passer)
+                          </Badge>
+                          <Badge className="bg-blue-600 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            CS Professional
+                          </Badge>
+                          <Badge className="bg-blue-600 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            CS Sub-Professional
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-3">
+                          Note: Specific eligibility requirements will be verified during application
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 

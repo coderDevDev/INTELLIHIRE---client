@@ -64,7 +64,8 @@ import {
   FileText,
   Star,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Archive
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -120,10 +121,10 @@ export default function JobPostingsPage() {
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('-postedDate');
 
-  // Delete confirmation modal state
-  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
-  const [deleteJobTitle, setDeleteJobTitle] = useState<string>('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Archive confirmation modal state
+  const [archiveJobId, setArchiveJobId] = useState<string | null>(null);
+  const [archiveJobTitle, setArchiveJobTitle] = useState<string>('');
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
 
   // Categories for filter
   const [categories, setCategories] = useState<
@@ -273,31 +274,31 @@ export default function JobPostingsPage() {
     }
   };
 
-  // Open delete confirmation modal
-  const openDeleteModal = (jobId: string, jobTitle: string) => {
-    setDeleteJobId(jobId);
-    setDeleteJobTitle(jobTitle);
-    setShowDeleteModal(true);
+  // Open archive confirmation modal
+  const openArchiveModal = (jobId: string, jobTitle: string) => {
+    setArchiveJobId(jobId);
+    setArchiveJobTitle(jobTitle);
+    setShowArchiveModal(true);
   };
 
-  // Handle job deletion
-  const handleDeleteJob = async () => {
-    if (!deleteJobId) return;
+  // Handle job archiving
+  const handleArchiveJob = async () => {
+    if (!archiveJobId) return;
 
     try {
-      await jobAPI.deleteJob(deleteJobId);
+      await jobAPI.updateJobStatus(archiveJobId, 'archived');
       toast({
         title: 'Success',
-        description: 'Job posting deleted successfully'
+        description: 'Job posting archived successfully'
       });
       loadJobs(); // Reload jobs to reflect changes
-      setShowDeleteModal(false);
-      setDeleteJobId(null);
-      setDeleteJobTitle('');
+      setShowArchiveModal(false);
+      setArchiveJobId(null);
+      setArchiveJobTitle('');
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete job posting',
+        description: 'Failed to archive job posting',
         variant: 'destructive'
       });
     }
@@ -684,14 +685,14 @@ export default function JobPostingsPage() {
                                 </Link>
                               </Button>
                               <Button
-                                size="sm"
                                 variant="outline"
+                                size="sm"
                                 onClick={() =>
-                                  openDeleteModal(job._id, job.title)
+                                  openArchiveModal(job._id, job.title)
                                 }
-                                title="Delete Job"
-                                className="bg-red-50 hover:bg-red-100 border-red-200">
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                                title="Archive Job"
+                                className="bg-orange-50 hover:bg-orange-100 border-orange-200">
+                                <Archive className="h-4 w-4 text-orange-600" />
                               </Button>
                             </div>
                           </TableCell>
@@ -759,38 +760,37 @@ export default function JobPostingsPage() {
         </div>
       </main>
 
-      {/* Delete Confirmation Modal */}
-      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <AlertDialogContent className="bg-white/95 backdrop-blur-sm border border-gray-200">
+      {/* Archive Confirmation Modal */}
+      <AlertDialog open={showArchiveModal} onOpenChange={setShowArchiveModal}>
+        <AlertDialogContent className="bg-white">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="h-5 w-5" />
-              Delete Job Posting
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <Archive className="h-5 w-5" />
+              Archive Job Posting
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600">
-              Are you sure you want to delete the job posting{' '}
+              Are you sure you want to archive the job posting{' '}
               <span className="font-semibold text-gray-900">
-                "{deleteJobTitle}"
+                "{archiveJobTitle}"
               </span>
-              ? This action cannot be undone and will permanently remove the job
-              posting and all associated data.
+              ? The job will be moved to archived status and will no longer be visible to applicants. You can reactivate it later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                setShowDeleteModal(false);
-                setDeleteJobId(null);
-                setDeleteJobTitle('');
+                setShowArchiveModal(false);
+                setArchiveJobId(null);
+                setArchiveJobTitle('');
               }}
               className="bg-gray-100 hover:bg-gray-200">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteJob}
-              className="bg-red-600 hover:bg-red-700 text-white">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Job Posting
+              onClick={handleArchiveJob}
+              className="bg-orange-600 hover:bg-orange-700 text-white">
+              <Archive className="h-4 w-4 mr-2" />
+              Archive Job Posting
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

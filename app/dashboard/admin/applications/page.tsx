@@ -651,7 +651,7 @@ export default function AdminApplicationsPage() {
                         <SelectItem value="deactivate">
                           Deactivate Jobs
                         </SelectItem>
-                        <SelectItem value="delete">Delete Jobs</SelectItem>
+                        <SelectItem value="archive">Archive Jobs</SelectItem>
                         <SelectItem value="export">Export Selected</SelectItem>
                       </SelectContent>
                     </Select>

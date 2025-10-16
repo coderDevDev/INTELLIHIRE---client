@@ -1267,14 +1267,14 @@ export default function BannerManagementPage() {
                           <RefreshCw className="mr-2 h-4 w-4" />
                           Refresh
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setShowTemplateModal(true)}
                           className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
                           <FileText className="mr-2 h-4 w-4" />
                           Templates
-                        </Button>
+                        </Button> */}
                         <Button
                           variant="outline"
                           size="sm"
@@ -2009,44 +2009,90 @@ export default function BannerManagementPage() {
                         Banner Image <span className="text-red-500">*</span>
                       </Label>
                       <div className="space-y-3">
-                        <Controller
-                          name="imageUrl"
-                          control={control}
-                          render={({ field }) => (
+                        {/* Drag and Drop Zone */}
+                        <div
+                          className={
+                            `relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+                              uploadingImage
+                                ? 'border-blue-400 bg-blue-50'
+                                : errors.imageUrl
+                                ? 'border-red-400 bg-red-50'
+                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                            }`
+                          }
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                            const files = e.dataTransfer.files;
+                            if (files && files[0]) {
+                              const fakeEvent = {
+                                target: { files: [files[0]] }
+                              } as any;
+                              handleImageUpload(fakeEvent);
+                            }
+                          }}>
+                          <div className="text-center">
+                            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                            <div className="flex flex-col items-center gap-2">
+                              <Label
+                                htmlFor="image-upload"
+                                className="cursor-pointer">
+                                <span className="text-blue-600 hover:text-blue-700 font-medium">
+                                  Click to upload
+                                </span>
+                                <span className="text-gray-600"> or drag and drop</span>
+                              </Label>
+                              <p className="text-xs text-gray-500">
+                                PNG, JPG, GIF or WebP (max. 5MB)
+                              </p>
+                            </div>
                             <Input
-                              {...field}
-                              placeholder="https://example.com/image.jpg"
-                              className={
-                                errors.imageUrl
-                                  ? 'border-red-500 focus:border-red-500'
-                                  : ''
-                              }
+                              id="image-upload"
+                              type="file"
+                              accept="image/jpeg,image/png,image/gif,image/webp"
+                              onChange={handleImageUpload}
+                              disabled={uploadingImage}
+                              className="hidden"
                             />
+                          </div>
+                          {uploadingImage && (
+                            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                              <div className="flex items-center gap-2 text-blue-600">
+                                <RefreshCw className="h-5 w-5 animate-spin" />
+                                <span className="font-medium">Uploading...</span>
+                              </div>
+                            </div>
                           )}
-                        />
+                        </div>
+                        
+                        {/* Preview */}
+                        {imageFile && watchedValues.imageUrl && (
+                          <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                            <img
+                              src={watchedValues.imageUrl}
+                              alt="Preview"
+                              className="w-full h-48 object-cover"
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                              <p className="text-sm text-white truncate">
+                                {imageFile.name}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
                         {errors.imageUrl && (
                           <p className="text-sm text-red-500 mt-1">
                             {errors.imageUrl.message}
                           </p>
-                        )}
-                        <div className="text-center text-sm text-gray-500">
-                          OR
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Input
-                            type="file"
-                            accept="image/jpeg,image/png,image/gif,image/webp"
-                            onChange={handleImageUpload}
-                            disabled={uploadingImage}
-                          />
-                          {uploadingImage && (
-                            <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
-                          )}
-                        </div>
-                        {imageFile && (
-                          <div className="text-sm text-green-600">
-                            Selected: {imageFile.name}
-                          </div>
                         )}
                       </div>
                     </div>
@@ -2270,7 +2316,7 @@ export default function BannerManagementPage() {
             </TabsContent>
 
             {/* Templates Tab */}
-            <TabsContent value="templates" className="space-y-6">
+            {/* <TabsContent value="templates" className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
@@ -2342,7 +2388,7 @@ export default function BannerManagementPage() {
                   ))}
                 </CardContent>
               </Card>
-            </TabsContent>
+            </TabsContent> */}
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="space-y-6">
@@ -2988,34 +3034,48 @@ export default function BannerManagementPage() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Banner Image</Label>
-                <div className="flex items-center gap-4">
-                  {editFormData.imageUrl && (
-                    <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
-                      <Image
-                        src={editFormData.imageUrl}
-                        alt="Banner preview"
-                        width={128}
-                        height={80}
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <Input
-                      value={editFormData.imageUrl}
-                      onChange={e =>
-                        setEditFormData(prev => ({
-                          ...prev,
-                          imageUrl: e.target.value
-                        }))
-                      }
-                      placeholder="Image URL or upload new image"
-                      className="border border-input"
+                
+                {/* Current Image Preview */}
+                {editFormData.imageUrl && (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-3">
+                    <img
+                      src={editFormData.imageUrl}
+                      alt="Current banner"
+                      className="w-full h-full object-cover"
                     />
-                    <div className="mt-2">
+                    <div className="absolute top-2 right-2">
+                      <Badge className="bg-green-500 text-white">
+                        Current Image
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Drag and Drop Upload */}
+                <div
+                  className="relative border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-6 transition-colors hover:bg-blue-50/50"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                    const files = e.dataTransfer.files;
+                    if (files && files[0]) {
+                      handleEditImageUpload(files[0]);
+                    }
+                  }}>
+                  <div className="text-center">
+                    <Upload className="mx-auto h-10 w-10 text-gray-400 mb-3" />
+                    <div className="flex flex-col items-center gap-2">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) handleEditImageUpload(file);
@@ -3025,10 +3085,13 @@ export default function BannerManagementPage() {
                       />
                       <Label
                         htmlFor="edit-image-upload"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md cursor-pointer transition-colors">
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md cursor-pointer transition-colors">
                         <Upload className="h-4 w-4" />
-                        Upload Image
+                        {editFormData.imageUrl ? 'Change Image' : 'Upload Image'}
                       </Label>
+                      <p className="text-xs text-gray-500">
+                        or drag and drop • PNG, JPG, GIF, WebP (max. 5MB)
+                      </p>
                     </div>
                   </div>
                 </div>

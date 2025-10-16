@@ -67,11 +67,13 @@ export function TopCompanies({ companies }: TopCompaniesProps) {
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <Building className="h-5 w-5" />
-            View All Companies
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-          </div>
+          <Link href="/companies">
+            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer">
+              <Building className="h-5 w-5" />
+              View All Companies
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+            </div>
+          </Link>
         </div>
 
         {/* Stats Section */}
@@ -91,7 +93,7 @@ export function TopCompanies({ companies }: TopCompaniesProps) {
               <Users className="h-6 w-6 text-white" />
             </div>
             <div className="text-2xl font-bold text-gray-900 mb-2">
-              {companies.reduce((sum, company) => sum + company.jobs, 0)}+
+              {companies.reduce((sum, company) => sum + (company.jobs || 0), 0)}+
             </div>
             <div className="text-sm text-gray-600">Total Job Openings</div>
           </div>

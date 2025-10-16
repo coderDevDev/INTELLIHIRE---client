@@ -25,7 +25,7 @@ export default function LoginPage() {
             style={{ animationDelay: '3s' }}></div>
         </div>
 
-        <div className="container relative mx-auto px-4 py-16 md:py-24 z-10">
+        <div className="container relative mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-24 z-10">
           <div className="max-w-md mx-auto relative z-20">
             {/* Header Section */}
             <div className="text-center mb-8">

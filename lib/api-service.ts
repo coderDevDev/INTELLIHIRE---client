@@ -171,6 +171,11 @@ export const jobAPI = {
     return response.data;
   },
 
+  updateJobStatus: async (id: string, status: string) => {
+    const response = await api.patch(`/jobs/${id}/status`, { status });
+    return response.data;
+  },
+
   deleteJob: async (id: string) => {
     const response = await api.delete(`/jobs/${id}`);
     return response.data;

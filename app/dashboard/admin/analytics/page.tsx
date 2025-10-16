@@ -451,9 +451,9 @@ End of Report
     change?: string;
     changeType?: 'increase' | 'decrease';
     icon: any;
-    color?: string;
+    color?: 'blue' | 'green' | 'purple' | 'orange' | 'red';
   }) => {
-    const colorClasses = {
+    const colorClasses: Record<string, string> = {
       blue: 'text-blue-600',
       green: 'text-green-600',
       purple: 'text-purple-600',
@@ -463,16 +463,16 @@ End of Report
 
     return (
       <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-gray-700">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+          <CardTitle className="text-xs sm:text-sm font-medium text-gray-700">
             {title}
           </CardTitle>
           <Icon
-            className={`h-5 w-5 ${colorClasses[color]} group-hover:scale-110 transition-transform`}
+            className={`h-4 w-4 sm:h-5 sm:w-5 ${colorClasses[color]} group-hover:scale-110 transition-transform`}
           />
         </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-gray-900">{value}</div>
+        <CardContent className="p-3 sm:p-4 pt-0">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{value}</div>
           {change && (
             <div className="flex items-center gap-1 text-xs mt-1">
               {changeType === 'increase' ? (
@@ -503,11 +503,11 @@ End of Report
     children: React.ReactNode;
   }) => (
     <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
+      <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4">
+        <CardTitle className="text-base sm:text-lg lg:text-xl font-semibold">{title}</CardTitle>
+        {description && <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>}
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">{children}</CardContent>
     </Card>
   );
 
@@ -518,16 +518,16 @@ End of Report
     data: Array<{ label: string; value: number }>;
     maxValue: number;
   }) => (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {data.map((item, index) => (
         <div key={index} className="space-y-1">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-700">{item.label}</span>
+          <div className="flex justify-between text-xs sm:text-sm">
+            <span className="text-gray-700 truncate max-w-[60%]">{item.label}</span>
             <span className="font-semibold text-gray-900">{item.value}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${(item.value / maxValue) * 100}%` }}
             />
           </div>
@@ -541,18 +541,18 @@ End of Report
   }: {
     data: Array<{ month: string; count: number }>;
   }) => {
-    const maxValue = Math.max(...data.map(d => d.count));
+    const maxValue = Math.max(...data.map(d => d.count), 1);
 
     return (
-      <div className="space-y-4">
-        <div className="flex items-end justify-between h-32">
+      <div className="space-y-3">
+        <div className="flex items-end justify-between h-20 sm:h-24">
           {data.map((item, index) => (
-            <div key={index} className="flex flex-col items-center space-y-2">
+            <div key={index} className="flex flex-col items-center space-y-1">
               <div
-                className="w-8 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all duration-500 hover:from-blue-600 hover:to-blue-500"
-                style={{ height: `${(item.count / maxValue) * 100}px` }}
+                className="w-6 sm:w-8 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t transition-all duration-500 hover:from-blue-600 hover:to-blue-500"
+                style={{ height: `${Math.max((item.count / maxValue) * 70, 4)}px` }}
               />
-              <span className="text-xs text-gray-600">{item.month}</span>
+              <span className="text-[10px] sm:text-xs text-gray-600">{item.month}</span>
             </div>
           ))}
         </div>
@@ -624,25 +624,25 @@ End of Report
 
       {/* Modern Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
-        <div className="container flex h-20 items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-              <BarChart3 className="h-6 w-6 text-white" />
+        <div className="container flex flex-col sm:flex-row h-auto sm:h-20 items-start sm:items-center justify-between px-4 sm:px-6 py-4 sm:py-0 gap-3 sm:gap-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+              <BarChart3 className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Analytics Dashboard
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
                 Comprehensive insights and performance metrics
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <select
               value={selectedPeriod}
               onChange={e => setSelectedPeriod(e.target.value)}
-              className="bg-white/60 backdrop-blur-sm border-white/50 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="bg-white/60 backdrop-blur-sm border-white/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-none">
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
               <option value="90d">Last 90 days</option>
@@ -651,25 +651,25 @@ End of Report
             <Button
               variant="outline"
               size="sm"
-              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
+              className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300 h-8 px-2 sm:px-3"
               onClick={fetchAnalyticsData}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
               size="sm"
               onClick={handleExport}
               disabled={exporting}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg">
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg h-8 px-2 sm:px-3">
               {exporting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Exporting...
+                  <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Exporting...</span>
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Export</span>
                 </>
               )}
             </Button>
@@ -678,9 +678,9 @@ End of Report
       </header>
 
       <main className="flex-1 overflow-auto relative z-10">
-        <div className="container px-6 py-8 space-y-8">
+        <div className="container px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 lg:space-y-8">
           {/* Overview Stats */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Total Jobs"
               value={data.overview.totalJobs}
@@ -708,7 +708,7 @@ End of Report
           </div>
 
           {/* Additional Stats Row */}
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-3">
             <StatCard
               title="Active Jobs"
               value={data.overview.activeJobs}
@@ -733,43 +733,43 @@ End of Report
           <Tabs
             value={selectedTab}
             onValueChange={setSelectedTab}
-            className="space-y-6">
-            <TabsList className="bg-white/60 backdrop-blur-sm border-white/50">
+            className="space-y-4 sm:space-y-6">
+            <TabsList className="bg-white/60 backdrop-blur-sm border-white/50 w-full sm:w-auto overflow-x-auto flex justify-start">
               <TabsTrigger
                 value="overview"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap">
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="jobs"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                Job Analytics
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap">
+                Jobs
               </TabsTrigger>
               <TabsTrigger
                 value="applications"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap">
                 Applications
               </TabsTrigger>
               <TabsTrigger
                 value="trends"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs sm:text-sm whitespace-nowrap">
                 Trends
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
+            <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
                 <ChartCard
                   title="Application Status Distribution"
                   description="Current status of all applications">
-                  <div className="space-y-4">
+                  <div className="space-y-2 sm:space-y-3 max-h-64 overflow-y-auto">
                     {data.applicationStats.byStatus.map((status, index) => (
                       <div
                         key={index}
                         className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           <div
-                            className={`w-3 h-3 rounded-full ${
+                            className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${
                               status.status === 'Approved'
                                 ? 'bg-green-500'
                                 : status.status === 'Pending'
@@ -777,16 +777,16 @@ End of Report
                                 : 'bg-red-500'
                             }`}
                           />
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-xs sm:text-sm font-medium text-gray-700">
                             {status.status}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-900">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <span className="text-xs sm:text-sm font-semibold text-gray-900">
                             {status.count}
                           </span>
-                          <span className="text-xs text-gray-500">
-                            ({status.percentage}%)
+                          <span className="text-[10px] sm:text-xs text-gray-500">
+                            ({status.percentage.toFixed(0)}%)
                           </span>
                         </div>
                       </div>
@@ -844,8 +844,8 @@ End of Report
               </div>
             </TabsContent>
 
-            <TabsContent value="jobs" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
+            <TabsContent value="jobs" className="space-y-4 sm:space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                 <ChartCard
                   title="Jobs by Category"
                   description="Distribution of job postings by category">
@@ -904,8 +904,8 @@ End of Report
               </div>
             </TabsContent>
 
-            <TabsContent value="applications" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
+            <TabsContent value="applications" className="space-y-4 sm:space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
                 <ChartCard
                   title="Applications Over Time"
                   description="Monthly application trends">
@@ -915,25 +915,25 @@ End of Report
                 <ChartCard
                   title="Top Jobs by Applications"
                   description="Most popular job postings">
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3 max-h-64 overflow-y-auto">
                     {data.applicationStats.byJob
                       .slice(0, 5)
                       .map((job, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 bg-white/40 backdrop-blur-sm rounded-lg border border-white/50">
-                          <div>
-                            <p className="font-medium text-gray-900">
+                          className="flex items-center justify-between p-2 sm:p-3 bg-white/40 backdrop-blur-sm rounded-lg border border-white/50">
+                          <div className="flex-1 min-w-0 mr-2">
+                            <p className="font-medium text-gray-900 text-xs sm:text-sm truncate">
                               {job.jobTitle}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-[10px] sm:text-xs text-gray-600 truncate">
                               {job.company}
                             </p>
                           </div>
                           <Badge
                             variant="secondary"
-                            className="bg-blue-100 text-blue-700">
-                            {job.count} applications
+                            className="bg-blue-100 text-blue-700 text-[10px] sm:text-xs whitespace-nowrap">
+                            {job.count}
                           </Badge>
                         </div>
                       ))}
@@ -942,8 +942,8 @@ End of Report
               </div>
             </TabsContent>
 
-            <TabsContent value="trends" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-3">
+            <TabsContent value="trends" className="space-y-4 sm:space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <ChartCard
                   title="Job Postings Trend"
                   description="Monthly job posting activity">
