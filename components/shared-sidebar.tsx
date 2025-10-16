@@ -116,8 +116,23 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       }
     };
 
+    // Listen for storage changes (when profile is updated)
+    const handleStorageChange = () => {
+      const updatedUser = authAPI.getCurrentUser();
+      setUser(updatedUser);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom profile update event
+    window.addEventListener('profileUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleStorageChange);
+    };
   }, [role, isMobileOpen, isCollapsed]);
 
   // Admin routes
@@ -144,6 +159,13 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       active: pathname === '/dashboard/admin/applicants',
       description: 'View applicants',
       badge: '245'
+    },
+    {
+      label: 'Companies',
+      icon: Building2,
+      href: '/dashboard/admin/companies',
+      active: pathname === '/dashboard/admin/companies',
+      description: 'Manage companies'
     },
     // {
     //   label: 'AI Parsing',
@@ -250,13 +272,6 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       href: '/dashboard/applicant/recommendations',
       active: pathname === '/dashboard/applicant/recommendations',
       description: 'AI-powered job suggestions'
-    },
-    {
-      label: 'Career Path',
-      icon: Route,
-      href: '/dashboard/applicant/career-path',
-      active: pathname === '/dashboard/applicant/career-path',
-      description: 'Career predictions'
     }
     // {
     //   label: 'Success Prediction',

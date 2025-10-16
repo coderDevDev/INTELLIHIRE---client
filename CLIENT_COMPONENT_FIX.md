@@ -40,3 +40,4 @@ Removed `generateStaticParams()` from these files:
 - ✅ No server-side pre-generation needed
 
 Your app is now ready to deploy! 🎉
+

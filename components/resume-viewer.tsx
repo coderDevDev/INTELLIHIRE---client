@@ -312,7 +312,7 @@ export function ResumeViewer({
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
-      {/* ATS Score Card */}
+      {/* PDS Score Card */}
       {resumeData.atsOptimization && (
         <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
@@ -320,7 +320,7 @@ export function ResumeViewer({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-6 w-6 text-blue-600 group-hover:scale-110 transition-transform" />
-                  <span className="font-semibold text-gray-900">ATS Score</span>
+                  <span className="font-semibold text-gray-900">PDS Score</span>
                 </div>
                 <Badge
                   className={`text-lg px-4 py-2 ${getATSColor(
@@ -755,7 +755,7 @@ ${
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* ATS Score */}
+                  {/* PDS Score */}
                   <div className="text-center">
                     <div
                       className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-2xl font-bold ${getATSColor(
@@ -765,7 +765,7 @@ ${
                       {resumeData.atsOptimization.atsScore}/100
                     </div>
                     <p className="text-gray-600 mt-2">
-                      Overall ATS Compatibility Score
+                      Overall PDS Compatibility Score
                     </p>
                   </div>
 

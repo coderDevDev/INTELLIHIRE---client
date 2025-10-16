@@ -38,7 +38,6 @@ import {
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState('applicant');
   const [showPassword, setShowPassword] = useState(false);
 
   // React Hook Form with Zod validation
@@ -148,29 +147,12 @@ export function LoginForm() {
                 Access Your Account
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Choose your account type and enter your credentials
+                Enter your credentials to access your account
               </CardDescription>
             </CardHeader>
 
             <CardContent className="px-6 pb-6">
-              <Tabs defaultValue="applicant" onValueChange={setUserType}>
-                <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-6">
-                  <TabsTrigger
-                    value="applicant"
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 font-medium transition-all duration-300">
-                    <User className="h-4 w-4 mr-2" />
-                    Applicant
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="admin"
-                    className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-purple-600 font-medium transition-all duration-300">
-                    <Shield className="h-4 w-4 mr-2" />
-                    Admin
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="applicant">
-                  <form
+              <form
                     onSubmit={handleFormSubmit(onSubmit)}
                     className="space-y-6">
                     <div className="space-y-2">
@@ -181,13 +163,12 @@ export function LoginForm() {
                         Email Address
                       </Label>
                       <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                         <Input
                           id="email"
                           type="email"
                           placeholder="your@email.com"
                           {...register('email')}
-                          className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                          className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                             errors.email
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                               : ''
@@ -217,12 +198,12 @@ export function LoginForm() {
                         </Link>
                       </div>
                       <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                         <Input
                           id="password"
                           type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
                           {...register('password')}
-                          className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                          className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                             errors.password
                               ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                               : ''
@@ -264,105 +245,6 @@ export function LoginForm() {
                       )}
                     </Button>
                   </form>
-                </TabsContent>
-
-                <TabsContent value="admin">
-                  <form
-                    onSubmit={handleFormSubmit(onSubmit)}
-                    className="space-y-6">
-                    <div className="space-y-2">
-                      <Label
-                        htmlFor="email"
-                        className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-purple-600" />
-                        Admin Email
-                      </Label>
-                      <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="admin@example.com"
-                          {...register('email')}
-                          className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
-                            errors.email
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                      {errors.email && (
-                        <p className="text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {errors.email.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label
-                          htmlFor="password"
-                          className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-purple-600" />
-                          Admin Password
-                        </Label>
-                        <Link
-                          href="/forgot-password"
-                          className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200">
-                          Forgot password?
-                        </Link>
-                      </div>
-                      <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          {...register('password')}
-                          className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
-                            errors.password
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
-                              : ''
-                          }`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                          {showPassword ? (
-                            <EyeOff className="h-5 w-5" />
-                          ) : (
-                            <Eye className="h-5 w-5" />
-                          )}
-                        </button>
-                      </div>
-                      {errors.password && (
-                        <p className="text-sm text-red-600 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          {errors.password.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 rounded-xl group"
-                      disabled={isLoading}>
-                      {isLoading ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Logging in...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          Admin Sign In
-                          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-                        </div>
-                      )}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
             </CardContent>
 
             <CardFooter className="flex justify-center pt-6 border-t border-gray-200/50 relative z-20">

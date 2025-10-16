@@ -239,13 +239,12 @@ export function RegisterForm() {
                       Email Address
                     </Label>
                     <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="john.doe@email.com"
+                        placeholder="your@email.com"
                         {...register('email')}
-                        className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.email
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''
@@ -356,12 +355,12 @@ export function RegisterForm() {
                       Password
                     </Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
                         {...register('password')}
-                        className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.password
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''
@@ -399,12 +398,12 @@ export function RegisterForm() {
                       Confirm Password
                     </Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
                         {...register('confirmPassword')}
-                        className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.confirmPassword
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''
@@ -520,13 +519,12 @@ export function RegisterForm() {
                       Admin Email
                     </Label>
                     <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
                       <Input
                         id="email"
                         type="email"
-                        placeholder="admin@intellihire.com"
+                        placeholder="your@email.com"
                         {...register('email')}
-                        className={`pl-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.email
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''
@@ -641,12 +639,12 @@ export function RegisterForm() {
                       Password
                     </Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
                         {...register('password')}
-                        className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.password
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''
@@ -684,12 +682,12 @@ export function RegisterForm() {
                       Confirm Password
                     </Label>
                     <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors duration-200" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
                         {...register('confirmPassword')}
-                        className={`pl-12 pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        className={`pr-12 h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-purple-500 focus:ring-purple-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.confirmPassword
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : ''

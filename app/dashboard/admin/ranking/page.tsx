@@ -99,6 +99,25 @@ interface ApplicantRanking {
     locationScore: number;
     atsKeywordsScore: number;
   };
+  pdsScoreBreakdown?: {
+    totalScore: number;
+    maxPossibleScore: number;
+    percentage: number;
+    criteriaScores: {
+      [key: string]: {
+        label: string;
+        earnedPoints: number;
+        maxPoints: number;
+        weight: number;
+        percentage: number;
+        matchedCriteria: string;
+        details: string;
+        enabled: boolean;
+      };
+    };
+    scoringSystemUsed: 'default' | 'company-custom' | 'job-custom';
+    calculatedAt: string;
+  };
   matchReasons: string[];
   concerns: string[];
   strengths: string[];
@@ -1363,7 +1382,8 @@ function ApplicantRankingPageContent() {
               <DialogHeader>
                 <DialogTitle>Ranking Details</DialogTitle>
                 <DialogDescription>
-                  Detailed analysis for {selectedRanking?.applicantId.firstName}{' '}
+                  Detailed analysissss for{' '}
+                  {selectedRanking?.applicantId.firstName}{' '}
                   {selectedRanking?.applicantId.lastName}
                 </DialogDescription>
               </DialogHeader>
@@ -1492,6 +1512,122 @@ function ApplicantRankingPageContent() {
                       </div>
                     </div>
                   </div>
+
+                  {/* PDS Score Breakdown (NEW) */}
+
+                  {console.log({ selectedRanking })}
+                  {selectedRanking.pdsScoreBreakdown && (
+                    <div className="border-t pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5 text-blue-600" />
+                          PDS Score Breakdown
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {selectedRanking.pdsScoreBreakdown
+                            .scoringSystemUsed === 'job-custom' && 'Job Custom'}
+                          {selectedRanking.pdsScoreBreakdown
+                            .scoringSystemUsed === 'company-custom' &&
+                            'Company Default'}
+                          {selectedRanking.pdsScoreBreakdown
+                            .scoringSystemUsed === 'default' &&
+                            'System Default'}
+                        </Badge>
+                      </div>
+
+                      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">
+                              Total PDS Score
+                            </p>
+                            <p className="text-3xl font-bold text-blue-600">
+                              {selectedRanking.pdsScoreBreakdown.totalScore.toFixed(
+                                1
+                              )}
+                              <span className="text-lg text-gray-500">
+                                /100
+                              </span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">Percentage</p>
+                            <p className="text-2xl font-bold text-blue-600">
+                              {selectedRanking.pdsScoreBreakdown.percentage.toFixed(
+                                1
+                              )}
+                              %
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        {Object.entries(
+                          selectedRanking.pdsScoreBreakdown.criteriaScores || {}
+                        ).map(([key, criterion]: [string, any]) => {
+                          if (!criterion.enabled) return null;
+
+                          return (
+                            <div
+                              key={key}
+                              className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-semibold text-sm">
+                                      {criterion.label}
+                                    </h4>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs">
+                                      Weight: {criterion.weight}%
+                                    </Badge>
+                                  </div>
+                                  {criterion.matchedCriteria && (
+                                    <p className="text-xs text-blue-600 font-medium">
+                                      {criterion.matchedCriteria}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right ml-4">
+                                  <p className="text-lg font-bold text-gray-900">
+                                    {criterion.earnedPoints.toFixed(1)}
+                                    <span className="text-sm text-gray-500">
+                                      /{criterion.maxPoints}
+                                    </span>
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {criterion.percentage.toFixed(0)}%
+                                  </p>
+                                </div>
+                              </div>
+
+                              <Progress
+                                value={criterion.percentage}
+                                className="h-2 mb-2"
+                              />
+
+                              {criterion.details && (
+                                <p className="text-xs text-gray-600 mt-2">
+                                  {criterion.details}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {selectedRanking.pdsScoreBreakdown.calculatedAt && (
+                        <p className="text-xs text-gray-500 mt-4 text-center">
+                          Calculated on{' '}
+                          {new Date(
+                            selectedRanking.pdsScoreBreakdown.calculatedAt
+                          ).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Match Reasons */}
                   {selectedRanking.matchReasons.length > 0 && (

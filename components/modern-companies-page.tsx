@@ -547,26 +547,6 @@ export function ModernCompaniesPage() {
                   <List className="h-3 w-3" />
                 </Button>
               </div>
-
-              {/* Filter Button */}
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="bg-white/60 backdrop-blur-sm border-white/50">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {Object.values(filters).some(v =>
-                  Array.isArray(v) ? v.length > 0 : v !== '' && v !== null
-                ) && (
-                  <Badge className="ml-2 bg-blue-100 text-blue-700 text-xs">
-                    {
-                      Object.values(filters).filter(v =>
-                        Array.isArray(v) ? v.length > 0 : v !== '' && v !== null
-                      ).length
-                    }
-                  </Badge>
-                )}
-              </Button>
             </div>
           </Card>
         </motion.div>
@@ -1260,4 +1240,3 @@ export function ModernCompaniesPage() {
     </div>
   );
 }
-

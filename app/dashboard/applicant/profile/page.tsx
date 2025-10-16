@@ -132,7 +132,14 @@ export default function ApplicantProfilePage() {
         ]);
 
         setProfile(profileData);
-        setAvatar(profileData.profilePicture || DEFAULT_AVATAR);
+        // Construct full URL for profile picture if it exists
+        if (profileData.profilePicture) {
+          const baseUrl = API_URL.replace(/\/api$/, '');
+          const picturePath = profileData.profilePicture.replace(/^\\+/, '').replace(/\\/g, '/');
+          setAvatar(`${baseUrl}/${picturePath}`);
+        } else {
+          setAvatar(DEFAULT_AVATAR);
+        }
         setExperience(
           Array.isArray(profileData.experience) ? profileData.experience : []
         );
@@ -211,6 +218,22 @@ export default function ApplicantProfilePage() {
       };
       const updated = await userAPI.updateProfile(updatePayload);
       setProfile(updated);
+      
+      // Update localStorage so sidebar reflects changes immediately
+      const currentUser = authAPI.getCurrentUser();
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          firstName: updated.firstName,
+          lastName: updated.lastName,
+          profilePicture: updated.profilePicture
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Dispatch custom event to notify sidebar of profile update
+        window.dispatchEvent(new Event('profileUpdated'));
+      }
+      
       setEditMode(false);
       setAvatarFile(null);
       toast.success('Profile updated successfully!');
@@ -520,6 +543,16 @@ export default function ApplicantProfilePage() {
                         </span>
                       </div>
                       <Progress value={completionPercentage} className="h-2" />
+                      {completionPercentage < 100 && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-blue-800">
+                              Complete your profile to improve job matches and increase your chances of being hired!
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -617,7 +650,7 @@ export default function ApplicantProfilePage() {
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600">
-                        DOB:{' '}
+                        Birthday:{' '}
                         {editMode ? (
                           <Input
                             name="dob"

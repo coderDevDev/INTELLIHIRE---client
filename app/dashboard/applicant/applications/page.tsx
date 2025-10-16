@@ -487,27 +487,6 @@ export default function ApplicantApplicationsPage() {
               </CardContent>
             </Card>
 
-            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
-                  Success Rate
-                </CardTitle>
-                <TrendingUp className="h-5 w-5 text-green-600 group-hover:scale-110 transition-transform" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">
-                  {stats.total > 0
-                    ? Math.round(
-                        ((stats.hired + stats.offered) / stats.total) * 100
-                      )
-                    : 0}
-                  %
-                </div>
-                <p className="text-xs text-green-600">
-                  {stats.hired} hired, {stats.offered} offered
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Filters */}

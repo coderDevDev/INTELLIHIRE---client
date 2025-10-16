@@ -323,15 +323,15 @@ export function ModernJobsPage() {
       );
     }
 
-    // Salary range filter
-    filtered = filtered.filter(job => {
-      const minSalary = job.salaryMin || 0;
-      const maxSalary = job.salaryMax || 0;
-      return (
-        minSalary >= filters.salaryRange[0] &&
-        maxSalary <= filters.salaryRange[1]
-      );
-    });
+    // Salary range filter - only apply if not at default max range
+    if (filters.salaryRange[1] < 200000) {
+      filtered = filtered.filter(job => {
+        const minSalary = job.salaryMin || 0;
+        const maxSalary = job.salaryMax || 999999;
+        // Job should overlap with the selected salary range
+        return maxSalary >= filters.salaryRange[0] && minSalary <= filters.salaryRange[1];
+      });
+    }
 
     // Experience level filter
     if (filters.experienceLevel.length > 0) {

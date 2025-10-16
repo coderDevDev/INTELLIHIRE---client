@@ -180,3 +180,4 @@ Once deployed, your IntelliHire client will be live at:
 `https://[your-service-name].onrender.com`
 
 🎉 You can now access your application from anywhere!
+

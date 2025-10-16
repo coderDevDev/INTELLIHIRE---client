@@ -355,6 +355,67 @@ export const companyAPI = {
   getCompanyById: async (id: string) => {
     const response = await api.get(`/companies/${id}`);
     return response.data;
+  },
+
+  createCompany: async (companyData: any) => {
+    const response = await api.post('/companies', companyData);
+    return response.data;
+  },
+
+  updateCompany: async (id: string, companyData: any) => {
+    const response = await api.put(`/companies/${id}`, companyData);
+    return response.data;
+  },
+
+  deleteCompany: async (id: string) => {
+    const response = await api.delete(`/companies/${id}`);
+    return response.data;
+  },
+
+  uploadCompanyDocument: async (id: string, file: File, documentType: string) => {
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('documentType', documentType);
+    const response = await api.post(`/companies/${id}/documents`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  verifyCompany: async (id: string, verificationData: { isVerified: boolean; verificationNotes?: string }) => {
+    const response = await api.put(`/companies/${id}/verify`, verificationData);
+    return response.data;
+  },
+
+  getScoringConfig: async (id: string) => {
+    const response = await api.get(`/companies/${id}/scoring-config`);
+    return response.data;
+  },
+
+  updateScoringConfig: async (id: string, scoringConfig: any) => {
+    const response = await api.put(`/companies/${id}/scoring-config`, { scoringConfig });
+    return response.data;
+  },
+
+  deleteScoringConfig: async (id: string) => {
+    const response = await api.delete(`/companies/${id}/scoring-config`);
+    return response.data;
+  },
+
+  uploadVerificationDocument: async (formData: FormData) => {
+    const response = await api.post('/companies/upload-verification-document', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
+  fixScoringConfigs: async () => {
+    const response = await api.post('/companies/fix-scoring-configs');
+    return response.data;
   }
 };
 

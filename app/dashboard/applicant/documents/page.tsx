@@ -1002,7 +1002,7 @@ export default function DocumentsPage() {
                                       });
 
                                       toast.success(
-                                        'ATS-compliant resume loaded successfully!'
+                                        'PDS loaded successfully!'
                                       );
                                     } catch (savedResumeError: any) {
                                       // If no saved resume found, it might still be processing

@@ -27,10 +27,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { jobAPI, companyAPI, categoryAPI } from '@/lib/api-service';
 import { useToast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { ScoringConfigForm } from '@/components/scoring-config-form';
+import { ScoringCriteria, DEFAULT_SCORING_CONFIG } from '@/types/scoring.types';
+import {
+  Settings as SettingsIcon,
+  AlertCircle,
+  HelpCircle
+} from 'lucide-react';
 
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 interface Company {
   _id: string;
   name: string;
+  isVerified?: boolean;
+  address?: {
+    street?: string;
+    city?: string;
+    province?: string;
+    zipCode?: string;
+  };
+  scoringConfig?: ScoringCriteria;
 }
 
 interface Category {
@@ -70,6 +87,11 @@ interface FormData {
   allowsRemote: boolean;
   department: string;
   positionCount: number;
+  jobScoringConfig?: {
+    useCompanyDefault: boolean;
+    useSystemDefault: boolean;
+    customScoring?: ScoringCriteria;
+  };
 }
 
 interface JobPostingFormProps {
@@ -89,6 +111,12 @@ export function JobPostingForm({
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentTab, setCurrentTab] = useState('basic');
+  const [scoringConfig, setScoringConfig] = useState<ScoringCriteria>(
+    DEFAULT_SCORING_CONFIG
+  );
+  const [scoringMode, setScoringMode] = useState<
+    'company' | 'system' | 'custom'
+  >('company');
 
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -121,7 +149,12 @@ export function JobPostingForm({
     isUrgent: false,
     allowsRemote: false,
     department: '',
-    positionCount: 1
+    positionCount: 1,
+    jobScoringConfig: {
+      useCompanyDefault: true,
+      useSystemDefault: false,
+      customScoring: undefined
+    }
   });
 
   // Populate form fields if editing
@@ -203,25 +236,32 @@ export function JobPostingForm({
           categoryAPI.getCategories()
         ]);
 
-        setCompanies(companiesData.companies || companiesData || []);
-        setCategories(categoriesData || []);
+        const loadedCompanies = companiesData.companies || companiesData || [];
+        const loadedCategories =
+          categoriesData.categories || categoriesData || [];
+
+        // Filter to show only verified companies
+        const verifiedCompanies = loadedCompanies.filter(
+          (company: Company) => company.isVerified
+        );
+
+        setCompanies(verifiedCompanies);
+        setCategories(loadedCategories);
+
+        // Show helpful message if no verified companies exist
+        if (verifiedCompanies.length === 0) {
+          toast.warning('No verified companies found', {
+            description:
+              'Please verify companies in the Company Management section first.'
+          });
+        }
       } catch (error) {
         console.error('Error loading data:', error);
-        // Fallback to placeholder data if API fails
-        setCompanies([
-          { _id: '1', name: 'Sto. Tomas Municipal Government' },
-          { _id: '2', name: 'Sample Company 1' },
-          { _id: '3', name: 'Sample Company 2' }
-        ]);
-
-        setCategories([
-          { _id: '1', name: 'Information Technology' },
-          { _id: '2', name: 'Human Resources' },
-          { _id: '3', name: 'Finance' },
-          { _id: '4', name: 'Marketing' },
-          { _id: '5', name: 'Operations' },
-          { _id: '6', name: 'Administration' }
-        ]);
+        toast.error('Failed to load companies and categories', {
+          description: 'Please check your connection and try again.'
+        });
+        setCompanies([]);
+        setCategories([]);
       }
     };
 
@@ -233,6 +273,81 @@ export function JobPostingForm({
       ...prev,
       [field]: value
     }));
+  };
+
+  // Handle company selection and auto-populate location + scoring config
+  const handleCompanyChange = async (companyId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      companyId
+    }));
+
+    // Find the selected company and populate location
+    const selectedCompany = companies.find(c => c._id === companyId);
+
+    if (selectedCompany) {
+      // Auto-populate location
+      if (selectedCompany.address) {
+        const { street, city, province, zipCode } = selectedCompany.address;
+        const locationParts = [street, city, province, zipCode].filter(Boolean);
+        const location = locationParts.join(', ');
+
+        if (location) {
+          setFormData(prev => ({
+            ...prev,
+            location
+          }));
+
+          toast({
+            title: 'Location auto-filled',
+            description: `Location populated from ${selectedCompany.name}'s address`
+          });
+        }
+      }
+
+      // Load company's scoring configuration
+      try {
+        const companyDetails = await companyAPI.getCompanyById(companyId);
+
+        if (companyDetails.scoringConfig) {
+          setScoringConfig(companyDetails.scoringConfig);
+          setScoringMode('company');
+          setFormData(prev => ({
+            ...prev,
+            jobScoringConfig: {
+              useCompanyDefault: true,
+              useSystemDefault: false,
+              customScoring: undefined
+            }
+          }));
+
+          toast({
+            title: 'Scoring configuration loaded',
+            description: `Using ${selectedCompany.name}'s scoring criteria. You can customize in the Scoring tab.`
+          });
+        } else {
+          // Use default if company has no custom config
+          setScoringConfig(DEFAULT_SCORING_CONFIG);
+          setScoringMode('system');
+          setFormData(prev => ({
+            ...prev,
+            jobScoringConfig: {
+              useCompanyDefault: false,
+              useSystemDefault: true,
+              customScoring: undefined
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading company scoring config:', error);
+        toast({
+          title: 'Could not load scoring configuration',
+          description: 'Using default scoring criteria.',
+          variant: 'destructive'
+        });
+        setScoringConfig(DEFAULT_SCORING_CONFIG);
+      }
+    }
   };
 
   const handleSkillsChange = (value: string) => {
@@ -259,6 +374,65 @@ export function JobPostingForm({
     }));
   };
 
+  const handleScoringModeChange = (mode: 'company' | 'system' | 'custom') => {
+    setScoringMode(mode);
+
+    if (mode === 'company') {
+      // Use company's config
+      const selectedCompany = companies.find(c => c._id === formData.companyId);
+      if (selectedCompany?.scoringConfig) {
+        setScoringConfig(selectedCompany.scoringConfig);
+      }
+      setFormData(prev => ({
+        ...prev,
+        jobScoringConfig: {
+          useCompanyDefault: true,
+          useSystemDefault: false,
+          customScoring: undefined
+        }
+      }));
+    } else if (mode === 'system') {
+      // Use system default
+      setScoringConfig(DEFAULT_SCORING_CONFIG);
+      setFormData(prev => ({
+        ...prev,
+        jobScoringConfig: {
+          useCompanyDefault: false,
+          useSystemDefault: true,
+          customScoring: undefined
+        }
+      }));
+    } else {
+      // Custom mode - keep current config but mark as custom
+      setFormData(prev => ({
+        ...prev,
+        jobScoringConfig: {
+          useCompanyDefault: false,
+          useSystemDefault: false,
+          customScoring: scoringConfig
+        }
+      }));
+    }
+  };
+
+  const handleScoringConfigSave = async (config: ScoringCriteria) => {
+    setScoringConfig(config);
+    setScoringMode('custom');
+    setFormData(prev => ({
+      ...prev,
+      jobScoringConfig: {
+        useCompanyDefault: false,
+        useSystemDefault: false,
+        customScoring: config
+      }
+    }));
+
+    toast({
+      title: 'Scoring configuration updated',
+      description: 'Custom scoring will be used for this job post.'
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -266,6 +440,7 @@ export function JobPostingForm({
       // Prepare the data for submission
       const jobData: any = {
         ...formData,
+        // jobScoringConfig already in formData with correct structure
         salaryMin: formData.salaryMin
           ? parseFloat(formData.salaryMin)
           : undefined,
@@ -380,6 +555,8 @@ export function JobPostingForm({
         return validateDetailsTab();
       case 'requirements':
         return validateRequirementsTab();
+      case 'scoring':
+        return []; // Scoring tab is optional (has its own internal validation)
       case 'settings':
         return []; // Settings tab is optional
       default:
@@ -399,7 +576,7 @@ export function JobPostingForm({
       return;
     }
 
-    const tabs = ['basic', 'details', 'requirements', 'settings'];
+    const tabs = ['basic', 'details', 'requirements', 'scoring', 'settings'];
     const currentIndex = tabs.indexOf(currentTab);
 
     if (currentIndex < tabs.length - 1) {
@@ -413,7 +590,7 @@ export function JobPostingForm({
   };
 
   const handlePreviousTab = () => {
-    const tabs = ['basic', 'details', 'requirements', 'settings'];
+    const tabs = ['basic', 'details', 'requirements', 'scoring', 'settings'];
     const currentIndex = tabs.indexOf(currentTab);
 
     if (currentIndex > 0) {
@@ -435,7 +612,7 @@ export function JobPostingForm({
   };
 
   const getTabProgress = () => {
-    const tabs = ['basic', 'details', 'requirements', 'settings'];
+    const tabs = ['basic', 'details', 'requirements', 'scoring', 'settings'];
     const currentIndex = tabs.indexOf(currentTab);
     return ((currentIndex + 1) / tabs.length) * 100;
   };
@@ -448,10 +625,14 @@ export function JobPostingForm({
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>
               Step{' '}
-              {['basic', 'details', 'requirements', 'settings'].indexOf(
-                currentTab
-              ) + 1}{' '}
-              of 4
+              {[
+                'basic',
+                'details',
+                'requirements',
+                'scoring',
+                'settings'
+              ].indexOf(currentTab) + 1}{' '}
+              of 5
             </span>
             <span>{Math.round(getTabProgress())}% Complete</span>
           </div>
@@ -466,10 +647,11 @@ export function JobPostingForm({
           value={currentTab}
           onValueChange={setCurrentTab}
           className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="details">Job Details</TabsTrigger>
             <TabsTrigger value="requirements">Requirements</TabsTrigger>
+            <TabsTrigger value="scoring">Scoring</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -501,20 +683,38 @@ export function JobPostingForm({
                     </Label>
                     <Select
                       value={formData.companyId}
-                      onValueChange={value =>
-                        handleInputChange('companyId', value)
-                      }>
+                      onValueChange={handleCompanyChange}>
                       <SelectTrigger id="companyId">
-                        <SelectValue placeholder="Select company" />
+                        <SelectValue placeholder="Select verified company" />
                       </SelectTrigger>
                       <SelectContent>
-                        {companies.map(company => (
-                          <SelectItem key={company._id} value={company._id}>
-                            {company.name}
-                          </SelectItem>
-                        ))}
+                        {companies.length === 0 ? (
+                          <div className="p-2 text-sm text-muted-foreground">
+                            No verified companies available
+                          </div>
+                        ) : (
+                          companies.map(company => (
+                            <SelectItem key={company._id} value={company._id}>
+                              <div className="flex items-center gap-2">
+                                {company.name}
+                                {company.isVerified && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs">
+                                    ✓ Verified
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
+                    {companies.length > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Only verified companies are shown
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="categoryId">
@@ -556,13 +756,17 @@ export function JobPostingForm({
                     </Label>
                     <Input
                       id="location"
-                      placeholder="e.g. Sto. Tomas"
+                      placeholder="Select a company to auto-fill location"
                       required
                       value={formData.location}
                       onChange={e =>
                         handleInputChange('location', e.target.value)
                       }
                     />
+                    <p className="text-xs text-muted-foreground">
+                      💡 Auto-filled from company address. You can edit if
+                      needed.
+                    </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -834,6 +1038,221 @@ export function JobPostingForm({
                     onChange={e => handleEligibilityChange(e.target.value)}
                   />
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="scoring">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="h-5 w-5 text-blue-600" />
+                  PDS Scoring Configuration
+                </CardTitle>
+                <CardDescription>
+                  Choose how this job should evaluate applicants based on their
+                  PDS (Personal Data Sheet)
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Scoring Mode Selection */}
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold">
+                    Scoring Mode
+                  </Label>
+                  <div className="space-y-3">
+                    {/* Option 1: Company Default */}
+                    <div
+                      className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        scoringMode === 'company'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handleScoringModeChange('company')}>
+                      <input
+                        type="radio"
+                        checked={scoringMode === 'company'}
+                        onChange={() => handleScoringModeChange('company')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            Use Company Default
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            Recommended
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formData.companyId ? (
+                            <>
+                              Use scoring criteria from{' '}
+                              <strong>
+                                {
+                                  companies.find(
+                                    c => c._id === formData.companyId
+                                  )?.name
+                                }
+                              </strong>
+                              . Consistent with other jobs from this company.
+                            </>
+                          ) : (
+                            'Select a company first to use their scoring criteria.'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Option 2: System Default */}
+                    <div
+                      className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        scoringMode === 'system'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handleScoringModeChange('system')}>
+                      <input
+                        type="radio"
+                        checked={scoringMode === 'system'}
+                        onChange={() => handleScoringModeChange('system')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            Use System Default
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Use the platform's standard scoring criteria. Balanced
+                          for general government and private sector positions.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Option 3: Custom */}
+                    <div
+                      className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        scoringMode === 'custom'
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => handleScoringModeChange('custom')}>
+                      <input
+                        type="radio"
+                        checked={scoringMode === 'custom'}
+                        onChange={() => handleScoringModeChange('custom')}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">
+                            Customize for This Job
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-amber-600 border-amber-600">
+                            Advanced
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Create custom scoring criteria specific to this job
+                          post. Overrides company defaults.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show Custom Configuration Form only when Custom mode is selected */}
+                {scoringMode === 'custom' && (
+                  <div className="border-t pt-6">
+                    <Alert className="mb-4 bg-amber-50 border-amber-200">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800">
+                        <strong>Custom Mode:</strong> Changes here will only
+                        apply to this job post. The company's default scoring
+                        will remain unchanged.
+                      </AlertDescription>
+                    </Alert>
+                    <ScoringConfigForm
+                      initialConfig={scoringConfig}
+                      onSave={handleScoringConfigSave}
+                      onCancel={() => {
+                        // Reset to previous mode
+                        const selectedCompany = companies.find(
+                          c => c._id === formData.companyId
+                        );
+                        if (selectedCompany?.scoringConfig) {
+                          handleScoringModeChange('company');
+                        } else {
+                          handleScoringModeChange('system');
+                        }
+                        toast({
+                          title: 'Changes discarded',
+                          description: 'Returned to previous scoring mode.'
+                        });
+                      }}
+                      companyName={
+                        companies.find(c => c._id === formData.companyId)
+                          ?.name || 'This Job'
+                      }
+                      isJobLevel={true}
+                      hasCustomConfig={scoringMode === 'custom'}
+                    />
+                  </div>
+                )}
+
+                {/* Preview for Company/System modes */}
+                {scoringMode !== 'custom' && (
+                  <div className="border-t pt-6">
+                    <div className="space-y-2">
+                      <Label className="text-base font-semibold">Preview</Label>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {scoringMode === 'company'
+                          ? "This job will use the company's scoring configuration shown below."
+                          : 'This job will use the system default scoring configuration shown below.'}
+                      </p>
+                      <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                        {Object.entries(scoringConfig).map(
+                          ([key, criterion]) => (
+                            <div
+                              key={key}
+                              className="flex items-center justify-between p-3 bg-white rounded border">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  checked={criterion.enabled}
+                                  disabled
+                                />
+                                <div>
+                                  <div className="font-medium">
+                                    {criterion.label}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {criterion.description}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-bold text-blue-600">
+                                  {criterion.weight}%
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Max: {criterion.maxPoints}pts
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground italic mt-2">
+                        ℹ️ To customize these values, select "Customize for This
+                        Job" above.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -479,9 +479,11 @@ export default function ApplicantDashboard() {
                           )}
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link
-                          href={`/dashboard/applicant/applications/${app._id}`}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        asChild>
+                        <Link href="/dashboard/applicant/applications">
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
