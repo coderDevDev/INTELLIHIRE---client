@@ -406,7 +406,7 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Recent Applicants */}
-            <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
+            {/* <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-xl font-semibold flex items-center gap-2">
@@ -477,7 +477,7 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* Quick Actions */}

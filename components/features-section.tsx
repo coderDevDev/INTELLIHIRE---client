@@ -133,9 +133,10 @@ export function FeaturesSection() {
 
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
-            <div
+            <Link
               key={feature.title}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3"
+              href="/features"
+              className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer block"
               style={{ animationDelay: `${index * 100}ms` }}>
               {/* Background Gradient */}
               <div
@@ -166,7 +167,7 @@ export function FeaturesSection() {
               {/* Hover Effect Border */}
               <div
                 className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-            </div>
+            </Link>
           ))}
         </div>
 
