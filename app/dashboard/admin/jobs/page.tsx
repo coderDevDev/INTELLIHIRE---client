@@ -65,7 +65,8 @@ import {
   Star,
   Clock,
   TrendingUp,
-  Archive
+  Archive,
+  Check
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -407,7 +408,7 @@ export default function JobPostingsPage() {
                 Manage Job Postings
               </CardTitle>
               <CardDescription>
-                Create, edit, and manage job postings for the PESO job portal.{' '}
+                Create, edit, and manage job postings for the job portal.{' '}
                 <span className="font-semibold text-blue-600">
                   Total: {totalJobs} job postings
                 </span>
@@ -684,16 +685,55 @@ export default function JobPostingsPage() {
                                   <FileText className="h-4 w-4 text-green-600" />
                                 </Link>
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  openArchiveModal(job._id, job.title)
-                                }
-                                title="Archive Job"
-                                className="bg-orange-50 hover:bg-orange-100 border-orange-200">
-                                <Archive className="h-4 w-4 text-orange-600" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300"
+                                    title="Change Status">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleStatusChange(job._id, 'draft')}
+                                    className={job.status === 'draft' ? 'bg-blue-50' : ''}>
+                                    <div className="flex items-center gap-2 w-full">
+                                      {job.status === 'draft' && <Check className="h-4 w-4" />}
+                                      <div className="h-2 w-2 rounded-full bg-gray-400"></div>
+                                      <span>Draft</span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleStatusChange(job._id, 'active')}
+                                    className={job.status === 'active' ? 'bg-blue-50' : ''}>
+                                    <div className="flex items-center gap-2 w-full">
+                                      {job.status === 'active' && <Check className="h-4 w-4" />}
+                                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                                      <span>Active</span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleStatusChange(job._id, 'paused')}
+                                    className={job.status === 'paused' ? 'bg-blue-50' : ''}>
+                                    <div className="flex items-center gap-2 w-full">
+                                      {job.status === 'paused' && <Check className="h-4 w-4" />}
+                                      <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                                      <span>Paused</span>
+                                    </div>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => openArchiveModal(job._id, job.title)}
+                                    className="text-red-600 hover:bg-red-50">
+                                    <Archive className="h-4 w-4 mr-2" />
+                                    <span>Archive</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -773,7 +813,8 @@ export default function JobPostingsPage() {
               <span className="font-semibold text-gray-900">
                 "{archiveJobTitle}"
               </span>
-              ? The job will be moved to archived status and will no longer be visible to applicants. You can reactivate it later if needed.
+              ? The job will be moved to archived status and will no longer be
+              visible to applicants. You can reactivate it later if needed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
