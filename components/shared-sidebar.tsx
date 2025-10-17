@@ -522,14 +522,12 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       <aside
         className={cn(
           'flex flex-col h-full bg-white/90 backdrop-blur-xl border-r border-white/50 shadow-xl relative overflow-hidden transition-all duration-300 ease-in-out',
-          // Desktop behavior
-          'hidden lg:flex',
-          isCollapsed ? 'lg:w-20' : 'lg:w-80',
-          // Mobile behavior
-          'lg:relative lg:translate-x-0',
-          // Mobile menu
-          'fixed inset-y-0 left-0 z-40',
-          isMobileOpen ? 'translate-x-0 w-80' : '-translate-x-full w-0'
+          'fixed inset-y-0 left-0 z-40 w-72 sm:w-80 transform',
+          isMobileOpen
+            ? 'translate-x-0 pointer-events-auto'
+            : '-translate-x-full pointer-events-none',
+          'lg:relative lg:inset-auto lg:translate-x-0 lg:pointer-events-auto',
+          isCollapsed ? 'lg:w-20' : 'lg:w-80'
         )}
         role="navigation"
         aria-label={`${getRoleTitle()} navigation`}>

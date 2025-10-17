@@ -1382,8 +1382,7 @@ function ApplicantRankingPageContent() {
               <DialogHeader>
                 <DialogTitle>Ranking Details</DialogTitle>
                 <DialogDescription>
-                  Detailed analysissss for{' '}
-                  {selectedRanking?.applicantId.firstName}{' '}
+                  Detailed analysi for {selectedRanking?.applicantId.firstName}{' '}
                   {selectedRanking?.applicantId.lastName}
                 </DialogDescription>
               </DialogHeader>
