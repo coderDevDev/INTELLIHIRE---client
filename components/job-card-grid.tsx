@@ -12,7 +12,8 @@ import {
   Calendar,
   Eye,
   Bookmark,
-  Share2
+  Share2,
+  PhilippinePeso
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -126,7 +127,7 @@ function JobCard({ job }: { job: JobCard }) {
           {/* Salary */}
           {job.salary && (
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <PhilippinePeso className="h-4 w-4 text-green-600" />
               <span className="font-semibold text-green-700">{job.salary}</span>
             </div>
           )}
@@ -165,9 +166,9 @@ function JobCard({ job }: { job: JobCard }) {
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <Bookmark className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {/* <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <Share2 className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>

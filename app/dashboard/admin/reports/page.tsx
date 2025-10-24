@@ -734,7 +734,7 @@ End of Report
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Applicant Summary
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="job-success"
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Job Success Report
@@ -743,20 +743,95 @@ End of Report
                 value="system-metrics"
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 System Metrics
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             {/* Applicant Summary Report */}
             <TabsContent value="applicant-summary" className="space-y-6">
+              {/* Stats Overview Cards */}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-blue-100 text-sm font-medium">
+                          Total Applicants
+                        </p>
+                        <h3 className="text-3xl font-bold mt-2">
+                          {data?.applicantSummary.totalApplicants || 0}
+                        </h3>
+                      </div>
+                      <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <Users className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-100 text-sm font-medium">
+                          New This Month
+                        </p>
+                        <h3 className="text-3xl font-bold mt-2">
+                          {data?.applicantSummary.newThisMonth || 0}
+                        </h3>
+                      </div>
+                      <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <TrendingUp className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-purple-100 text-sm font-medium">
+                          Education Levels
+                        </p>
+                        <h3 className="text-3xl font-bold mt-2">
+                          {data?.applicantSummary.byEducation.length || 0}
+                        </h3>
+                      </div>
+                      <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <Activity className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-orange-100 text-sm font-medium">
+                          Locations
+                        </p>
+                        <h3 className="text-3xl font-bold mt-2">
+                          {data?.applicantSummary.byLocation.length || 0}
+                        </h3>
+                      </div>
+                      <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <BarChart3 className="h-6 w-6" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
               <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-xl font-semibold flex items-center gap-2">
                       <Users className="h-5 w-5 text-blue-600" />
-                      Applicant Summary Report
+                      Applicant Demographics & Qualifications
                     </CardTitle>
                     <CardDescription>
-                      Comprehensive overview of applicant demographics and
+                      Detailed breakdown of applicant profiles and
                       qualifications
                     </CardDescription>
                   </div>
@@ -766,7 +841,7 @@ End of Report
                       size="sm"
                       onClick={() => generateReport('applicant-summary')}
                       disabled={generatingReport === 'applicant-summary'}
-                      className="bg-white/60 backdrop-blur-sm border-white/50">
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
                       {generatingReport === 'applicant-summary' ? (
                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
@@ -778,7 +853,7 @@ End of Report
                       variant="outline"
                       size="sm"
                       onClick={() => exportReport('pdf')}
-                      className="bg-white/60 backdrop-blur-sm border-white/50">
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
                       <Download className="h-4 w-4 mr-2" />
                       Export PDF
                     </Button>
@@ -787,30 +862,50 @@ End of Report
                 <CardContent className="space-y-6">
                   {/* Education Distribution */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-blue-600" />
                       Education Distribution
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {data?.applicantSummary.byEducation.map((item, index) => (
-                        <div
-                          key={index}
-                          className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">
-                              {item.level}
-                            </span>
-                            <Badge className="bg-blue-100 text-blue-700">
-                              {item.count}
-                            </Badge>
+                      {data?.applicantSummary.byEducation
+                        .sort((a, b) => b.count - a.count)
+                        .map((item, index) => (
+                          <div
+                            key={index}
+                            className="p-4 rounded-xl border border-white/50 bg-gradient-to-br from-white/60 to-blue-50/30 backdrop-blur-sm hover:shadow-md transition-shadow group">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-blue-500 group-hover:scale-125 transition-transform"></div>
+                                <span className="font-medium text-gray-900">
+                                  {item.level}
+                                </span>
+                              </div>
+                              <Badge className="bg-blue-500 text-white">
+                                {item.count}
+                              </Badge>
+                            </div>
+                            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    (item.count /
+                                      (data?.applicantSummary.totalApplicants ||
+                                        1)) *
+                                      100,
+                                    100
+                                  )}%`
+                                }}></div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
                     </div>
                   </div>
 
                   {/* Experience Distribution */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Briefcase className="h-5 w-5 text-green-600" />
                       Experience Distribution
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -818,14 +913,30 @@ End of Report
                         (item, index) => (
                           <div
                             key={index}
-                            className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
+                            className="p-4 rounded-xl border border-white/50 bg-gradient-to-br from-white/60 to-green-50/30 backdrop-blur-sm hover:shadow-md transition-shadow group">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium text-gray-900">
-                                {item.range}
-                              </span>
-                              <Badge className="bg-green-100 text-green-700">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-green-500 group-hover:scale-125 transition-transform"></div>
+                                <span className="font-medium text-gray-900">
+                                  {item.range}
+                                </span>
+                              </div>
+                              <Badge className="bg-green-500 text-white">
                                 {item.count}
                               </Badge>
+                            </div>
+                            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    (item.count /
+                                      (data?.applicantSummary.totalApplicants ||
+                                        1)) *
+                                      100,
+                                    100
+                                  )}%`
+                                }}></div>
                             </div>
                           </div>
                         )
@@ -834,29 +945,42 @@ End of Report
                   </div>
 
                   {/* Location Distribution */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">
-                      Location Distribution
+                  {/* <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-purple-600" />
+                      Top Locations
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {data?.applicantSummary.byLocation
+                        .sort((a, b) => b.count - a.count)
                         .slice(0, 9)
                         .map((item, index) => (
                           <div
                             key={index}
-                            className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
+                            className="p-4 rounded-xl border border-white/50 bg-gradient-to-br from-white/60 to-purple-50/30 backdrop-blur-sm hover:shadow-md transition-shadow group">
                             <div className="flex items-center justify-between">
-                              <span className="font-medium text-gray-900">
-                                {item.location}
-                              </span>
-                              <Badge className="bg-purple-100 text-purple-700">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-purple-500 group-hover:scale-125 transition-transform"></div>
+                                <span className="font-medium text-gray-900">
+                                  {item.location}
+                                </span>
+                              </div>
+                              <Badge className="bg-purple-500 text-white">
                                 {item.count}
                               </Badge>
+                            </div>
+                            <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className="bg-purple-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${Math.min((item.count / (data?.applicantSummary.totalApplicants || 1)) * 100, 100)}%` 
+                                }}
+                              ></div>
                             </div>
                           </div>
                         ))}
                     </div>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </TabsContent>

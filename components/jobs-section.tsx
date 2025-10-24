@@ -39,7 +39,7 @@ type JobsSectionProps = {
 
 export function JobsSection({
   showFilters = true,
-  limit = 12
+  limit = 6
 }: JobsSectionProps) {
   const [jobs, setJobs] = useState<JobCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +195,7 @@ export function JobsSection({
             </h2>
             <p className="max-w-[800px] text-gray-600 md:text-xl leading-relaxed">
               Discover the latest job opportunities in Sto. Tomas with our
-              intelligent search and filtering system
+              intelligent search and filtering systems
             </p>
           </div>
         </div>

@@ -487,12 +487,6 @@ export function HeroSection({ categories }: HeroSectionProps) {
                       Browse Jobs
                     </Link>
                   </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 border border-white/30 hover:border-white/50 font-semibold transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg">
-                    For Employers
-                  </Button>
                 </div>
               </div>
             )}

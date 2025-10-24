@@ -45,7 +45,8 @@ import {
   Download,
   AlertCircle,
   Info,
-  FileSpreadsheet
+  FileSpreadsheet,
+  PhilippinePeso
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -960,7 +961,7 @@ export default function JobApplyPage() {
                             </div>
                             {job.salaryMin && job.salaryMax && (
                               <div className="flex items-center gap-1">
-                                <DollarSign className="h-4 w-4" />₱
+                                <PhilippinePeso className="h-4 w-4" />₱
                                 {job.salaryMin.toLocaleString()} - ₱
                                 {job.salaryMax.toLocaleString()}
                               </div>

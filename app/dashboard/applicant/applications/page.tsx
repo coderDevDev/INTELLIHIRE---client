@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { applicationAPI } from '@/lib/api-service';
 import {
   Briefcase,
@@ -199,6 +200,8 @@ export default function ApplicantApplicationsPage() {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const highlightedAppId = searchParams.get('id');
 
   // Calculate stats from applications
   const calculateStats = (apps: any[]) => {
@@ -231,13 +234,25 @@ export default function ApplicantApplicationsPage() {
         const apps = data.applications || [];
         setApplications(apps);
         setStats(calculateStats(apps));
+        
+        // If there's a highlighted app ID, expand it and scroll to it
+        if (highlightedAppId) {
+          setExpandedRow(highlightedAppId);
+          // Scroll to the application after a short delay to ensure it's rendered
+          setTimeout(() => {
+            const element = document.getElementById(`app-${highlightedAppId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 500);
+        }
       } catch {
         setApplications([]);
       }
       setLoading(false);
     }
     fetchApplications();
-  }, []);
+  }, [highlightedAppId]);
 
   // Get unique companies from applications
   const companyOptions = useMemo(() => {
@@ -730,7 +745,11 @@ export default function ApplicantApplicationsPage() {
           ) : view === 'card' ? (
             <div className="grid gap-6">
               {pagedApps.map(app => (
-                <ApplicationCard key={app._id} application={app} />
+                <ApplicationCard 
+                  key={app._id} 
+                  application={app} 
+                  isHighlighted={highlightedAppId === app._id}
+                />
               ))}
             </div>
           ) : (
@@ -738,6 +757,7 @@ export default function ApplicantApplicationsPage() {
               applications={pagedApps}
               expandedRow={expandedRow}
               setExpandedRow={setExpandedRow}
+              highlightedAppId={highlightedAppId}
             />
           )}
 
@@ -795,7 +815,7 @@ export default function ApplicantApplicationsPage() {
   );
 }
 
-function ApplicationCard({ application }: { application: any }) {
+function ApplicationCard({ application, isHighlighted }: { application: any; isHighlighted?: boolean }) {
   const job = application.jobId;
   const company = job?.companyId;
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -840,111 +860,389 @@ function ApplicationCard({ application }: { application: any }) {
   };
 
   const handleDownload = () => {
-    // Generate application summary as text
-    const applicationSummary = `
-APPLICATION SUMMARY
-==================
+    // Generate beautiful PDF with IntelliHire branding
+    const generatePDF = () => {
+      // Create a new window for PDF generation
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Please allow popups to download PDF');
+        return;
+      }
 
-Job Title: ${job?.title || 'N/A'}
-Company: ${company?.name || 'N/A'}
-Location: ${job?.location || 'N/A'}
-Employment Type: ${job?.employmentType || 'N/A'}
-Salary Range: ${
-      job?.salaryMin ? `₱${job.salaryMin.toLocaleString()}` : 'N/A'
-    } - ${job?.salaryMax ? `₱${job.salaryMax.toLocaleString()}` : 'N/A'}
+      const statusColors: Record<string, string> = {
+        applied: '#3B82F6',
+        screening: '#F59E0B',
+        interview: '#8B5CF6',
+        offered: '#10B981',
+        hired: '#059669',
+        rejected: '#EF4444',
+        withdrawn: '#6B7280'
+      };
 
-Application Status: ${application.status}
-Applied Date: ${new Date(application.createdAt).toLocaleString()}
-Last Updated: ${new Date(application.updatedAt).toLocaleString()}
+      const statusColor = statusColors[application.status] || '#6B7280';
 
-${application.notes ? `\nAdmin Notes:\n${application.notes}\n` : ''}
-${
-  application.interviewDate
-    ? `\nInterview Date: ${new Date(
-        application.interviewDate
-      ).toLocaleString()}`
-    : ''
-}
-${
-  application.interviewLocation
-    ? `Interview Location: ${application.interviewLocation}`
-    : ''
-}
-${
-  application.interviewType
-    ? `Interview Type: ${application.interviewType}`
-    : ''
-}
-${
-  application.rejectionReason
-    ? `\nRejection Reason:\n${application.rejectionReason}`
-    : ''
-}
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Application Summary - ${job?.title}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #1F2937;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    
+    .header p {
+      font-size: 16px;
+      opacity: 0.95;
+    }
+    
+    .content {
+      padding: 40px;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      background: ${statusColor};
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 30px;
+    }
+    
+    .section {
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid #F3F4F6;
+    }
+    
+    .section:last-child {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .info-item {
+      background: #F9FAFB;
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 3px solid #667eea;
+    }
+    
+    .info-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .info-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1F2937;
+    }
+    
+    .note-box {
+      background: #EFF6FF;
+      border: 2px solid #DBEAFE;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 12px;
+    }
+    
+    .note-box.interview {
+      background: #F5F3FF;
+      border-color: #E9D5FF;
+    }
+    
+    .note-box.rejection {
+      background: #FEF2F2;
+      border-color: #FECACA;
+    }
+    
+    .note-title {
+      font-weight: 700;
+      color: #1F2937;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .note-content {
+      color: #4B5563;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .documents-list {
+      list-style: none;
+    }
+    
+    .documents-list li {
+      padding: 12px;
+      background: #F9FAFB;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .documents-list li::before {
+      content: '📄';
+      font-size: 20px;
+    }
+    
+    .footer {
+      background: #F9FAFB;
+      padding: 24px 40px;
+      text-align: center;
+      border-top: 2px solid #E5E7EB;
+    }
+    
+    .footer p {
+      color: #6B7280;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    
+    .footer .brand {
+      color: #667eea;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 APPLICATION SUMMARY</h1>
+      <p>IntelliHire - Intelligent Hiring System</p>
+    </div>
+    
+    <div class="content">
+      <div style="text-align: center;">
+        <span class="status-badge">${application.status.toUpperCase()}</span>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">Job Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Job Title</div>
+            <div class="info-value">${job?.title || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Company</div>
+            <div class="info-value">${company?.name || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Location</div>
+            <div class="info-value">${job?.location || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Employment Type</div>
+            <div class="info-value">${job?.employmentType || 'N/A'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Salary Range</div>
+            <div class="info-value">${job?.salaryMin ? `₱${job.salaryMin.toLocaleString()}` : 'N/A'} - ${job?.salaryMax ? `₱${job.salaryMax.toLocaleString()}` : 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <h2 class="section-title">Application Timeline</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Applied Date</div>
+            <div class="info-value">${new Date(application.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Last Updated</div>
+            <div class="info-value">${new Date(application.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+        </div>
+      </div>
+      
+      ${application.notes ? `
+      <div class="section">
+        <h2 class="section-title">Admin Notes</h2>
+        <div class="note-box">
+          <div class="note-content">${application.notes}</div>
+        </div>
+      </div>
+      ` : ''}
+      
+      ${application.interviewDate ? `
+      <div class="section">
+        <h2 class="section-title">Interview Details</h2>
+        <div class="note-box interview">
+          <div class="note-title">📅 Scheduled Interview</div>
+          <div class="note-content">
+            <strong>Date:</strong> ${new Date(application.interviewDate).toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
+            ${application.interviewLocation ? `<strong>Location:</strong> ${application.interviewLocation}<br>` : ''}
+            ${application.interviewType ? `<strong>Type:</strong> ${application.interviewType}` : ''}
+          </div>
+        </div>
+      </div>
+      ` : ''}
+      
+      ${application.rejectionReason ? `
+      <div class="section">
+        <h2 class="section-title">Rejection Reason</h2>
+        <div class="note-box rejection">
+          <div class="note-content">${application.rejectionReason}</div>
+        </div>
+      </div>
+      ` : ''}
+      
+      <div class="section">
+        <h2 class="section-title">Documents Submitted</h2>
+        <ul class="documents-list">
+          <li><strong>Resume:</strong> ${application.resumeId?.title || 'Not provided'}</li>
+          <li><strong>PDS:</strong> ${application.pdsId?.title || 'Not provided'}</li>
+          ${application.additionalDocuments?.length > 0 ? `<li><strong>Additional Documents:</strong> ${application.additionalDocuments.length} file(s)</li>` : ''}
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+      <p class="brand">IntelliHire</p>
+      <p>Intelligent Hiring System</p>
+    </div>
+  </div>
+</body>
+</html>
+      `;
 
-Documents Submitted:
-- Resume: ${application.resumeId?.title || 'N/A'}
-- PDS: ${application.pdsId?.title || 'N/A'}
-${
-  application.additionalDocuments?.length > 0
-    ? `- Additional Documents: ${application.additionalDocuments.length}`
-    : ''
-}
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      setTimeout(() => {
+        printWindow.print();
+        toast.success('PDF generated successfully! Please save using the print dialog.');
+      }, 500);
+    };
 
-==================
-Generated on: ${new Date().toLocaleString()}
-    `.trim();
-
-    // Create and download file
-    const blob = new Blob([applicationSummary], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `application-${job?.title?.replace(
-      /\s+/g,
-      '-'
-    )}-${new Date().getTime()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    toast.success('Application summary downloaded');
+    generatePDF();
   };
 
   return (
-    <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Company Logo */}
+    <Card 
+      id={`app-${application._id}`}
+      className={`group hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-xl border hover:-translate-y-0.5 ${
+        isHighlighted 
+          ? 'border-blue-400 ring-2 ring-blue-400 bg-blue-50/50' 
+          : 'border-white/50'
+      }`}>
+      <CardContent className="p-4">
+        <div className="flex gap-4">
+          {/* Company Logo - Smaller */}
           <div className="flex-shrink-0">
-            <div className="w-20 h-20 bg-gray-50 rounded-xl border flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="w-14 h-14 bg-gray-50 rounded-lg border flex items-center justify-center">
               {company?.logo ? (
                 <img
                   src={company.logo}
                   alt={company.name}
-                  className="object-contain h-16 w-16 rounded-lg"
+                  className="object-contain h-10 w-10 rounded"
                 />
               ) : (
-                <Building className="h-10 w-10 text-gray-300" />
+                <Building className="h-7 w-7 text-gray-300" />
               )}
             </div>
           </div>
 
-          {/* Job & Company Info */}
+          {/* Job Info - Compact */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+            <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/jobs/${job?._id}`}
-                  className="font-semibold text-xl hover:text-brand-blue transition-colors truncate block">
+                  className="font-semibold text-lg hover:text-blue-600 transition-colors truncate block">
                   {job?.title}
                 </Link>
-                <div className="flex items-center gap-2 text-gray-600 mt-1">
-                  <Building className="h-4 w-4" />
-                  <span className="font-medium">{company?.name}</span>
+                <div className="flex items-center gap-2 text-sm text-gray-600 mt-0.5">
+                  <Building className="h-3.5 w-3.5" />
+                  <span>{company?.name}</span>
                   {job?.location && (
                     <>
-                      <span className="mx-2">•</span>
-                      <MapPin className="h-4 w-4" />
+                      <span>•</span>
+                      <MapPin className="h-3.5 w-3.5" />
                       <span>{job.location}</span>
                     </>
                   )}
@@ -953,167 +1251,84 @@ Generated on: ${new Date().toLocaleString()}
               <StatusBadge status={application.status} />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  {job?.employmentType}
-                </Badge>
-              </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Salary:</span>{' '}
+            {/* Compact Info Row */}
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+              <Badge variant="secondary" className="text-xs">
+                {job?.employmentType}
+              </Badge>
+              <span>
                 {job?.salaryMin ? `₱${job.salaryMin.toLocaleString()}` : '—'}
                 {job?.salaryMax && ` - ₱${job.salaryMax.toLocaleString()}`}
-              </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Applied:</span>{' '}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
                 {new Date(application.createdAt).toLocaleDateString()}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Documents:</span>
-                <div className="flex gap-1">
-                  {application.resumeId?.fileUrl && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a
-                        href={`/${application.resumeId.fileUrl.replace(
-                          /\\/g,
-                          '/'
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer">
-                        <FileText className="h-3 w-3" />
-                      </a>
-                    </Button>
-                  )}
-                  {application.pdsId?.fileUrl && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a
-                        href={`/${application.pdsId.fileUrl.replace(
-                          /\\/g,
-                          '/'
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer">
-                        <File className="h-3 w-3" />
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </div>
+              </span>
             </div>
 
-            {/* Status Stepper */}
-            <Stepper status={application.status} />
-
-            {/* Status Details & Updates */}
-            {application.notes && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-start gap-2">
-                  <FileText className="h-4 w-4 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-blue-900">
-                      Admin Notes
-                    </p>
-                    <p className="text-sm text-blue-700 mt-1">
-                      {application.notes}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Interview Details */}
-            {application.status === 'interview' &&
-              application.interviewDate && (
-                <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 text-purple-600 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-purple-900">
-                        Interview Scheduled
-                      </p>
-                      <p className="text-sm text-purple-700">
-                        <strong>Date:</strong>{' '}
-                        {new Date(application.interviewDate).toLocaleString()}
-                      </p>
-                      {application.interviewLocation && (
-                        <p className="text-sm text-purple-700">
-                          <strong>Location:</strong>{' '}
-                          {application.interviewLocation}
-                        </p>
-                      )}
-                      {application.interviewType && (
-                        <p className="text-sm text-purple-700">
-                          <strong>Type:</strong> {application.interviewType}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            {/* Rejection Reason */}
-            {application.status === 'rejected' &&
-              application.rejectionReason && (
-                <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <div className="flex items-start gap-2">
-                    <XCircle className="h-4 w-4 text-red-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-900">
-                        Rejection Reason
-                      </p>
-                      <p className="text-sm text-red-700 mt-1">
-                        {application.rejectionReason}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            {/* Actions */}
-            <div className="flex items-center justify-between mt-6 pt-4 border-t">
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/jobs/${job?._id}`}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Job
-                  </Link>
+            {/* Actions - Compact */}
+            <div className="flex items-center gap-2">
+              {application.resumeId?.fileUrl && (
+                <Button variant="ghost" size="sm" className="h-8" asChild>
+                  <a
+                    href={`/${application.resumeId.fileUrl.replace(
+                      /\\/g,
+                      '/'
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer">
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    Resume
+                  </a>
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Application
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={handleWithdraw}
-                      disabled={
-                        isWithdrawing ||
-                        application.status === 'withdrawn' ||
-                        application.status === 'hired'
-                      }
-                      className={`${
-                        application.status === 'withdrawn' ||
-                        application.status === 'hired'
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'text-red-600'
-                      }`}>
-                      <XCircle className="h-4 w-4 mr-2" />
-                      {isWithdrawing
-                        ? 'Withdrawing...'
-                        : application.status === 'withdrawn'
-                        ? 'Already Withdrawn'
-                        : application.status === 'hired'
-                        ? 'Cannot Withdraw'
-                        : 'Withdraw Application'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              )}
+              {application.pdsId?.fileUrl && (
+                <Button variant="ghost" size="sm" className="h-8" asChild>
+                  <a
+                    href={`/${application.pdsId.fileUrl.replace(
+                      /\\/g,
+                          '/'
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        <File className="h-3.5 w-3.5 mr-1" />
+                    PDS
+                  </a>
+                </Button>
+              )}
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                asChild>
+                <Link href={`/jobs/${job?._id}`}>
+                  <Eye className="h-3.5 w-3.5 mr-1" />
+                  View Job
+                </Link>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8"
+                onClick={handleDownload}>
+                <Download className="h-3.5 w-3.5 mr-1" />
+                Download
+              </Button>
+              
+              {application.status !== 'withdrawn' && application.status !== 'hired' && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={handleWithdraw}
+                  disabled={isWithdrawing}>
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
+                  {isWithdrawing ? 'Withdrawing...' : 'Withdraw'}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -1125,11 +1340,13 @@ Generated on: ${new Date().toLocaleString()}
 function ApplicationsTable({
   applications,
   expandedRow,
-  setExpandedRow
+  setExpandedRow,
+  highlightedAppId
 }: {
   applications: any[];
   expandedRow: string | null;
   setExpandedRow: (id: string | null) => void;
+  highlightedAppId: string | null;
 }) {
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [progressModal, setProgressModal] = useState<{
@@ -1281,8 +1498,11 @@ Generated on: ${new Date().toLocaleString()}
                 return (
                   <>
                     <tr
+                      id={`app-${app._id}`}
                       key={app._id}
-                      className="hover:bg-blue-50/30 transition-all duration-200 border-b border-white/30">
+                      className={`hover:bg-blue-50/30 transition-all duration-200 border-b border-white/30 ${
+                        highlightedAppId === app._id ? 'bg-blue-100/50 ring-2 ring-blue-400' : ''
+                      }`}>
                       {/* Expand toggle */}
                       <td className="px-4 py-4">
                         <Button

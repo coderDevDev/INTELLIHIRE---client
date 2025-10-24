@@ -72,24 +72,24 @@ export function LandingPage() {
 
         <div>
           <JobsSection showFilters={false} limit={6} />
-          <div className="mt-2 flex justify-center">
+          {/* <div className="mt-2 flex justify-center">
             <Button variant="outline" size="lg" asChild>
               <Link href="/jobs" className="inline-flex items-center gap-2">
                 <Briefcase className="h-4 w-4" />
                 View All Jobs
               </Link>
             </Button>
-          </div>
+          </div> */}
         </div>
-        <hr className="mt-10" />
-        <TopCompanies companies={topCompanies} />
+        {/* <hr className="mt-10" /> */}
+        {/* <TopCompanies companies={topCompanies} /> */}
 
         {/* Sidebar Banner Section */}
         <div className="py-8">
           <BannerDisplay position="sidebar" className="max-w-4xl mx-auto" />
         </div>
-
-        <GovernmentJobs jobs={governmentJobs} />
+        {/* 
+        <GovernmentJobs jobs={governmentJobs} /> */}
         <FeaturesSection />
 
         {/* Bottom Banner Section */}

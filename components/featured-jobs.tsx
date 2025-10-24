@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Building, Clock, Briefcase } from 'lucide-react';
+import { MapPin, Building, Clock, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type FeaturedJob = {
   id: string;
@@ -20,7 +21,28 @@ type FeaturedJobsProps = {
   jobs: FeaturedJob[];
 };
 
+const JOBS_PER_PAGE = 6;
+
 export function FeaturedJobs({ jobs }: FeaturedJobsProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const totalPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const startIndex = (currentPage - 1) * JOBS_PER_PAGE;
+  const endIndex = startIndex + JOBS_PER_PAGE;
+  const currentJobs = jobs.slice(startIndex, endIndex);
+  
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+  
+  const goToPrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+  
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <section className="bg-gray-50 py-12 md:py-16">
       <div className="container px-4 md:px-6">
@@ -38,7 +60,7 @@ export function FeaturedJobs({ jobs }: FeaturedJobsProps) {
           </div>
         </div>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 py-8 md:grid-cols-2 lg:grid-cols-3">
-          {jobs.map(job => (
+          {currentJobs.map(job => (
             <Card key={job.id} className="job-card overflow-hidden">
               {job.featured && (
                 <div className="absolute right-0 top-0">
@@ -91,14 +113,50 @@ export function FeaturedJobs({ jobs }: FeaturedJobsProps) {
             </Card>
           ))}
         </div>
-        <div className="mt-8 flex justify-center">
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/jobs" className="inline-flex items-center gap-2">
-              <Briefcase className="h-4 w-4" />
-              View All Jobs
-            </Link>
-          </Button>
-        </div>
+        
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className="h-9 w-9 p-0">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => goToPage(page)}
+                  className={`h-9 w-9 p-0 ${
+                    currentPage === page 
+                      ? 'bg-brand-blue hover:bg-brand-blue/90' 
+                      : ''
+                  }`}>
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="h-9 w-9 p-0">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            <span className="ml-4 text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+        )}
       </div>
     </section>
   );

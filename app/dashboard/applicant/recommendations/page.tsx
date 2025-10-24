@@ -46,7 +46,8 @@ import {
   Calendar,
   User,
   Upload,
-  FileText
+  FileText,
+  PhilippinePeso
 } from 'lucide-react';
 import Link from 'next/link';
 import { jobAPI, authAPI, documentAPI } from '@/lib/api-service';
@@ -801,18 +802,22 @@ export default function JobRecommendationsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-6">
+              <div className="grid gap-4">
                 {recommendations.map(job => (
                   <Card
                     key={job._id}
-                    className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <CardTitle className="text-xl font-semibold text-gray-900">
+                    className="group hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 hover:-translate-y-0.5">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Main Content */}
+                        <div className="flex-1 min-w-0">
+                          {/* Title and Badges */}
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <Link
+                              href={`/jobs/${job._id}`}
+                              className="font-semibold text-lg text-gray-900 hover:text-blue-600 transition-colors">
                               {job.title}
-                            </CardTitle>
+                            </Link>
                             <Badge
                               className={`text-xs font-semibold ${getMatchScoreColor(
                                 job.matchScore
@@ -840,130 +845,127 @@ export default function JobRecommendationsPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+
+                          {/* Job Info - Compact Row */}
+                          <div className="flex items-center gap-3 text-sm text-gray-600 mb-2 flex-wrap">
                             <span className="flex items-center gap-1">
-                              <Building className="h-4 w-4" />
+                              <Building className="h-3.5 w-3.5" />
                               {job.companyId.name}
                             </span>
+                            <span>•</span>
                             <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
+                              <MapPin className="h-3.5 w-3.5" />
                               {job.location}
                             </span>
+                            <span>•</span>
                             <span className="flex items-center gap-1">
-                              <Briefcase className="h-4 w-4" />
+                              <Briefcase className="h-3.5 w-3.5" />
                               {job.employmentType}
                             </span>
+                            <span>•</span>
                             <span className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
+                              <PhilippinePeso className="h-3.5 w-3.5" />
                               {formatSalary(job.salary)}
                             </span>
                           </div>
-                          <CardDescription className="text-sm">
-                            {job.categoryId.name} • Posted{' '}
-                            {formatDate(job.postedDate)} • Expires{' '}
-                            {formatDate(job.expiryDate)}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80"
-                            onClick={() => handleSaveJob(job._id)}>
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80"
-                            asChild>
-                            <Link href={`/jobs/${job._id}`}>
-                              <Eye className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {/* Match Reasons */}
-                      <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <Lightbulb className="h-4 w-4 text-blue-600" />
-                          Why This Job Matches You
-                        </h4>
-                        <div className="space-y-2">
-                          {job.matchReasons.map((reason, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-2 text-sm text-gray-600">
-                              <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span>{reason}</span>
+
+                          {/* Match Reasons - Compact */}
+                          <div className="mb-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {job.matchReasons
+                                .slice(0, 3)
+                                .map((reason, index) => (
+                                  <span
+                                    key={index}
+                                    className="inline-flex items-center gap-1 text-xs text-gray-600 bg-green-50 px-2 py-1 rounded">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    {reason}
+                                  </span>
+                                ))}
+                              {job.matchReasons.length > 3 && (
+                                <span className="text-xs text-gray-500 px-2 py-1">
+                                  +{job.matchReasons.length - 3} more
+                                </span>
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      </div>
+                          </div>
 
-                      {/* Skills Match */}
-                      <div className="mb-6">
-                        <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <Award className="h-4 w-4 text-purple-600" />
-                          Skills Match
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {job.skillsMatch.map((skill, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="bg-purple-100 text-purple-700 border-purple-200">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
+                          {/* Skills - Compact */}
+                          {job.skillsMatch.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mb-3">
+                              {job.skillsMatch
+                                .slice(0, 5)
+                                .map((skill, index) => (
+                                  <Badge
+                                    key={index}
+                                    variant="secondary"
+                                    className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              {job.skillsMatch.length > 5 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{job.skillsMatch.length - 5}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
 
-                      {/* Job Stats */}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/50">
-                        <div className="flex items-center gap-6 text-sm text-gray-600">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {job.applicationCount} applications
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-4 w-4" />
-                            {job.viewCount} views
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            {Math.ceil(
-                              (new Date(job.expiryDate).getTime() -
-                                new Date().getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )}{' '}
-                            days left
-                          </span>
+                          {/* Footer Info */}
+                          {/* <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3.5 w-3.5" />
+                              {job.applicationCount}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-3.5 w-3.5" />
+                              {job.viewCount}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {Math.ceil(
+                                (new Date(job.expiryDate).getTime() -
+                                  new Date().getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              )} days left
+                            </span>
+                          </div> */}
                         </div>
-                        <div className="flex items-center gap-3">
+
+                        {/* Actions - Compact */}
+                        <div className="flex flex-col gap-2">
                           <Button
                             variant="outline"
-                            className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleSaveJob(job._id)}>
+                            <Bookmark className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="h-8"
                             asChild>
                             <Link href={`/jobs/${job._id}`}>
-                              View Details
-                              <ArrowRight className="h-4 w-4 ml-2" />
+                              <Eye className="h-3.5 w-3.5 mr-1" />
+                              View
                             </Link>
                           </Button>
                           {appliedJobs.has(job._id) ? (
                             <Button
                               disabled
-                              className="bg-gray-400 cursor-not-allowed shadow-lg">
-                              <CheckCircle className="h-4 w-4 mr-2" />
+                              size="sm"
+                              className="h-8 bg-gray-400 cursor-not-allowed">
+                              <CheckCircle className="h-3.5 w-3.5 mr-1" />
                               Applied
                             </Button>
                           ) : (
                             <Button
-                              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
+                              size="sm"
+                              className="h-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                               onClick={() => handleApply(job._id)}>
-                              Apply Now
+                              <ArrowRight className="h-3.5 w-3.5 mr-1" />
+                              Apply
                             </Button>
                           )}
                         </div>

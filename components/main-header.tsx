@@ -45,8 +45,21 @@ export function MainHeader() {
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
+    console.log('MainHeader - Current User:', currentUser);
     setUser(currentUser);
   }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -238,7 +251,11 @@ export function MainHeader() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/dashboard/applicant/profile"
+                      href={
+                        user.role === 'applicant'
+                          ? '/dashboard/applicant/profile'
+                          : '/dashboard/admin'
+                      }
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
                       <div className="p-1.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors duration-200">
                         <FileText className="h-4 w-4 text-green-600" />
@@ -368,8 +385,8 @@ export function MainHeader() {
         />
         <div
           className={cn(
-            'absolute inset-y-0 right-0 z-50 w-full sm:max-w-sm transform transition-transform duration-300',
-            'bg-white/85 backdrop-blur-xl px-6 py-6 shadow-2xl overflow-y-auto',
+            'fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm transform transition-transform duration-300',
+            'bg-white px-6 py-6 shadow-2xl overflow-y-auto',
             mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
           )}>
           {/* Background Blobs for Mobile Menu */}
@@ -456,6 +473,12 @@ export function MainHeader() {
                 ))}
               </div>
               <div className="py-6">
+                {/* Debug: Show user state */}
+                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-xs">
+                  <p className="font-semibold">Debug Info:</p>
+                  <p>User logged in: {user ? 'YES' : 'NO'}</p>
+                  {user && <p>Email: {user.email}</p>}
+                </div>
                 {user ? (
                   <div className="space-y-4">
                     <div className="flex items-center gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
@@ -522,24 +545,22 @@ export function MainHeader() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <Link
                       href="/login"
-                      className="flex items-center gap-3 -mx-3 rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group"
+                      className="flex items-center justify-center gap-3 -mx-3 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-700 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group shadow-sm hover:shadow-md"
                       onClick={() => setMobileMenuOpen(false)}>
-                      <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors duration-200">
-                        <User className="h-4 w-4 text-blue-600" />
-                      </div>
+                      <User className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
                       <span className="group-hover:text-blue-700 transition-colors duration-200">
                         Sign In
                       </span>
                     </Link>
                     <Link
                       href="/register"
-                      className="flex items-center gap-3 -mx-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-center text-base font-medium text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                      className="flex items-center justify-center gap-3 -mx-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3.5 text-base font-semibold text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group"
                       onClick={() => setMobileMenuOpen(false)}>
                       <span>Get Started</span>
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                     </Link>
                   </div>
                 )}

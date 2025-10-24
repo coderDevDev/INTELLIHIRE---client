@@ -45,7 +45,8 @@ import {
   Phone,
   Heart,
   Share2,
-  Award
+  Award,
+  PhilippinePeso
 } from 'lucide-react';
 import {
   jobAPI,
@@ -336,7 +337,10 @@ export function ModernJobsPage() {
         const minSalary = job.salaryMin || 0;
         const maxSalary = job.salaryMax || 999999;
         // Job should overlap with the selected salary range
-        return maxSalary >= filters.salaryRange[0] && minSalary <= filters.salaryRange[1];
+        return (
+          maxSalary >= filters.salaryRange[0] &&
+          minSalary <= filters.salaryRange[1]
+        );
       });
     }
 
@@ -464,10 +468,10 @@ export function ModernJobsPage() {
     }
 
     // Check if required documents are uploaded
-    const isGovernmentJob = 
-      job.companyId?.isGovernment || 
+    const isGovernmentJob =
+      job.companyId?.isGovernment ||
       job.category?.toLowerCase().includes('government') ||
-      job.categoryId?.name?.toLowerCase().includes('government') || 
+      job.categoryId?.name?.toLowerCase().includes('government') ||
       false;
     const hasPDS = userDocuments.some(doc => doc.type === 'pds');
     const hasResume = userDocuments.some(doc => doc.type === 'resume');
@@ -1017,9 +1021,13 @@ export function ModernJobsPage() {
                                       </p>
                                     </div>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      {(job.companyId?.isGovernment || 
-                                        job.category?.toLowerCase().includes('government') ||
-                                        job.categoryId?.name?.toLowerCase().includes('government')) && (
+                                      {(job.companyId?.isGovernment ||
+                                        job.category
+                                          ?.toLowerCase()
+                                          .includes('government') ||
+                                        job.categoryId?.name
+                                          ?.toLowerCase()
+                                          .includes('government')) && (
                                         <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
                                           <Award className="h-3 w-3 mr-1" />
                                           Government
@@ -1075,7 +1083,7 @@ export function ModernJobsPage() {
 
                                   {/* Salary */}
                                   <div className="flex items-center gap-1 text-sm font-medium text-green-600 mb-3">
-                                    <DollarSign className="h-4 w-4" />
+                                    <PhilippinePeso className="h-4 w-4" />
                                     {formatSalary(job)}
                                   </div>
 
@@ -1245,11 +1253,13 @@ export function ModernJobsPage() {
                       size="sm"
                       onClick={() => {
                         if (navigator.share) {
-                          navigator.share({
-                            title: selectedJob.title,
-                            text: `Check out this job: ${selectedJob.title} at ${selectedJob.companyId?.name}`,
-                            url: window.location.href
-                          }).catch((err) => console.log('Error sharing:', err));
+                          navigator
+                            .share({
+                              title: selectedJob.title,
+                              text: `Check out this job: ${selectedJob.title} at ${selectedJob.companyId?.name}`,
+                              url: window.location.href
+                            })
+                            .catch(err => console.log('Error sharing:', err));
                         } else {
                           navigator.clipboard.writeText(window.location.href);
                           toast.success('Link copied to clipboard!');
@@ -1267,7 +1277,7 @@ export function ModernJobsPage() {
                 {/* Salary & Match Score */}
                 <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-200">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-600" />
+                    <PhilippinePeso className="h-5 w-5 text-green-600" />
                     <span className="font-semibold text-green-800">
                       {formatSalary(selectedJob)}
                     </span>
@@ -1332,9 +1342,11 @@ export function ModernJobsPage() {
                 )}
 
                 {/* Civil Service Eligibility - for Government Jobs */}
-                {(selectedJob.companyId?.isGovernment || 
+                {(selectedJob.companyId?.isGovernment ||
                   selectedJob.category?.toLowerCase().includes('government') ||
-                  selectedJob.categoryId?.name?.toLowerCase().includes('government')) && (
+                  selectedJob.categoryId?.name
+                    ?.toLowerCase()
+                    .includes('government')) && (
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
                     <div className="flex items-start gap-3 mb-4">
                       <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
@@ -1345,25 +1357,29 @@ export function ModernJobsPage() {
                           Civil Service Eligibility Required
                         </h2>
                         <p className="text-sm text-gray-600">
-                          This is a government position requiring valid Civil Service eligibility
+                          This is a government position requiring valid Civil
+                          Service eligibility
                         </p>
                       </div>
                     </div>
-                    
-                    {selectedJob.civilServiceEligibility && selectedJob.civilServiceEligibility.length > 0 ? (
+
+                    {selectedJob.civilServiceEligibility &&
+                    selectedJob.civilServiceEligibility.length > 0 ? (
                       <div className="space-y-2">
                         <p className="text-sm font-medium text-gray-700 mb-2">
                           Accepted Eligibilities:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {selectedJob.civilServiceEligibility.map((eligibility, idx) => (
-                            <Badge
-                              key={idx}
-                              className="bg-blue-600 text-white hover:bg-blue-700">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              {eligibility}
-                            </Badge>
-                          ))}
+                          {selectedJob.civilServiceEligibility.map(
+                            (eligibility, idx) => (
+                              <Badge
+                                key={idx}
+                                className="bg-blue-600 text-white hover:bg-blue-700">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                {eligibility}
+                              </Badge>
+                            )
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -1375,31 +1391,33 @@ export function ModernJobsPage() {
                         </div>
                       )
                     )}
-                    
-                    {!selectedJob.civilServiceEligibility && !selectedJob.eligibility && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                          Common Eligibilities Accepted:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className="bg-blue-600 text-white">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            RA 1080 (Board/Bar Passer)
-                          </Badge>
-                          <Badge className="bg-blue-600 text-white">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            CS Professional
-                          </Badge>
-                          <Badge className="bg-blue-600 text-white">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            CS Sub-Professional
-                          </Badge>
+
+                    {!selectedJob.civilServiceEligibility &&
+                      !selectedJob.eligibility && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-gray-700 mb-2">
+                            Common Eligibilities Accepted:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className="bg-blue-600 text-white">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              RA 1080 (Board/Bar Passer)
+                            </Badge>
+                            <Badge className="bg-blue-600 text-white">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              CS Professional
+                            </Badge>
+                            <Badge className="bg-blue-600 text-white">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              CS Sub-Professional
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-600 mt-3">
+                            Note: Specific eligibility requirements will be
+                            verified during application
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-600 mt-3">
-                          Note: Specific eligibility requirements will be verified during application
-                        </p>
-                      </div>
-                    )}
+                      )}
                   </div>
                 )}
 

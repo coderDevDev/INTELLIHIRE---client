@@ -35,19 +35,36 @@ export const registerSchema = z
       .string()
       .min(1, 'Phone number is required')
       .regex(
+        /^[0-9+\-\s()]+$/,
+        'Phone number can only contain numbers, +, -, spaces, and parentheses'
+      )
+      .regex(
         /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/,
-        'Please enter a valid phone number'
+        'Please enter a valid phone number format'
       ),
 
-    address: z.string().optional().or(z.literal('')),
+    address: z
+      .string()
+      .min(1, 'Address is required')
+      .min(5, 'Address must be at least 5 characters'),
 
     gender: z
-      .enum(['male', 'female', 'other', 'prefer_not_to_say', ''], {
-        errorMap: () => ({ message: 'Please select a valid gender' })
-      })
-      .optional(),
+      .enum(['male', 'female', 'other', 'prefer_not_to_say'], {
+        errorMap: () => ({ message: 'Please select your gender' })
+      }),
 
-    dob: z.string().optional().or(z.literal('')),
+    dob: z
+      .string()
+      .min(1, 'Date of birth is required')
+      .refine(
+        (date) => {
+          const birthDate = new Date(date);
+          const today = new Date();
+          const age = today.getFullYear() - birthDate.getFullYear();
+          return age >= 18 && age <= 100;
+        },
+        { message: 'You must be at least 18 years old' }
+      ),
 
     password: z
       .string()

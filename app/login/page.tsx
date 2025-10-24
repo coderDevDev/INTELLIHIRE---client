@@ -6,7 +6,7 @@ import { Briefcase, Sparkles, Shield, User } from 'lucide-react';
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* <MainHeader /> */}
+      <MainHeader />
       <main className="flex-1 relative overflow-hidden bg-gradient-to-br from-gray-50 via-white to-blue-50">
         {/* Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

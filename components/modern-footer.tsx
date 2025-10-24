@@ -52,43 +52,17 @@ export function ModernFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/jobs/categories" className="hover:text-white">
-                  Job Categories
-                </Link>
-              </li>
-              <li>
-                <Link href="/jobs/government" className="hover:text-white">
-                  Government Jobs
-                </Link>
-              </li>
-              <li>
                 <Link href="/about" className="hover:text-white">
                   About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-white">
-                  Contact Us
                 </Link>
               </li>
             </ul>
           </div>
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">Contact Information</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>City Hall, Sto. Tomas, Batangas, Philippines</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4 shrink-0" />
-                <span>(043) 123-4567</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4 shrink-0" />
-                <span>peso@stotomas.gov.ph</span>
-              </li>
-            </ul>
+            <h3 className="text-lg font-semibold text-white">About InteliHire</h3>
+            <p className="text-sm">
+              InteliHire is an AI-powered job matching platform designed to connect job seekers with their ideal opportunities in Sto. Tomas, Batangas. Our mission is to make job hunting smarter and more efficient.
+            </p>
           </div>
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Newsletter</h3>

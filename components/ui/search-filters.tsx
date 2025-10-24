@@ -7,7 +7,8 @@ import {
   MapPin,
   Building,
   Clock,
-  DollarSign
+  DollarSign,
+  PhilippinePeso
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -292,7 +293,7 @@ export function SearchFilters({
               {/* Salary Range */}
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" />
+                  <PhilippinePeso className="h-4 w-4" />
                   Salary Range (₱)
                 </label>
                 <div className="space-y-2">

@@ -305,6 +305,24 @@ export default function JobPostingsPage() {
     }
   };
 
+  // Handle job unarchiving
+  const handleUnarchiveJob = async (jobId: string, jobTitle: string) => {
+    try {
+      await jobAPI.updateJobStatus(jobId, 'active');
+      toast({
+        title: 'Success',
+        description: `"${jobTitle}" has been unarchived and set to active`
+      });
+      loadJobs(); // Reload jobs to reflect changes
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to unarchive job posting',
+        variant: 'destructive'
+      });
+    }
+  };
+
   // Handle export all applicants
   const handleExportAllApplicants = async () => {
     try {
@@ -353,6 +371,8 @@ export default function JobPostingsPage() {
         return 'outline';
       case 'closed':
         return 'destructive';
+      case 'archived':
+        return 'secondary';
       default:
         return 'outline';
     }
@@ -460,6 +480,7 @@ export default function JobPostingsPage() {
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="paused">Paused</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -726,12 +747,21 @@ export default function JobPostingsPage() {
                                     </div>
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onClick={() => openArchiveModal(job._id, job.title)}
-                                    className="text-red-600 hover:bg-red-50">
-                                    <Archive className="h-4 w-4 mr-2" />
-                                    <span>Archive</span>
-                                  </DropdownMenuItem>
+                                  {job.status === 'archived' ? (
+                                    <DropdownMenuItem
+                                      onClick={() => handleUnarchiveJob(job._id, job.title)}
+                                      className="text-green-600 hover:bg-green-50">
+                                      <Archive className="h-4 w-4 mr-2" />
+                                      <span>Unarchive</span>
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem
+                                      onClick={() => openArchiveModal(job._id, job.title)}
+                                      className="text-orange-600 hover:bg-orange-50">
+                                      <Archive className="h-4 w-4 mr-2" />
+                                      <span>Archive</span>
+                                    </DropdownMenuItem>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>

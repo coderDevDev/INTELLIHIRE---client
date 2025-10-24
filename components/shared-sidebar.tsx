@@ -77,7 +77,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
-import { authAPI } from '@/lib/api-service';
+import { authAPI, userAPI, documentAPI, jobAPI } from '@/lib/api-service';
 
 interface SharedSidebarProps {
   role: 'admin' | 'applicant' | 'employer';
@@ -90,10 +90,22 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
   const [systemStatus, setSystemStatus] = useState('operational');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [profileCompletion, setProfileCompletion] = useState(0);
+  const [stats, setStats] = useState({ jobsCount: 0, applicantsCount: 0 });
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
     setUser(currentUser);
+
+    // Fetch profile completion for applicants
+    if (role === 'applicant' && currentUser?.id) {
+      fetchProfileCompletion(currentUser.id);
+    }
+
+    // Fetch stats for admin
+    if (role === 'admin') {
+      fetchAdminStats();
+    }
 
     // Set notifications based on role
     if (role === 'admin') {
@@ -150,7 +162,7 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       href: '/dashboard/admin/jobs',
       active: pathname === '/dashboard/admin/jobs',
       description: 'Manage job postings',
-      badge: '12'
+      badge: stats.jobsCount > 0 ? stats.jobsCount.toString() : undefined
     },
     {
       label: 'Applicants',
@@ -158,7 +170,7 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       href: '/dashboard/admin/applicants',
       active: pathname === '/dashboard/admin/applicants',
       description: 'View applicants',
-      badge: '245'
+      badge: stats.applicantsCount > 0 ? stats.applicantsCount.toString() : undefined
     },
     {
       label: 'Companies',
@@ -483,9 +495,76 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
     }
   };
 
+  const fetchAdminStats = async () => {
+    try {
+      const [jobsData, applicantsData] = await Promise.all([
+        jobAPI.getAdminJobs({ limit: 1, page: 1 }),
+        userAPI.getApplicants({ limit: 1, page: 1 })
+      ]);
+
+      setStats({
+        jobsCount: jobsData.total || 0,
+        applicantsCount: applicantsData.total || 0
+      });
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+    }
+  };
+
+  const fetchProfileCompletion = async (userId: string) => {
+    try {
+      const [profileData, documentsData] = await Promise.all([
+        userAPI.getUserById(userId),
+        documentAPI.getMyDocuments()
+      ]);
+
+      const hasResume = documentsData?.some((doc: any) => doc.type === 'resume');
+      const completion = calculateProfileCompletion(profileData, { hasResume });
+      setProfileCompletion(completion);
+    } catch (error) {
+      console.error('Error fetching profile completion:', error);
+      setProfileCompletion(0);
+    }
+  };
+
+  const calculateProfileCompletion = (
+    profileData: any,
+    docs: { hasResume: boolean }
+  ) => {
+    // Profile completion based on 4 main sections
+    // Each section is worth 25%
+    let completionScore = 0;
+
+    // Section 1: Personal Information (25%)
+    const hasPersonalInfo = !!(
+      profileData.firstName &&
+      profileData.lastName &&
+      profileData.phoneNumber &&
+      profileData.address?.street
+    );
+    if (hasPersonalInfo) completionScore += 25;
+
+    // Section 2: Education (25%)
+    if (profileData.education && profileData.education.length > 0) {
+      completionScore += 25;
+    }
+
+    // Section 3: Experience (25%)
+    if (profileData.experience && profileData.experience.length > 0) {
+      completionScore += 25;
+    }
+
+    // Section 4: Documents - Resume (25%)
+    if (docs.hasResume) {
+      completionScore += 25;
+    }
+
+    return completionScore;
+  };
+
   const getProfileCompletion = () => {
     if (role === 'applicant') {
-      return 75;
+      return profileCompletion;
     } else if (role === 'employer') {
       return 90;
     }
@@ -576,8 +655,16 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
         {(role === 'applicant' || role === 'employer') && !isCollapsed && (
           <div className="p-6 border-b border-white/50 relative z-10 transition-all duration-300">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0">
-                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg shrink-0 overflow-hidden">
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-gray-900 truncate text-lg">
@@ -623,8 +710,16 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
         {(role === 'applicant' || role === 'employer') && isCollapsed && (
           <div className="p-3 border-b border-white/50 relative z-10 flex justify-center">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg cursor-pointer hover:scale-110 transition-transform overflow-hidden">
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'
+                )}
               </div>
               {/* {notifications > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-[10px] bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">

@@ -132,11 +132,17 @@ export default function ApplicantProfilePage() {
         ]);
 
         setProfile(profileData);
-        // Construct full URL for profile picture if it exists
+        // Set profile picture (either base64 or file path)
         if (profileData.profilePicture) {
-          const baseUrl = API_URL.replace(/\/api$/, '');
-          const picturePath = profileData.profilePicture.replace(/^\\+/, '').replace(/\\/g, '/');
-          setAvatar(`${baseUrl}/${picturePath}`);
+          // Check if it's a base64 string
+          if (profileData.profilePicture.startsWith('data:image')) {
+            setAvatar(profileData.profilePicture);
+          } else {
+            // It's a file path, construct full URL
+            const baseUrl = API_URL.replace(/\/api$/, '');
+            const picturePath = profileData.profilePicture.replace(/^\\+/, '').replace(/\\/g, '/');
+            setAvatar(`${baseUrl}/${picturePath}`);
+          }
         } else {
           setAvatar(DEFAULT_AVATAR);
         }
@@ -186,8 +192,15 @@ export default function ApplicantProfilePage() {
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setAvatarFile(e.target.files[0]);
-      setAvatar(URL.createObjectURL(e.target.files[0]));
+      const file = e.target.files[0];
+      setAvatarFile(file);
+      
+      // Convert to base64 for preview and storage
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -200,13 +213,9 @@ export default function ApplicantProfilePage() {
 
   const handleSave = async () => {
     try {
-      let profilePicture = profile.profilePicture;
-      if (avatarFile) {
-        const formData = new FormData();
-        formData.append('picture', avatarFile);
-        const res = await userAPI.uploadProfilePicture(formData);
-        profilePicture = res.profilePicture;
-      }
+      // Use the base64 avatar if a new file was selected
+      const profilePicture = avatarFile ? avatar : profile.profilePicture;
+      
       const updatePayload: any = {
         firstName: profile.firstName,
         lastName: profile.lastName,
@@ -214,10 +223,16 @@ export default function ApplicantProfilePage() {
         address: profile.address,
         gender: profile.gender,
         dob: profile.dob,
+        summary: profile.summary,
         profilePicture
       };
       const updated = await userAPI.updateProfile(updatePayload);
       setProfile(updated);
+      
+      // Update avatar display with the new profile picture
+      if (updated.profilePicture) {
+        setAvatar(updated.profilePicture);
+      }
       
       // Update localStorage so sidebar reflects changes immediately
       const currentUser = authAPI.getCurrentUser();

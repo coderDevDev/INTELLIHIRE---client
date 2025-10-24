@@ -54,7 +54,8 @@ import {
   X,
   AlertCircle,
   Upload,
-  FileText
+  FileText,
+  PhilippinePeso
 } from 'lucide-react';
 import Link from 'next/link';
 import { authAPI, careerPathAPI, documentAPI } from '@/lib/api-service';
@@ -565,7 +566,7 @@ export default function CareerPathPage() {
       case 'skill_gap':
         return <Target className="h-5 w-5" />;
       case 'salary_insight':
-        return <DollarSign className="h-5 w-5" />;
+        return <PhilippinePeso className="h-5 w-5" />;
       case 'growth_opportunity':
         return <Zap className="h-5 w-5" />;
       default:
@@ -935,7 +936,7 @@ export default function CareerPathPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-gray-500" />
+                          <PhilippinePeso className="h-4 w-4 text-gray-500" />
                           <span className="text-gray-600">
                             {formatSalary(path.averageSalary)}
                           </span>

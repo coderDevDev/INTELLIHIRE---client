@@ -25,7 +25,8 @@ import {
   ArrowRight,
   Clock,
   Users,
-  DollarSign
+  DollarSign,
+  PhilippinePeso
 } from 'lucide-react';
 import Link from 'next/link';
 import { jobAPI } from '@/lib/api-service';
@@ -333,7 +334,7 @@ export function AIJobRecommendations({
                   <div className="text-gray-500">Posted</div>
                 </div>
                 <div className="text-center p-2 bg-white/40 backdrop-blur-sm rounded-lg border border-white/50">
-                  <DollarSign className="h-3 w-3 mx-auto mb-1 text-purple-600" />
+                  <PhilippinePeso className="h-3 w-3 mx-auto mb-1 text-purple-600" />
                   <div className="font-semibold text-xs">
                     {job.salaryMin && job.salaryMax
                       ? `${

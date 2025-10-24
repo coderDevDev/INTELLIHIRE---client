@@ -63,7 +63,8 @@ import {
   Video,
   FileSpreadsheet,
   Mail,
-  Image
+  Image,
+  PhilippinePeso
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -777,7 +778,7 @@ export default function SuccessPredictionPage() {
                         {prediction.location}
                       </span>
                       <span className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-gray-500" />
+                        <PhilippinePeso className="h-4 w-4 text-gray-500" />
                         {formatSalary(prediction.salaryRange)}
                       </span>
                       <span className="flex items-center gap-1">

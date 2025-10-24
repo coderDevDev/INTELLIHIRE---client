@@ -231,6 +231,11 @@ function ApplicantRankingPageContent() {
     }
   }, [activeTab, selectedJob, statusFilter, sortBy, sortOrder, currentPage]);
 
+  // Recalculate stats whenever rankings change
+  useEffect(() => {
+    loadStats();
+  }, [rankings, selectedJob]);
+
   const loadAvailableJobs = async () => {
     try {
       const response = await applicantRankingAPI.getAvailableJobs();
@@ -319,9 +324,37 @@ function ApplicantRankingPageContent() {
 
   const loadStats = async () => {
     try {
-      const response = await applicantRankingAPI.getRankingStats();
-      if (response.success) {
-        setStats(response.stats);
+      // Calculate stats from current rankings (job-specific)
+      if (rankings.length > 0) {
+        const totalRankings = rankings.length;
+        const averageScore = rankings.reduce((sum, r) => sum + r.overallScore, 0) / totalRankings;
+        
+        const statusCounts = rankings.reduce((acc, r) => {
+          const status = r.rankingStatus || 'pending';
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        setStats({
+          totalRankings,
+          averageScore,
+          statusCounts,
+          jobsWithRankings: selectedJob ? 1 : 0
+        });
+      } else if (selectedJob) {
+        // If job is selected but no rankings, show zeros
+        setStats({
+          totalRankings: 0,
+          averageScore: 0,
+          statusCounts: {},
+          jobsWithRankings: 0
+        });
+      } else {
+        // Load global stats only when no job is selected
+        const response = await applicantRankingAPI.getRankingStats();
+        if (response.success) {
+          setStats(response.stats);
+        }
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -777,7 +810,9 @@ function ApplicantRankingPageContent() {
                   <div className="text-3xl font-bold text-gray-900">
                     {stats.totalRankings}
                   </div>
-                  <p className="text-xs text-blue-600">All rankings</p>
+                  <p className="text-xs text-blue-600">
+                    {selectedJob ? 'For this job' : 'All rankings'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -792,7 +827,9 @@ function ApplicantRankingPageContent() {
                   <div className="text-3xl font-bold text-gray-900">
                     {Math.round(stats.averageScore)}%
                   </div>
-                  <p className="text-xs text-green-600">Overall average</p>
+                  <p className="text-xs text-green-600">
+                    {selectedJob ? 'For this job' : 'Overall average'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -807,7 +844,9 @@ function ApplicantRankingPageContent() {
                   <div className="text-3xl font-bold text-gray-900">
                     {stats.statusCounts.shortlisted || 0}
                   </div>
-                  <p className="text-xs text-purple-600">Top candidates</p>
+                  <p className="text-xs text-purple-600">
+                    {selectedJob ? 'For this job' : 'Top candidates'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -822,7 +861,9 @@ function ApplicantRankingPageContent() {
                   <div className="text-3xl font-bold text-gray-900">
                     {stats.statusCounts.hired || 0}
                   </div>
-                  <p className="text-xs text-orange-600">Successfully hired</p>
+                  <p className="text-xs text-orange-600">
+                    {selectedJob ? 'For this job' : 'Successfully hired'}
+                  </p>
                 </CardContent>
               </Card>
             </div>

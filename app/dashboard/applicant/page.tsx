@@ -76,12 +76,10 @@ export default function ApplicantDashboard() {
 
       // Calculate statistics based on actual uploaded documents
       const uploadedDocs = documentsData || [];
-      const hasPDS = uploadedDocs.some((doc: any) => doc.type === 'pds');
       const hasResume = uploadedDocs.some((doc: any) => doc.type === 'resume');
-      const documentCount = (hasPDS ? 1 : 0) + (hasResume ? 1 : 0);
+      const documentCount = hasResume ? 1 : 0;
 
       const profileCompletion = calculateProfileCompletion(profileData, {
-        hasPDS,
         hasResume
       });
 
@@ -100,25 +98,37 @@ export default function ApplicantDashboard() {
 
   const calculateProfileCompletion = (
     profileData: any,
-    docs: { hasPDS: boolean; hasResume: boolean }
+    docs: { hasResume: boolean }
   ) => {
-    const fields = [
-      profileData.firstName,
-      profileData.lastName,
-      profileData.phoneNumber,
-      profileData.address?.street,
-      profileData.gender,
-      profileData.dob,
-      profileData.summary,
-      profileData.experience?.length > 0,
-      profileData.education?.length > 0,
-      profileData.certification?.length > 0,
-      docs.hasPDS,
-      docs.hasResume
-    ];
+    // Profile completion based on 4 main sections
+    // Each section is worth 25%
+    let completionScore = 0;
 
-    const completedFields = fields.filter(Boolean).length;
-    return Math.round((completedFields / fields.length) * 100);
+    // Section 1: Personal Information (25%)
+    const hasPersonalInfo = !!(
+      profileData.firstName &&
+      profileData.lastName &&
+      profileData.phoneNumber &&
+      profileData.address?.street
+    );
+    if (hasPersonalInfo) completionScore += 25;
+
+    // Section 2: Education (25%)
+    if (profileData.education && profileData.education.length > 0) {
+      completionScore += 25;
+    }
+
+    // Section 3: Experience (25%)
+    if (profileData.experience && profileData.experience.length > 0) {
+      completionScore += 25;
+    }
+
+    // Section 4: Documents - Resume (25%)
+    if (docs.hasResume) {
+      completionScore += 25;
+    }
+
+    return completionScore;
   };
 
   const getStatusIcon = (status: string) => {
@@ -221,16 +231,10 @@ export default function ApplicantDashboard() {
               : 'Incomplete'
         };
       case 'documents':
-        const hasPDS = documents.some(doc => doc.type === 'pds');
         const hasResume = documents.some(doc => doc.type === 'resume');
-        const hasRequiredDocs = hasPDS && hasResume;
         return {
-          completed: hasRequiredDocs,
-          label: hasRequiredDocs
-            ? 'Complete'
-            : hasPDS || hasResume
-            ? 'Partial'
-            : 'Incomplete'
+          completed: hasResume,
+          label: hasResume ? 'Complete' : 'Incomplete'
         };
       default:
         return { completed: false, label: 'Incomplete' };
@@ -483,7 +487,7 @@ export default function ApplicantDashboard() {
                         variant="ghost" 
                         size="sm"
                         asChild>
-                        <Link href="/dashboard/applicant/applications">
+                        <Link href={`/dashboard/applicant/applications?id=${app._id}`}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -510,7 +514,12 @@ export default function ApplicantDashboard() {
                       {stats.profileCompletion}% Complete
                     </span>
                     <span className="text-sm text-gray-500">
-                      {Math.round(stats.profileCompletion / 25)}/4 sections
+                      {[
+                        getProfileSectionStatus('personal').completed,
+                        getProfileSectionStatus('education').completed,
+                        getProfileSectionStatus('experience').completed,
+                        getProfileSectionStatus('documents').completed
+                      ].filter(Boolean).length}/4 sections
                     </span>
                   </div>
                   <Progress value={stats.profileCompletion} className="h-2" />

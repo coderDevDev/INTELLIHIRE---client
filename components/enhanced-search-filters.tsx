@@ -43,7 +43,8 @@ import {
   ChevronDown,
   ChevronUp,
   Plus,
-  Minus
+  Minus,
+  PhilippinePeso
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -476,7 +477,7 @@ export function EnhancedSearchFilters({
             {/* Salary Range */}
             <FilterSection
               title="Salary Range"
-              icon={<DollarSign className="h-4 w-4 text-green-600" />}
+              icon={<PhilippinePeso className="h-4 w-4 text-green-600" />}
               sectionKey="salary"
               defaultExpanded={false}>
               <div className="space-y-4">
@@ -579,6 +580,3 @@ export function EnhancedSearchFilters({
     </div>
   );
 }
-
-
-

@@ -154,19 +154,19 @@ export function RegisterForm() {
 
           <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
             <Tabs defaultValue="applicant" onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-4 sm:mb-6">
+              <TabsList className="grid w-full grid-cols-1 bg-gray-100/80 backdrop-blur-sm rounded-xl p-1 mb-4 sm:mb-6">
                 <TabsTrigger
                   value="applicant"
                   className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-blue-600 font-medium transition-all duration-300">
                   <User className="h-4 w-4 mr-2" />
                   Job Seeker
                 </TabsTrigger>
-                <TabsTrigger
+                {/* <TabsTrigger
                   value="admin"
                   className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-md data-[state=active]:text-purple-600 font-medium transition-all duration-300">
                   <Shield className="h-4 w-4 mr-2" />
                   Admin
-                </TabsTrigger>
+                </TabsTrigger> */}
               </TabsList>
 
               {/* APPLICANT TAB */}
@@ -188,6 +188,12 @@ export function RegisterForm() {
                         type="text"
                         placeholder="John"
                         {...register('firstName')}
+                        onKeyPress={(e) => {
+                          // Only allow letters, spaces, hyphens, and apostrophes
+                          if (!/^[a-zA-Z\s'\-]$/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.firstName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -215,6 +221,12 @@ export function RegisterForm() {
                         type="text"
                         placeholder="Doe"
                         {...register('lastName')}
+                        onKeyPress={(e) => {
+                          // Only allow letters, spaces, hyphens, and apostrophes
+                          if (!/^[a-zA-Z\s'\-]$/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                           errors.lastName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -270,8 +282,14 @@ export function RegisterForm() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="09"
+                      placeholder="09123456789"
                       {...register('phone')}
+                      onKeyPress={(e) => {
+                        // Only allow numbers, +, -, spaces, and parentheses
+                        if (!/^[0-9+\-\s()]$/.test(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                       className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
                         errors.phone
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
@@ -292,38 +310,57 @@ export function RegisterForm() {
                     <div className="space-y-2">
                       <Label
                         htmlFor="gender"
-                        className="text-sm font-semibold text-gray-700">
-                        Gender{' '}
-                        <span className="text-gray-400 font-normal">
-                          (Optional)
-                        </span>
+                        className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <User className="h-4 w-4 text-blue-600" />
+                        Gender
                       </Label>
                       <select
                         id="gender"
                         {...register('gender')}
-                        className="h-12 w-full bg-white/80 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm px-4">
+                        className={`h-12 w-full bg-white/80 border border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm px-4 ${
+                          errors.gender
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                            : ''
+                        }`}>
                         <option value="">Select gender</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
                       </select>
+                      {errors.gender && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.gender.message}
+                        </p>
+                      )}
                     </div>
 
                     {/* Date of Birth */}
                     <div className="space-y-2">
                       <Label
                         htmlFor="dob"
-                        className="text-sm font-semibold text-gray-700">
-                        Date of Birth{' '}
-                        <span className="text-gray-400 font-normal">
-                          (Optional)
-                        </span>
+                        className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <User className="h-4 w-4 text-blue-600" />
+                        Date of Birth
                       </Label>
                       <Input
                         id="dob"
                         type="date"
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
                         {...register('dob')}
-                        className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                        className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                          errors.dob
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                            : ''
+                        }`}
                       />
+                      {errors.dob && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.dob.message}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -331,19 +368,27 @@ export function RegisterForm() {
                   <div className="space-y-2">
                     <Label
                       htmlFor="address"
-                      className="text-sm font-semibold text-gray-700">
-                      Address{' '}
-                      <span className="text-gray-400 font-normal">
-                        (Optional)
-                      </span>
+                      className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <User className="h-4 w-4 text-blue-600" />
+                      Address
                     </Label>
                     <Input
                       id="address"
                       type="text"
                       placeholder="123 Main St, City, Province"
                       {...register('address')}
-                      className="h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
+                      className={`h-12 bg-white/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm ${
+                        errors.address
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                          : ''
+                      }`}
                     />
+                    {errors.address && (
+                      <p className="text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.address.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Password */}

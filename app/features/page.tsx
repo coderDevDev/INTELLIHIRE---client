@@ -80,7 +80,7 @@ export default function FeaturesPage() {
         {
           title: '8 Scoring Criteria',
           items: [
-            'Education (Default 20%): Doctorate, Master\'s, Bachelor\'s, Vocational, High School',
+            "Education (Default 20%): Doctorate, Master's, Bachelor's, Vocational, High School",
             'Work Experience (25%): 10+ years, 7-9, 4-6, 2-3, 0-1 year brackets',
             'Training Programs (10%): Seminars, workshops, certifications count',
             'Civil Service Eligibility (15%): RA 1080, CS Professional, Sub-Professional',
@@ -214,7 +214,7 @@ export default function FeaturesPage() {
         {
           title: 'Education Matching',
           items: [
-            'Degree level verification (Doctorate, Master\'s, Bachelor\'s, etc.)',
+            "Degree level verification (Doctorate, Master's, Bachelor's, etc.)",
             'Field of study alignment',
             'Institution recognition',
             'Graduation year tracking',
@@ -499,7 +499,7 @@ export default function FeaturesPage() {
               government offices
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
+            {/* <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
               <Link href="/register">
                 <button className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                   Get Started Free
@@ -512,7 +512,7 @@ export default function FeaturesPage() {
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
@@ -554,7 +554,8 @@ export default function FeaturesPage() {
                         key={idx}
                         className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-gray-100">
                         <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${feature.gradient}`}></div>
+                          <div
+                            className={`w-2 h-2 rounded-full bg-gradient-to-r ${feature.gradient}`}></div>
                           {detail.title}
                         </h3>
                         <ul className="space-y-3">
@@ -608,7 +609,9 @@ export default function FeaturesPage() {
 
                 <ul className="space-y-3">
                   {feature.items.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-3 text-gray-700">
+                    <li
+                      key={idx}
+                      className="flex items-start gap-3 text-gray-700">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 flex-shrink-0 mt-2"></div>
                       <span>{item}</span>
                     </li>
@@ -630,8 +633,8 @@ export default function FeaturesPage() {
                 Ready to Transform Your Recruitment?
               </h2>
               <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-                Join hundreds of government offices using INTELLIHIRE to streamline
-                their hiring process
+                Join hundreds of government offices using INTELLIHIRE to
+                streamline their hiring process
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
                 <Link href="/register">
