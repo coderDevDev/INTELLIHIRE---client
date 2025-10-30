@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   BarChart,
   Briefcase,
@@ -85,6 +86,7 @@ interface SharedSidebarProps {
 
 export function SharedSidebar({ role }: SharedSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [notifications, setNotifications] = useState(0);
   const [systemStatus, setSystemStatus] = useState('operational');
@@ -136,16 +138,23 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Also listen for custom profile update event
     window.addEventListener('profileUpdated', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('profileUpdated', handleStorageChange);
     };
   }, [role, isMobileOpen, isCollapsed]);
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setUser(null);
+    setIsMobileOpen(false);
+    router.replace('/login');
+  };
 
   // Admin routes
   const adminRoutes = [
@@ -170,7 +179,8 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       href: '/dashboard/admin/applicants',
       active: pathname === '/dashboard/admin/applicants',
       description: 'View applicants',
-      badge: stats.applicantsCount > 0 ? stats.applicantsCount.toString() : undefined
+      badge:
+        stats.applicantsCount > 0 ? stats.applicantsCount.toString() : undefined
     },
     {
       label: 'Companies',
@@ -201,13 +211,13 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
       active: pathname === '/dashboard/admin/reports',
       description: 'Generate reports'
     },
-    // {
-    //   label: 'Newsletter',
-    //   icon: Mail,
-    //   href: '/dashboard/admin/newsletter',
-    //   active: pathname === '/dashboard/admin/newsletter',
-    //   description: 'Email marketing'
-    // },
+    {
+      label: 'Email Marketing',
+      icon: Mail,
+      href: '/dashboard/admin/email-marketing',
+      active: pathname === '/dashboard/admin/email-marketing',
+      description: 'Send campaigns & newsletters'
+    },
     {
       label: 'Banner Management',
       icon: Image,
@@ -518,7 +528,9 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
         documentAPI.getMyDocuments()
       ]);
 
-      const hasResume = documentsData?.some((doc: any) => doc.type === 'resume');
+      const hasResume = documentsData?.some(
+        (doc: any) => doc.type === 'resume'
+      );
       const completion = calculateProfileCompletion(profileData, { hasResume });
       setProfileCompletion(completion);
     } catch (error) {
@@ -923,16 +935,10 @@ export function SharedSidebar({ role }: SharedSidebarProps) {
                 ? 'w-full justify-center p-3'
                 : 'w-full justify-start gap-3'
             )}
-            asChild>
-            <Link
-              href="/login"
-              onClick={() => setIsMobileOpen(false)}
-              aria-label="Logout">
-              <LogOut className="h-4 w-4" />
-              {!isCollapsed && <span>Logout</span>}
-            </Link>
+            onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            {!isCollapsed && <span>Logout</span>}
           </Button>
-
           {/* Version */}
           {!isCollapsed && (
             <div className="text-xs text-gray-400 text-center mt-3 font-medium">

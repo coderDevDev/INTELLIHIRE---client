@@ -146,103 +146,97 @@ export default function ReportsPage() {
       return;
     }
 
-    setExportingAll(true);
     try {
-      toast.info('Generating comprehensive report...');
+      setExportingAll(true);
+      toast.info('Generating comprehensive CSV report...');
 
-      // Generate comprehensive report with all data
-      const comprehensiveReport = `
-INTELLIHIRE COMPREHENSIVE REPORTS
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedPeriod}
-============================================
+      // Generate CSV sections
+      const csvSections = [];
 
-APPLICANT SUMMARY REPORT
-============================================
+      // Header
+      csvSections.push('INTELLIHIRE COMPREHENSIVE REPORT');
+      csvSections.push(`Generated,${new Date().toLocaleString()}`);
+      csvSections.push(`Period,${selectedPeriod}`);
+      csvSections.push('');
 
-OVERVIEW
--------------------------------------------
-Total Applicants: ${data.applicantSummary.totalApplicants}
-New This Month: ${data.applicantSummary.newThisMonth}
+      // Applicant Summary
+      csvSections.push('APPLICANT SUMMARY');
+      csvSections.push('Metric,Value');
+      csvSections.push(
+        `Total Applicants,${data.applicantSummary.totalApplicants}`
+      );
+      csvSections.push(`New This Month,${data.applicantSummary.newThisMonth}`);
+      csvSections.push('');
 
-EDUCATION DISTRIBUTION
--------------------------------------------
-${data.applicantSummary.byEducation
-  .map(item => `${item.level}: ${item.count}`)
-  .join('\n')}
+      csvSections.push('EDUCATION DISTRIBUTION');
+      csvSections.push('Education Level,Count');
+      data.applicantSummary.byEducation.forEach(item => {
+        csvSections.push(`"${item.level}",${item.count}`);
+      });
+      csvSections.push('');
 
-EXPERIENCE DISTRIBUTION
--------------------------------------------
-${data.applicantSummary.byExperience
-  .map(item => `${item.range}: ${item.count}`)
-  .join('\n')}
+      csvSections.push('EXPERIENCE DISTRIBUTION');
+      csvSections.push('Experience Range,Count');
+      data.applicantSummary.byExperience.forEach(item => {
+        csvSections.push(`"${item.range}",${item.count}`);
+      });
+      csvSections.push('');
 
-LOCATION DISTRIBUTION
--------------------------------------------
-${data.applicantSummary.byLocation
-  .slice(0, 10)
-  .map(item => `${item.location}: ${item.count}`)
-  .join('\n')}
+      csvSections.push('LOCATION DISTRIBUTION');
+      csvSections.push('Location,Count');
+      data.applicantSummary.byLocation.forEach(item => {
+        csvSections.push(`"${item.location}",${item.count}`);
+      });
+      csvSections.push('');
 
+      // Job Success Report
+      csvSections.push('JOB SUCCESS REPORT');
+      csvSections.push('Metric,Value');
+      csvSections.push(`Total Jobs,${data.jobSuccess.totalJobs}`);
+      csvSections.push(`Active Jobs,${data.jobSuccess.activeJobs}`);
+      csvSections.push('');
 
-JOB SUCCESS REPORT
-============================================
+      csvSections.push('APPLICATIONS PER JOB');
+      csvSections.push('Job Title,Applications,Success Rate (%)');
+      data.jobSuccess.applicationsPerJob.forEach(item => {
+        csvSections.push(
+          `"${item.jobTitle}",${item.applications},${item.successRate}`
+        );
+      });
+      csvSections.push('');
 
-OVERVIEW
--------------------------------------------
-Total Jobs: ${data.jobSuccess.totalJobs}
-Active Jobs: ${data.jobSuccess.activeJobs}
+      csvSections.push('TOP PERFORMING JOBS');
+      csvSections.push('Job Title,Company,Applications');
+      data.jobSuccess.topPerformingJobs.forEach(item => {
+        csvSections.push(
+          `"${item.jobTitle}","${item.company}",${item.applications}`
+        );
+      });
+      csvSections.push('');
 
-APPLICATIONS PER JOB (Top 10)
--------------------------------------------
-${data.jobSuccess.applicationsPerJob
-  .map(
-    (item, i) =>
-      `${i + 1}. ${item.jobTitle}
-   Applications: ${item.applications}
-   Success Rate: ${item.successRate}%`
-  )
-  .join('\n\n')}
+      // System Metrics
+      csvSections.push('SYSTEM METRICS');
+      csvSections.push('Metric,Value');
+      csvSections.push(`Total Users,${data.systemMetrics.totalUsers}`);
+      csvSections.push(
+        `Total Applications,${data.systemMetrics.totalApplications}`
+      );
+      csvSections.push(
+        `Average Processing Time (days),${data.systemMetrics.averageProcessingTime}`
+      );
+      csvSections.push(`System Uptime (%),${data.systemMetrics.systemUptime}`);
+      csvSections.push('');
 
-TOP PERFORMING JOBS
--------------------------------------------
-${data.jobSuccess.topPerformingJobs
-  .map(
-    (item, i) =>
-      `${i + 1}. ${item.jobTitle} (${item.company})
-   Applications: ${item.applications}`
-  )
-  .join('\n\n')}
+      const csvContent = csvSections.join('\n');
 
-
-SYSTEM METRICS REPORT
-============================================
-
-SYSTEM PERFORMANCE
--------------------------------------------
-Total Users: ${data.systemMetrics.totalUsers}
-Total Applications: ${data.systemMetrics.totalApplications}
-Average Processing Time: ${data.systemMetrics.averageProcessingTime} days
-System Uptime: ${data.systemMetrics.systemUptime}%
-
-SYSTEM STATUS
--------------------------------------------
-Database Connection: Active
-AI Services: Operational
-Email Service: Active
-
-============================================
-End of Comprehensive Report
-      `.trim();
-
-      // Create and download file
-      const blob = new Blob([comprehensiveReport], { type: 'text/plain' });
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `intellihire-comprehensive-report-${
         new Date().toISOString().split('T')[0]
-      }.txt`;
+      }.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -734,16 +728,16 @@ End of Report
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Applicant Summary
               </TabsTrigger>
-              {/* <TabsTrigger
+              <TabsTrigger
                 value="job-success"
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 Job Success Report
               </TabsTrigger>
-              <TabsTrigger
+              {/* <TabsTrigger
                 value="system-metrics"
                 className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
                 System Metrics
-              </TabsTrigger> */}
+              </TabsTrigger>  */}
             </TabsList>
 
             {/* Applicant Summary Report */}

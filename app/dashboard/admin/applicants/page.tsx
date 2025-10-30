@@ -38,6 +38,13 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
   Users,
   Search,
   Filter,
@@ -68,8 +75,8 @@ interface Applicant {
     firstName: string;
     lastName: string;
     email: string;
-    phone?: string;
-    address?: string;
+    phoneNumber?: string;
+    address?: any;
   };
   jobId: {
     _id: string;
@@ -102,6 +109,10 @@ export default function AdminApplicantsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalApplicants, setTotalApplicants] = useState(0);
   const [pageSize] = useState(10);
+  const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(
+    null
+  );
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -183,13 +194,29 @@ export default function AdminApplicantsPage() {
 
     setStats({
       total: apps.length,
-      pending: statusCounts['pending'] || 0,
-      reviewed: statusCounts['reviewed'] || 0,
+      pending: statusCounts['applied'] || 0,
+      reviewed: statusCounts['screening'] || 0,
       shortlisted: statusCounts['shortlisted'] || 0,
-      interview: statusCounts['interview_scheduled'] || 0,
-      accepted: statusCounts['accepted'] || 0,
+      interview: statusCounts['interview'] || 0,
+      accepted: statusCounts['hired'] || 0,
       rejected: statusCounts['rejected'] || 0
     });
+  };
+
+  // View applicant details
+  const handleViewDetails = (applicant: Applicant) => {
+    setSelectedApplicant(applicant);
+    setIsDetailsModalOpen(true);
+  };
+
+  // Get document download URL
+  const getDocumentUrl = (fileUrl: string) => {
+    if (!fileUrl) return '';
+    // If it's already a full URL, return it
+    if (fileUrl.startsWith('http')) return fileUrl;
+    // Otherwise, prepend the API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    return `${apiUrl}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
   };
 
   // Load data on mount and when filters change
@@ -230,43 +257,25 @@ export default function AdminApplicantsPage() {
     }
   };
 
-  // Get status badge variant
-  const getStatusBadgeVariant = (status: string) => {
+  // Get status badge styling
+  const getStatusBadgeStyle = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'secondary';
-      case 'reviewed':
-        return 'default';
-      case 'shortlisted':
-        return 'default';
-      case 'interview_scheduled':
-        return 'default';
-      case 'accepted':
-        return 'default';
+      case 'applied':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200 hover:bg-yellow-200';
+      case 'screening':
+        return 'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200';
+      case 'interview':
+        return 'bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200';
+      case 'offered':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200';
+      case 'hired':
+        return 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200';
       case 'rejected':
-        return 'destructive';
+        return 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200';
+      case 'withdrawn':
+        return 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200';
       default:
-        return 'outline';
-    }
-  };
-
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'text-yellow-600';
-      case 'reviewed':
-        return 'text-blue-600';
-      case 'shortlisted':
-        return 'text-purple-600';
-      case 'interview_scheduled':
-        return 'text-indigo-600';
-      case 'accepted':
-        return 'text-green-600';
-      case 'rejected':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
+        return 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200';
     }
   };
 
@@ -391,16 +400,17 @@ export default function AdminApplicantsPage() {
               <div className="flex flex-col gap-4 mb-8">
                 {/* Search and Export */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
+                  <div className="flex items-center w-full max-w-sm rounded-xl border border-white/50 bg-white/60 backdrop-blur-sm shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-300 px-3">
+                    <Search className="h-4 w-4 text-gray-500 mr-2" />
+                    <input
                       type="search"
                       placeholder="Search applicants..."
-                      className="w-full pl-8 rounded-xl border border-white/50 bg-white/60 backdrop-blur-sm shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus:bg-white/80 transition-all duration-300"
+                      className="flex-1 bg-transparent border-none outline-none py-2 placeholder-gray-500"
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                     />
                   </div>
+
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -428,14 +438,13 @@ export default function AdminApplicantsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="reviewed">Reviewed</SelectItem>
-                      <SelectItem value="shortlisted">Shortlisted</SelectItem>
-                      <SelectItem value="interview_scheduled">
-                        Interview Scheduled
-                      </SelectItem>
-                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="applied">Applied</SelectItem>
+                      <SelectItem value="screening">Screening</SelectItem>
+                      <SelectItem value="interview">Interview</SelectItem>
+                      <SelectItem value="offered">Offered</SelectItem>
+                      <SelectItem value="hired">Hired</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="withdrawn">Withdrawn</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -535,10 +544,10 @@ export default function AdminApplicantsPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-col gap-1 text-sm">
-                                {applicant.applicantId.phone && (
+                                {applicant.applicantId.phoneNumber && (
                                   <div className="flex items-center gap-1 text-gray-600">
                                     <Phone className="h-3 w-3" />
-                                    {applicant.applicantId.phone}
+                                    {applicant.applicantId.phoneNumber}
                                   </div>
                                 )}
                                 {applicant.jobId.location && (
@@ -557,12 +566,10 @@ export default function AdminApplicantsPage() {
                             </TableCell>
                             <TableCell>
                               <Badge
-                                variant={getStatusBadgeVariant(
+                                variant="outline"
+                                className={`${getStatusBadgeStyle(
                                   applicant.status
-                                )}
-                                className={`${getStatusColor(
-                                  applicant.status
-                                )} capitalize`}>
+                                )} capitalize font-medium px-3 py-1 transition-colors duration-200`}>
                                 {applicant.status.replace('_', ' ')}
                               </Badge>
                             </TableCell>
@@ -571,21 +578,20 @@ export default function AdminApplicantsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                                  asChild>
-                                  <Link
-                                    href={`/dashboard/admin/ranking?jobId=${applicant.jobId._id}`}>
-                                    <Eye className="h-4 w-4" />
-                                  </Link>
+                                  onClick={() => handleViewDetails(applicant)}
+                                  className="hover:bg-blue-100 hover:text-blue-700 transition-colors">
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                                 {applicant.resumeId && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                                    className="hover:bg-green-100 hover:text-green-700 transition-colors"
                                     asChild>
                                     <a
-                                      href={applicant.resumeId.fileUrl}
+                                      href={getDocumentUrl(
+                                        applicant.resumeId.fileUrl
+                                      )}
                                       target="_blank"
                                       rel="noopener noreferrer">
                                       <FileText className="h-4 w-4" />
@@ -638,6 +644,234 @@ export default function AdminApplicantsPage() {
           </Card>
         </div>
       </main>
+
+      {/* Applicant Details Modal */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Applicant Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete information about the applicant and their application
+            </DialogDescription>
+          </DialogHeader>
+          {selectedApplicant && (
+            <div className="space-y-6 py-4">
+              {/* Personal Information */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Full Name
+                    </label>
+                    <p className="text-base text-gray-900">
+                      {selectedApplicant.applicantId.firstName}{' '}
+                      {selectedApplicant.applicantId.lastName}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Email
+                    </label>
+                    <p className="text-base text-gray-900">
+                      {selectedApplicant.applicantId.email}
+                    </p>
+                  </div>
+                  {selectedApplicant.applicantId.phoneNumber && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Phone Number
+                      </label>
+                      <p className="text-base text-gray-900">
+                        {selectedApplicant.applicantId.phoneNumber}
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplicant.applicantId.address && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-600">
+                        Address
+                      </label>
+                      <p className="text-base text-gray-900">
+                        {typeof selectedApplicant.applicantId.address ===
+                        'string'
+                          ? selectedApplicant.applicantId.address
+                          : `${
+                              selectedApplicant.applicantId.address.street || ''
+                            }, ${
+                              selectedApplicant.applicantId.address.city || ''
+                            }, ${
+                              selectedApplicant.applicantId.address.province ||
+                              ''
+                            }, ${
+                              selectedApplicant.applicantId.address.zipCode ||
+                              ''
+                            }`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Job Information */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  Job Application
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Position
+                    </label>
+                    <p className="text-base text-gray-900">
+                      {selectedApplicant.jobId.title}
+                    </p>
+                  </div>
+                  {selectedApplicant.jobId.companyId && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Company
+                      </label>
+                      <p className="text-base text-gray-900">
+                        {selectedApplicant.jobId.companyId.name}
+                      </p>
+                    </div>
+                  )}
+                  {selectedApplicant.jobId.location && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Location
+                      </label>
+                      <p className="text-base text-gray-900">
+                        {selectedApplicant.jobId.location}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Application Date
+                    </label>
+                    <p className="text-base text-gray-900">
+                      {formatDate(selectedApplicant.createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Status
+                    </label>
+                    <div className="mt-1">
+                      <Badge
+                        variant="outline"
+                        className={`${getStatusBadgeStyle(
+                          selectedApplicant.status
+                        )} capitalize font-medium px-3 py-1`}>
+                        {selectedApplicant.status.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Documents */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                  Documents
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {selectedApplicant.resumeId && (
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="bg-blue-50 hover:bg-blue-100">
+                      <a
+                        href={getDocumentUrl(
+                          selectedApplicant.resumeId.fileUrl
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Resume
+                      </a>
+                    </Button>
+                  )}
+                  {selectedApplicant.pdsId && (
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="bg-green-50 hover:bg-green-100">
+                      <a
+                        href={getDocumentUrl(selectedApplicant.pdsId.fileUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View PDS
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Cover Letter */}
+              {selectedApplicant.coverLetter && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Cover Letter
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedApplicant.coverLetter}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedApplicant.notes && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Notes
+                  </h3>
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {selectedApplicant.notes}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Interview Date */}
+              {selectedApplicant.interviewDate && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Interview Scheduled
+                  </h3>
+                  <p className="text-base text-gray-900">
+                    {new Date(selectedApplicant.interviewDate).toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              {/* Rejection Reason */}
+              {selectedApplicant.rejectionReason && (
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Rejection Reason
+                  </h3>
+                  <div className="bg-red-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700">
+                      {selectedApplicant.rejectionReason}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

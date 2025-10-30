@@ -539,11 +539,11 @@ export default function DocumentsPage() {
                         Upload your completed Personal Data Sheet in PDF format
                       </CardDescription>
                     </div>
-                    <Badge
+                    {/* <Badge
                       variant="secondary"
                       className="bg-yellow-100/80 text-yellow-700 border-yellow-200/50">
                       Required
-                    </Badge>
+                    </Badge> */}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -736,7 +736,7 @@ export default function DocumentsPage() {
                             }}
                             className="text-blue-500 hover:text-blue-700">
                             <FileUp className="h-4 w-4 mr-2" />
-                            View Resume
+                            View 
                           </Button>
                           {/* <Button
                             size="sm"
@@ -1191,17 +1191,17 @@ export default function DocumentsPage() {
                           documents.filter(
                             doc =>
                               doc.status === 'uploaded' &&
-                              ['pds', 'resume'].includes(doc.type)
+                              ['resume'].includes(doc.type)
                           ).length
                         }
-                        /2 required
+                        /1 required
                       </span>
                     </div>
                     <Progress value={completionPercentage} className="h-2" />
                   </div>
 
                   <div className="space-y-3">
-                    {['pds', 'resume'].map(type => {
+                    {['resume'].map(type => {
                       const doc = documents.find(d => d.type === type);
                       const status = getDocumentStatus(
                         doc || { type, status: 'required' }

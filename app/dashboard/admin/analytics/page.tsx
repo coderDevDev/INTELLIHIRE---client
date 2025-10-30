@@ -336,94 +336,111 @@ export default function AnalyticsDashboard() {
     setExporting(true);
     try {
       // Generate comprehensive analytics report
-      const report = `
-INTELLIHIRE ANALYTICS REPORT
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedPeriod}
-============================================
+      // Generate CSV sections
+      const csvSections = [];
 
-OVERVIEW STATISTICS
--------------------------------------------
-Total Jobs: ${data.overview.totalJobs}
-Active Jobs: ${data.overview.activeJobs}
-Inactive Jobs: ${data.overview.inactiveJobs}
-Total Applicants: ${data.overview.totalApplicants}
-Total Applications: ${data.overview.totalApplications}
-Total Companies: ${data.overview.totalCompanies}
+      // Header
+      csvSections.push('INTELLIHIRE ANALYTICS REPORT');
+      csvSections.push(`Generated,${new Date().toLocaleString()}`);
+      csvSections.push(`Period,${selectedPeriod}`);
+      csvSections.push('');
 
-APPLICATION STATUS BREAKDOWN
--------------------------------------------
-Pending: ${data.overview.pendingApplications}
-Approved: ${data.overview.approvedApplications}
-Rejected: ${data.overview.rejectedApplications}
+      // Overview Statistics
+      csvSections.push('OVERVIEW STATISTICS');
+      csvSections.push('Metric,Value');
+      csvSections.push(`Total Jobs,${data.overview.totalJobs}`);
+      csvSections.push(`Active Jobs,${data.overview.activeJobs}`);
+      csvSections.push(`Inactive Jobs,${data.overview.inactiveJobs}`);
+      csvSections.push(`Total Applicants,${data.overview.totalApplicants}`);
+      csvSections.push(`Total Applications,${data.overview.totalApplications}`);
+      csvSections.push(`Total Companies,${data.overview.totalCompanies}`);
+      csvSections.push(`Pending Applications,${data.overview.pendingApplications}`);
+      csvSections.push(`Approved Applications,${data.overview.approvedApplications}`);
+      csvSections.push(`Rejected Applications,${data.overview.rejectedApplications}`);
+      csvSections.push('');
 
-JOBS BY CATEGORY
--------------------------------------------
-${data.jobStats.byCategory
-  .map(cat => `${cat.category}: ${cat.count} (${cat.percentage.toFixed(1)}%)`)
-  .join('\n')}
+      // Jobs by Category
+      csvSections.push('JOBS BY CATEGORY');
+      csvSections.push('Category,Count,Percentage');
+      data.jobStats.byCategory.forEach(cat => {
+        csvSections.push(`"${cat.category}",${cat.count},${cat.percentage.toFixed(1)}`);
+      });
+      csvSections.push('');
 
-JOBS BY LOCATION
--------------------------------------------
-${data.jobStats.byLocation
-  .map(loc => `${loc.location}: ${loc.count} (${loc.percentage.toFixed(1)}%)`)
-  .join('\n')}
+      // Jobs by Location
+      csvSections.push('JOBS BY LOCATION');
+      csvSections.push('Location,Count,Percentage');
+      data.jobStats.byLocation.forEach(loc => {
+        csvSections.push(`"${loc.location}",${loc.count},${loc.percentage.toFixed(1)}`);
+      });
+      csvSections.push('');
 
-JOBS BY EMPLOYMENT TYPE
--------------------------------------------
-${data.jobStats.byEmploymentType
-  .map(type => `${type.type}: ${type.count} (${type.percentage.toFixed(1)}%)`)
-  .join('\n')}
+      // Jobs by Employment Type
+      csvSections.push('JOBS BY EMPLOYMENT TYPE');
+      csvSections.push('Employment Type,Count,Percentage');
+      data.jobStats.byEmploymentType.forEach(type => {
+        csvSections.push(`"${type.type}",${type.count},${type.percentage.toFixed(1)}`);
+      });
+      csvSections.push('');
 
-JOBS BY SALARY RANGE
--------------------------------------------
-${data.jobStats.bySalaryRange
-  .map(
-    range => `${range.range}: ${range.count} (${range.percentage.toFixed(1)}%)`
-  )
-  .join('\n')}
+      // Jobs by Salary Range
+      csvSections.push('JOBS BY SALARY RANGE');
+      csvSections.push('Salary Range,Count,Percentage');
+      data.jobStats.bySalaryRange.forEach(range => {
+        csvSections.push(`"${range.range}",${range.count},${range.percentage.toFixed(1)}`);
+      });
+      csvSections.push('');
 
-APPLICATIONS BY STATUS
--------------------------------------------
-${data.applicationStats.byStatus
-  .map(
-    status =>
-      `${status.status}: ${status.count} (${status.percentage.toFixed(1)}%)`
-  )
-  .join('\n')}
+      // Applications by Status
+      csvSections.push('APPLICATIONS BY STATUS');
+      csvSections.push('Status,Count,Percentage');
+      data.applicationStats.byStatus.forEach(status => {
+        csvSections.push(`"${status.status}",${status.count},${status.percentage.toFixed(1)}`);
+      });
+      csvSections.push('');
 
-TOP JOBS BY APPLICATION COUNT
--------------------------------------------
-${data.applicationStats.byJob
-  .map(
-    (job, i) =>
-      `${i + 1}. ${job.jobTitle} (${job.company}): ${job.count} applications`
-  )
-  .join('\n')}
+      // Top Jobs by Application Count
+      csvSections.push('TOP JOBS BY APPLICATION COUNT');
+      csvSections.push('Rank,Job Title,Company,Applications');
+      data.applicationStats.byJob.forEach((job, i) => {
+        csvSections.push(`${i + 1},"${job.jobTitle}","${job.company}",${job.count}`);
+      });
+      csvSections.push('');
 
-MONTHLY TRENDS
--------------------------------------------
-Applications:
-${data.applicationStats.byMonth.map(m => `${m.month}: ${m.count}`).join('\n')}
+      // Monthly Trends - Applications
+      csvSections.push('MONTHLY APPLICATION TRENDS');
+      csvSections.push('Month,Count');
+      data.applicationStats.byMonth.forEach(m => {
+        csvSections.push(`"${m.month}",${m.count}`);
+      });
+      csvSections.push('');
 
-Job Postings:
-${data.trends.jobPostings.map(m => `${m.month}: ${m.count}`).join('\n')}
+      // Monthly Trends - Job Postings
+      csvSections.push('MONTHLY JOB POSTING TRENDS');
+      csvSections.push('Month,Count');
+      data.trends.jobPostings.forEach(m => {
+        csvSections.push(`"${m.month}",${m.count}`);
+      });
+      csvSections.push('');
 
-User Registrations:
-${data.trends.userRegistrations.map(m => `${m.month}: ${m.count}`).join('\n')}
+      // Monthly Trends - User Registrations
+      csvSections.push('MONTHLY USER REGISTRATION TRENDS');
+      csvSections.push('Month,Count');
+      data.trends.userRegistrations.forEach(m => {
+        csvSections.push(`"${m.month}",${m.count}`);
+      });
+      csvSections.push('');
 
-============================================
-End of Report
-      `.trim();
+      const csvContent = csvSections.join('\n');
 
-      // Create and download file
-      const blob = new Blob([report], { type: 'text/plain' });
+      // Create and download CSV file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `analytics-report-${
         new Date().toISOString().split('T')[0]
-      }.txt`;
+      }.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

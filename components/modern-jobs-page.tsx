@@ -151,9 +151,6 @@ export function ModernJobsPage() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
 
-  const filterRef = useRef<HTMLDivElement>(null);
-  const [isFilterSticky, setIsFilterSticky] = useState(false);
-
   // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
@@ -255,25 +252,6 @@ export function ModernJobsPage() {
       loadMoreJobs();
     }
   }, [inView, hasMore, loadingMore]);
-
-  // Handle filter sticky behavior and infinite scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (filterRef.current) {
-        const rect = filterRef.current.getBoundingClientRect();
-        setIsFilterSticky(rect.top <= 0);
-      }
-
-      // Check if load more element is in view
-      if (loadMoreRef.current) {
-        const rect = loadMoreRef.current.getBoundingClientRect();
-        setInView(rect.top <= window.innerHeight && rect.bottom >= 0);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const loadMoreJobs = async () => {
     if (loadingMore) return;
@@ -588,243 +566,230 @@ export function ModernJobsPage() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar - Filters */}
-          <div className="lg:w-80 flex-shrink-0">
-            <div
-              ref={filterRef}
-              className={`bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white/50 ${
-                isFilterSticky ? 'sticky top-4' : ''
-              }`}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                  <Filter className="h-5 w-5 text-blue-600" />
-                  Filters
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-gray-500 hover:text-gray-700">
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white/50 sticky top-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Filter className="h-5 w-5 text-blue-600" />
+                Filters
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="text-gray-500 hover:text-gray-700">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
 
-              <div className="space-y-6">
-                {/* Search */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Search
-                  </Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Job title, company, keyword..."
-                      value={filters.search}
-                      onChange={e =>
-                        setFilters(prev => ({
-                          ...prev,
-                          search: e.target.value
-                        }))
-                      }
-                      className="pl-10 bg-white/60 backdrop-blur-sm border-white/50"
-                    />
-                  </div>
-                </div>
-
-                {/* Job Category */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Job Category
-                  </Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {categories.map(category => (
-                      <div
-                        key={category._id}
-                        className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`category-${category._id}`}
-                          checked={filters.category.includes(category.name)}
-                          onCheckedChange={checked => {
-                            if (checked) {
-                              setFilters(prev => ({
-                                ...prev,
-                                category: [...prev.category, category.name]
-                              }));
-                            } else {
-                              setFilters(prev => ({
-                                ...prev,
-                                category: prev.category.filter(
-                                  c => c !== category.name
-                                )
-                              }));
-                            }
-                          }}
-                        />
-                        <Label
-                          htmlFor={`category-${category._id}`}
-                          className="text-sm text-gray-600 cursor-pointer">
-                          {category.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Salary Range */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Salary Range: ₱{filters.salaryRange[0].toLocaleString()} - ₱
-                    {filters.salaryRange[1].toLocaleString()}
-                  </Label>
-                  <Slider
-                    value={filters.salaryRange}
-                    onValueChange={value =>
+            <div className="space-y-6">
+              {/* Search */}
+              <div className="space-y-1">
+                <div className="relative">
+                  <Input
+                    placeholder="Job title, company, keyword..."
+                    value={filters.search}
+                    onChange={e =>
                       setFilters(prev => ({
                         ...prev,
-                        salaryRange: value as [number, number]
+                        search: e.target.value
                       }))
                     }
-                    max={200000}
-                    min={0}
-                    step={5000}
-                    className="w-full"
+                    className="pl-1 bg-white/60 backdrop-blur-sm border-white/50"
                   />
                 </div>
+              </div>
 
-                {/* Experience Level */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Experience Level
-                  </Label>
-                  <div className="space-y-2">
-                    {['Entry', 'Mid', 'Senior', 'Executive'].map(level => (
-                      <div key={level} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`exp-${level}`}
-                          checked={filters.experienceLevel.includes(level)}
-                          onCheckedChange={checked => {
-                            if (checked) {
-                              setFilters(prev => ({
-                                ...prev,
-                                experienceLevel: [
-                                  ...prev.experienceLevel,
-                                  level
-                                ]
-                              }));
-                            } else {
-                              setFilters(prev => ({
-                                ...prev,
-                                experienceLevel: prev.experienceLevel.filter(
-                                  l => l !== level
-                                )
-                              }));
-                            }
-                          }}
-                        />
-                        <Label
-                          htmlFor={`exp-${level}`}
-                          className="text-sm text-gray-600 cursor-pointer">
-                          {level}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+              {/* Job Category */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Job Category
+                </Label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {categories.map(category => (
+                    <div
+                      key={category._id}
+                      className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`category-${category._id}`}
+                        checked={filters.category.includes(category.name)}
+                        onCheckedChange={checked => {
+                          if (checked) {
+                            setFilters(prev => ({
+                              ...prev,
+                              category: [...prev.category, category.name]
+                            }));
+                          } else {
+                            setFilters(prev => ({
+                              ...prev,
+                              category: prev.category.filter(
+                                c => c !== category.name
+                              )
+                            }));
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`category-${category._id}`}
+                        className="text-sm text-gray-600 cursor-pointer">
+                        {category.name}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Date Posted */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Date Posted
-                  </Label>
-                  <Select
-                    value={filters.datePosted || 'any'}
-                    onValueChange={value =>
-                      setFilters(prev => ({
-                        ...prev,
-                        datePosted: value === 'any' ? '' : value
-                      }))
-                    }>
-                    <SelectTrigger className="bg-white/60 backdrop-blur-sm border-white/50">
-                      <SelectValue placeholder="Any time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any time</SelectItem>
-                      <SelectItem value="today">Today</SelectItem>
-                      <SelectItem value="week">This week</SelectItem>
-                      <SelectItem value="month">This month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Salary Range */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Salary Range: ₱{filters.salaryRange[0].toLocaleString()} - ₱
+                  {filters.salaryRange[1].toLocaleString()}
+                </Label>
+                <Slider
+                  value={filters.salaryRange}
+                  onValueChange={value =>
+                    setFilters(prev => ({
+                      ...prev,
+                      salaryRange: value as [number, number]
+                    }))
+                  }
+                  max={200000}
+                  min={0}
+                  step={5000}
+                  className="w-full"
+                />
+              </div>
 
-                {/* Employment Type */}
+              {/* Experience Level */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Experience Level
+                </Label>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Employment Type
-                  </Label>
-                  <div className="space-y-2">
-                    {[
-                      'Full-time',
-                      'Part-time',
-                      'Contract',
-                      'Temporary',
-                      'Internship'
-                    ].map(type => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`type-${type}`}
-                          checked={filters.employmentType.includes(type)}
-                          onCheckedChange={checked => {
-                            if (checked) {
-                              setFilters(prev => ({
-                                ...prev,
-                                employmentType: [...prev.employmentType, type]
-                              }));
-                            } else {
-                              setFilters(prev => ({
-                                ...prev,
-                                employmentType: prev.employmentType.filter(
-                                  t => t !== type
-                                )
-                              }));
-                            }
-                          }}
-                        />
-                        <Label
-                          htmlFor={`type-${type}`}
-                          className="text-sm text-gray-600 cursor-pointer">
-                          {type}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                  {['Entry', 'Mid', 'Senior', 'Executive'].map(level => (
+                    <div key={level} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`exp-${level}`}
+                        checked={filters.experienceLevel.includes(level)}
+                        onCheckedChange={checked => {
+                          if (checked) {
+                            setFilters(prev => ({
+                              ...prev,
+                              experienceLevel: [...prev.experienceLevel, level]
+                            }));
+                          } else {
+                            setFilters(prev => ({
+                              ...prev,
+                              experienceLevel: prev.experienceLevel.filter(
+                                l => l !== level
+                              )
+                            }));
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`exp-${level}`}
+                        className="text-sm text-gray-600 cursor-pointer">
+                        {level}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Remote Work */}
+              {/* Date Posted */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Date Posted
+                </Label>
+                <Select
+                  value={filters.datePosted || 'any'}
+                  onValueChange={value =>
+                    setFilters(prev => ({
+                      ...prev,
+                      datePosted: value === 'any' ? '' : value
+                    }))
+                  }>
+                  <SelectTrigger className="bg-white/60 backdrop-blur-sm border-white/50">
+                    <SelectValue placeholder="Any time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This week</SelectItem>
+                    <SelectItem value="month">This month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Employment Type */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Employment Type
+                </Label>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
-                    Remote Work
-                  </Label>
-                  <Select
-                    value={
-                      filters.isRemote === null
-                        ? 'any'
-                        : filters.isRemote.toString()
-                    }
-                    onValueChange={value =>
-                      setFilters(prev => ({
-                        ...prev,
-                        isRemote: value === 'any' ? null : value === 'true'
-                      }))
-                    }>
-                    <SelectTrigger className="bg-white/60 backdrop-blur-sm border-white/50">
-                      <SelectValue placeholder="Any" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">Any</SelectItem>
-                      <SelectItem value="true">Remote only</SelectItem>
-                      <SelectItem value="false">On-site only</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {[
+                    'Full-time',
+                    'Part-time',
+                    'Contract',
+                    'Temporary',
+                    'Internship'
+                  ].map(type => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`type-${type}`}
+                        checked={filters.employmentType.includes(type)}
+                        onCheckedChange={checked => {
+                          if (checked) {
+                            setFilters(prev => ({
+                              ...prev,
+                              employmentType: [...prev.employmentType, type]
+                            }));
+                          } else {
+                            setFilters(prev => ({
+                              ...prev,
+                              employmentType: prev.employmentType.filter(
+                                t => t !== type
+                              )
+                            }));
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`type-${type}`}
+                        className="text-sm text-gray-600 cursor-pointer">
+                        {type}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Remote Work */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">
+                  Remote Work
+                </Label>
+                <Select
+                  value={
+                    filters.isRemote === null
+                      ? 'any'
+                      : filters.isRemote.toString()
+                  }
+                  onValueChange={value =>
+                    setFilters(prev => ({
+                      ...prev,
+                      isRemote: value === 'any' ? null : value === 'true'
+                    }))
+                  }>
+                  <SelectTrigger className="bg-white/60 backdrop-blur-sm border-white/50">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    <SelectItem value="true">Remote only</SelectItem>
+                    <SelectItem value="false">On-site only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -1236,7 +1201,7 @@ export function ModernJobsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
+                  {/* <div className="flex flex-col gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1268,7 +1233,7 @@ export function ModernJobsPage() {
                       className="bg-white/20 border-white/30 text-white hover:bg-white/30">
                       <Share2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -1518,7 +1483,7 @@ export function ModernJobsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button
+                    {/* <Button
                       variant="outline"
                       onClick={() => handleSaveJob(selectedJob._id)}
                       className="bg-white/60 backdrop-blur-sm border-white/50">
@@ -1533,7 +1498,7 @@ export function ModernJobsPage() {
                           Save Job
                         </>
                       )}
-                    </Button>
+                    </Button> */}
                     <Button
                       size="lg"
                       onClick={() => handleApplyNow(selectedJob)}

@@ -982,7 +982,7 @@ export default function JobApplyPage() {
                     <Card className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg rounded-3xl overflow-hidden">
                       <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 p-6">
                         <div className="flex items-center gap-3">
-                          {user.profilePicture && (
+                          {/* {user.profilePicture && (
                             <img
                               src={`/${user.profilePicture.replace(
                                 /\\/g,
@@ -991,7 +991,7 @@ export default function JobApplyPage() {
                               alt="Profile"
                               className="h-12 w-12 rounded-full border object-cover"
                             />
-                          )}
+                          )} */}
                           <div>
                             <CardTitle className="text-lg text-gray-900">
                               Applicant Information

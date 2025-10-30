@@ -91,6 +91,7 @@ export const authAPI = {
       clearTimeout(logoutTimer);
       logoutTimer = null;
     }
+    return Promise.resolve({ success: true, message: 'Logout successful' });
   },
 
   getCurrentUser: () => {
@@ -377,7 +378,11 @@ export const companyAPI = {
     return response.data;
   },
 
-  uploadCompanyDocument: async (id: string, file: File, documentType: string) => {
+  uploadCompanyDocument: async (
+    id: string,
+    file: File,
+    documentType: string
+  ) => {
     const formData = new FormData();
     formData.append('document', file);
     formData.append('documentType', documentType);
@@ -389,7 +394,10 @@ export const companyAPI = {
     return response.data;
   },
 
-  verifyCompany: async (id: string, verificationData: { isVerified: boolean; verificationNotes?: string }) => {
+  verifyCompany: async (
+    id: string,
+    verificationData: { isVerified: boolean; verificationNotes?: string }
+  ) => {
     const response = await api.put(`/companies/${id}/verify`, verificationData);
     return response.data;
   },
@@ -400,7 +408,9 @@ export const companyAPI = {
   },
 
   updateScoringConfig: async (id: string, scoringConfig: any) => {
-    const response = await api.put(`/companies/${id}/scoring-config`, { scoringConfig });
+    const response = await api.put(`/companies/${id}/scoring-config`, {
+      scoringConfig
+    });
     return response.data;
   },
 
@@ -410,11 +420,15 @@ export const companyAPI = {
   },
 
   uploadVerificationDocument: async (formData: FormData) => {
-    const response = await api.post('/companies/upload-verification-document', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    const response = await api.post(
+      '/companies/upload-verification-document',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       }
-    });
+    );
     return response.data;
   },
 
@@ -704,6 +718,77 @@ export const applicationAPI = {
       },
       responseType: format === 'csv' ? 'blob' : 'json'
     });
+    return response.data;
+  }
+};
+
+// Email Campaign API
+export const emailCampaignAPI = {
+  // Get all campaigns
+  getCampaigns: async (params?: any) => {
+    const response = await api.get('/email-campaigns', { params });
+    return response.data;
+  },
+
+  // Get single campaign
+  getCampaign: async (id: string) => {
+    const response = await api.get(`/email-campaigns/${id}`);
+    return response.data;
+  },
+
+  // Create campaign
+  createCampaign: async (data: any) => {
+    const response = await api.post('/email-campaigns', data);
+    return response.data;
+  },
+
+  // Update campaign
+  updateCampaign: async (id: string, data: any) => {
+    const response = await api.put(`/email-campaigns/${id}`, data);
+    return response.data;
+  },
+
+  // Delete campaign
+  deleteCampaign: async (id: string) => {
+    const response = await api.delete(`/email-campaigns/${id}`);
+    return response.data;
+  },
+
+  // Get recipient count
+  getRecipientCount: async (recipients: any) => {
+    const response = await api.post('/email-campaigns/recipients/count', {
+      recipients
+    });
+    return response.data;
+  },
+
+  // Send campaign
+  sendCampaign: async (id: string) => {
+    const response = await api.post(`/email-campaigns/${id}/send`);
+    return response.data;
+  },
+
+  // Schedule campaign
+  scheduleCampaign: async (id: string, scheduledDate: string) => {
+    const response = await api.post(`/email-campaigns/${id}/schedule`, {
+      scheduledDate
+    });
+    return response.data;
+  },
+
+  // Get statistics
+  getStats: async () => {
+    const response = await api.get('/email-campaigns/stats/overview');
+    return response.data;
+  },
+
+  // Send test email
+  sendTestEmail: async (data: {
+    email: string;
+    subject: string;
+    content: string;
+  }) => {
+    const response = await api.post('/email-campaigns/test', data);
     return response.data;
   }
 };

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Briefcase,
   Menu,
@@ -34,14 +34,13 @@ import {
 import { cn } from '@/lib/utils';
 import { authAPI } from '@/lib/api-service';
 import { NotificationCenter } from '@/components/notification-center';
+import { toast } from 'sonner';
 
 export function MainHeader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<any>(null);
-  const [notifications, setNotifications] = useState(3);
-  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
@@ -80,8 +79,10 @@ export function MainHeader() {
     }
   };
 
+  let currentRole = user?.role;
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/30 shadow-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/30 shadow-lg md:sticky">
       {/* Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-10 w-32 h-32 bg-blue-300/10 rounded-full blur-2xl animate-float"></div>
@@ -113,6 +114,7 @@ export function MainHeader() {
             </div>
           </Link>
 
+          {/* Desktop navigation: */}
           <nav className="hidden md:flex md:space-x-2">
             {navigation.map(item => (
               <Link
@@ -137,7 +139,7 @@ export function MainHeader() {
         </div>
 
         {/* Enhanced Search Bar */}
-        <div className="hidden lg:flex flex-1 max-w-lg mx-8">
+        {/* <div className="hidden lg:flex flex-1 max-w-lg mx-8">
           <form onSubmit={handleSearch} className="relative w-full group">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
@@ -158,7 +160,7 @@ export function MainHeader() {
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
           </form>
-        </div>
+        </div> */}
 
         {/* Right Side Actions */}
         <div className="hidden md:flex md:items-center md:gap-4">
@@ -239,7 +241,11 @@ export function MainHeader() {
                   <DropdownMenuSeparator className="bg-gradient-to-r from-gray-200 to-gray-300" />
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/dashboard/applicant"
+                      href={
+                        currentRole === 'admin'
+                          ? '/dashboard/admin'
+                          : '/dashboard/applicant'
+                      }
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
                       <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors duration-200">
                         <User className="h-4 w-4 text-blue-600" />
@@ -252,9 +258,9 @@ export function MainHeader() {
                   <DropdownMenuItem asChild>
                     <Link
                       href={
-                        user.role === 'applicant'
-                          ? '/dashboard/applicant/profile'
-                          : '/dashboard/admin'
+                        currentRole === 'admin'
+                          ? '/dashboard/admin/profile'
+                          : '/dashboard/applicant/profile'
                       }
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 group">
                       <div className="p-1.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors duration-200">
@@ -317,8 +323,15 @@ export function MainHeader() {
                   <DropdownMenuSeparator className="bg-gradient-to-r from-gray-200 to-gray-300" />
                   <DropdownMenuItem
                     onClick={() => {
-                      authAPI.logout();
-                      window.location.href = '/login';
+                      authAPI.logout().then((response: any) => {
+                        console.log(response);
+                        if (response.success) {
+                          window.location.href = '/login';
+                        } else {
+                          toast.error(response.message);
+                          window.location.href = '/login';
+                        }
+                      });
                     }}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-200 group text-red-600 focus:text-red-600">
                     <div className="p-1.5 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors duration-200">
@@ -371,204 +384,168 @@ export function MainHeader() {
       </div>
 
       {/* Enhanced Mobile menu */}
-      <div
-        className={cn(
-          'fixed inset-0 z-50 md:hidden transition-opacity duration-300',
-          mobileMenuOpen
-            ? 'opacity-100 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
-        )}
-        aria-hidden={!mobileMenuOpen}>
-        <div
-          className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
-        />
+      {mobileMenuOpen && (
         <div
           className={cn(
-            'fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm transform transition-transform duration-300',
-            'bg-white px-6 py-6 shadow-2xl overflow-y-auto',
-            mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          )}>
-          {/* Background Blobs for Mobile Menu */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-10 right-10 w-32 h-32 bg-blue-300/10 rounded-full blur-2xl animate-float"></div>
-            <div
-              className="absolute top-32 left-10 w-24 h-24 bg-purple-300/8 rounded-full blur-2xl animate-float"
-              style={{ animationDelay: '2s' }}></div>
-            <div
-              className="absolute bottom-32 right-20 w-28 h-28 bg-pink-300/6 rounded-full blur-2xl animate-float"
-              style={{ animationDelay: '4s' }}></div>
-          </div>
-
-          <div className="relative flex items-center justify-between mb-8">
-            <Link
-              href="/"
-              className="flex items-center gap-3 group"
-              onClick={() => setMobileMenuOpen(false)}>
-              <div className="relative">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                  <Briefcase className="h-5 w-5 text-white" />
+            'inset-0 z-[120] md:hidden transition-opacity duration-300 opacity-100 pointer-events-auto'
+          )}
+          aria-hidden={!mobileMenuOpen}>
+          {/* Opaque/blur BG overlay for true coverage */}
+          <div
+            className="absolute inset-0 bg-white/90 backdrop-blur-xl"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          {/* Side menu sheet container, scrolling for overflow */}
+          <div
+            className={cn(
+              'inset-y-0 right-0 z-[121] w-full sm:max-w-sm transform transition-transform duration-300',
+              'bg-white px-6 py-6 shadow-2xl overflow-y-auto max-h-screen',
+              'translate-x-0'
+            )}>
+            <div className="relative flex items-center justify-between mb-8">
+              {/* logo/title */}
+              <Link
+                href="/"
+                className="flex items-center gap-3 group"
+                onClick={() => setMobileMenuOpen(false)}>
+                <div className="relative">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                    <Briefcase className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl blur opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-              </div>
-              <div>
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  InteliHire
-                </span>
-                <p className="text-xs text-gray-500 -mt-1 font-medium">
-                  AI Job Platform
-                </p>
-              </div>
-            </Link>
-            <button
-              type="button"
-              className="relative -m-2.5 rounded-xl p-2.5 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 group"
-              onClick={() => setMobileMenuOpen(false)}>
-              <span className="sr-only">Close menu</span>
-              <X
-                className="h-6 w-6 group-hover:scale-110 transition-transform duration-200"
-                aria-hidden="true"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-pink-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-          </div>
-
-          {/* Enhanced Mobile Search */}
-          <form onSubmit={handleSearch} className="relative mb-8 group">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
-              <Input
-                type="search"
-                placeholder="Search jobs..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 h-12 bg-gray-50/80 border-gray-200 focus:bg-white focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-300 rounded-xl backdrop-blur-sm"
-              />
+                <div>
+                  <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    InteliHire
+                  </span>
+                  <p className="text-xs text-gray-500 -mt-1 font-medium">
+                    AI Job Platform
+                  </p>
+                </div>
+              </Link>
+              {/* X button */}
+              <button
+                type="button"
+                className="relative -m-2.5 rounded-xl p-2.5 text-gray-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 group"
+                onClick={() => setMobileMenuOpen(false)}>
+                <span className="sr-only">Close menu</span>
+                <X
+                  className="h-6 w-6 group-hover:scale-110 transition-transform duration-200"
+                  aria-hidden="true"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-pink-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-          </form>
 
-          <div className="relative flow-root">
-            <div className="-my-6 divide-y divide-gray-200/50">
-              <div className="space-y-3 py-6">
-                {navigation.map(item => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'relative -mx-3 block rounded-xl px-4 py-3 text-base font-medium transition-all duration-300 group overflow-hidden',
-                      isActive(item.href)
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-gray-900 hover:shadow-md'
-                    )}
-                    onClick={() => setMobileMenuOpen(false)}>
-                    <span className="relative z-10">{item.name}</span>
-                    {isActive(item.href) && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 animate-pulse" />
-                    )}
-                    {!isActive(item.href) && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    )}
-                  </Link>
-                ))}
-              </div>
-              <div className="py-6">
-                {/* Debug: Show user state */}
-                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-xs">
-                  <p className="font-semibold">Debug Info:</p>
-                  <p>User logged in: {user ? 'YES' : 'NO'}</p>
-                  {user && <p>Email: {user.email}</p>}
-                </div>
-                {user ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
-                      <div className="relative">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
-                          {user.firstName?.charAt(0) ||
-                            user.email?.charAt(0) ||
-                            'U'}
-                        </div>
-                        <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full blur opacity-20"></div>
+            {/* NAVIGATION AT THE TOP! */}
+            <nav className="space-y-1 pb-6">
+              {navigation.map(item => (
+                <button
+                  key={item.name}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    router.push(item.href);
+                  }}
+                  className="flex items-center gap-2 hover:text-blue-700 transition-colors duration-200">
+                  <span className="text-blue-700">{item.name}</span>
+                </button>
+              ))}
+            </nav>
+
+            {/* User/profile/actions section here, after nav */}
+            <div className="py-2">
+              {user ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
+                        {user.firstName?.charAt(0) ||
+                          user.email?.charAt(0) ||
+                          'U'}
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {user.firstName
-                            ? `${user.firstName} ${user.lastName}`
-                            : 'User'}
-                        </p>
-                        <p className="text-xs text-gray-500 font-medium">
-                          {user.email}
-                        </p>
-                        <div className="inline-flex items-center gap-1 mt-1">
-                          <Sparkles className="h-3 w-3 text-blue-500" />
-                          <span className="text-xs text-blue-600 font-medium">
-                            {user.role}
-                          </span>
-                        </div>
-                      </div>
+                      <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full blur opacity-20"></div>
                     </div>
-                    <Link
-                      href="/dashboard/applicant"
-                      className="flex items-center gap-3 -mx-3 rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group"
-                      onClick={() => setMobileMenuOpen(false)}>
-                      <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors duration-200">
-                        <User className="h-4 w-4 text-blue-600" />
-                      </div>
-                      <span className="group-hover:text-blue-700 transition-colors duration-200">
-                        Dashboard
-                      </span>
-                    </Link>
-                    <Link
-                      href="/dashboard/applicant/profile"
-                      className="flex items-center gap-3 -mx-3 rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group"
-                      onClick={() => setMobileMenuOpen(false)}>
-                      <div className="p-1.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors duration-200">
-                        <FileText className="h-4 w-4 text-green-600" />
-                      </div>
-                      <span className="group-hover:text-green-700 transition-colors duration-200">
-                        Profile
-                      </span>
-                    </Link>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {user.firstName
+                          ? `${user.firstName} ${user.lastName}`
+                          : 'User'}
+                      </p>
+                      <p className="text-xs text-gray-500 font-medium">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={
+                      currentRole === 'admin'
+                        ? '/dashboard/admin'
+                        : '/dashboard/applicant'
+                    }
+                    className="flex items-center gap-3 -mx-3 rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group"
+                    onClick={() => setMobileMenuOpen(false)}>
+                    <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors duration-200">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="group-hover:text-blue-700 transition-colors duration-200">
+                      Dashboard
+                    </span>
+                  </Link>
+                  {/* <Link
+                    href={
+                      currentRole === 'admin'
+                        ? '/dashboard/admin/profile'
+                        : '/dashboard/applicant/profile'
+                    }
+                    className="flex items-center gap-3 -mx-3 rounded-xl px-4 py-3 text-base font-medium text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group"
+                    onClick={() => setMobileMenuOpen(false)}>
+                    <div className="p-1.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors duration-200">
+                      <FileText className="h-4 w-4 text-green-600" />
+                    </div>
+                    <span className="group-hover:text-green-700 transition-colors duration-200">
+                      Profile
+                    </span>
+                  </Link> */}
+                  <button
+                    onClick={() => {
+                      authAPI.logout();
+                      setMobileMenuOpen(false);
+                      window.location.href = '/login';
+                    }}
+                    className="flex items-center gap-3 -mx-3 w-full text-left rounded-xl px-4 py-3 text-base font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 group">
+                    <div className="p-1.5 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors duration-200">
+                      <LogOut className="h-4 w-4 text-red-600" />
+                    </div>
+                    <span className="group-hover:text-red-700 transition-colors duration-200">
+                      Logout
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <>
+                    <button
+                      className="flex items-center gap-2 hover:text-blue-700 transition-colors duration-200"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        router.push('/login');
+                      }}>
+                      <span className="text-blue-700">Sign In</span>
+                    </button>
                     <button
                       onClick={() => {
-                        authAPI.logout();
                         setMobileMenuOpen(false);
-                        window.location.href = '/login';
-                      }}
-                      className="flex items-center gap-3 -mx-3 w-full text-left rounded-xl px-4 py-3 text-base font-medium text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-300 group">
-                      <div className="p-1.5 rounded-lg bg-red-100 group-hover:bg-red-200 transition-colors duration-200">
-                        <LogOut className="h-4 w-4 text-red-600" />
-                      </div>
-                      <span className="group-hover:text-red-700 transition-colors duration-200">
-                        Logout
-                      </span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Link
-                      href="/login"
-                      className="flex items-center justify-center gap-3 -mx-3 rounded-xl px-4 py-3.5 text-base font-semibold text-gray-700 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 group shadow-sm hover:shadow-md"
-                      onClick={() => setMobileMenuOpen(false)}>
-                      <User className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
-                      <span className="group-hover:text-blue-700 transition-colors duration-200">
-                        Sign In
-                      </span>
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="flex items-center justify-center gap-3 -mx-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3.5 text-base font-semibold text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group"
-                      onClick={() => setMobileMenuOpen(false)}>
-                      <span>Get Started</span>
-                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
-                    </Link>
-                  </div>
-                )}
-              </div>
+                        router.push('/register');
+                      }}>
+                      <span className="text-blue-700">Register</span>
+                    </button>{' '}
+                  </>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Notification Center */}
       {/* <NotificationCenter

@@ -1069,7 +1069,12 @@ export default function BannerManagementPage() {
         <div className="container flex h-20 items-center justify-between px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-              <Image className="h-6 w-6 text-white" />
+              <Image
+                src="/images/logo.png"
+                alt="Banner Management"
+                width={24}
+                height={24}
+              />
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
@@ -1097,7 +1102,12 @@ export default function BannerManagementPage() {
                 <CardTitle className="text-sm font-medium text-gray-700">
                   Total Banners
                 </CardTitle>
-                <Image className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                <Image
+                  src="/images/logo.png"
+                  alt="Banner Management"
+                  width={24}
+                  height={24}
+                />
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-900">
@@ -1197,7 +1207,13 @@ export default function BannerManagementPage() {
               <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Image className="h-5 w-5 text-blue-600" />
+                    <Image
+                      src="/images/logo.png"
+                      alt="Banner Management"
+                      width={24}
+                      height={24}
+                      className="h-5 w-5 text-blue-600"
+                    />
                     Manage Banners
                   </CardTitle>
                   <CardDescription>
@@ -1324,7 +1340,7 @@ export default function BannerManagementPage() {
                         <option value="sidebar">Sidebar</option>
                       </select>
 
-                      <select
+                      {/* <select
                         value={categoryFilter}
                         onChange={e => setCategoryFilter(e.target.value)}
                         className="w-[180px] px-3 py-2 rounded-lg border border-white/50 bg-white/60 backdrop-blur-sm text-sm hover:bg-white/80 transition-all duration-300">
@@ -1334,9 +1350,9 @@ export default function BannerManagementPage() {
                             {category.name}
                           </option>
                         ))}
-                      </select>
+                      </select> */}
 
-                      <select
+                      {/* <select
                         value={tagFilter}
                         onChange={e => setTagFilter(e.target.value)}
                         className="w-[150px] px-3 py-2 rounded-lg border border-white/50 bg-white/60 backdrop-blur-sm text-sm hover:bg-white/80 transition-all duration-300">
@@ -1346,7 +1362,7 @@ export default function BannerManagementPage() {
                             {tag.name}
                           </option>
                         ))}
-                      </select>
+                      </select> */}
 
                       {/* Clear Filters */}
                       {(statusFilter ||
@@ -1485,7 +1501,7 @@ export default function BannerManagementPage() {
                                 {/* Banner Image */}
                                 <div className="relative h-48 overflow-hidden">
                                   <img
-                                    src={banner.imageUrl}
+                                    src={`${process.env.NEXT_PUBLIC_API_IMAGE_URL}${banner.imageUrl}`}
                                     alt={banner.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   />
@@ -2011,26 +2027,33 @@ export default function BannerManagementPage() {
                       <div className="space-y-3">
                         {/* Drag and Drop Zone */}
                         <div
-                          className={
-                            `relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-                              uploadingImage
-                                ? 'border-blue-400 bg-blue-50'
-                                : errors.imageUrl
-                                ? 'border-red-400 bg-red-50'
-                                : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
-                            }`
-                          }
-                          onDragOver={(e) => {
+                          className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+                            uploadingImage
+                              ? 'border-blue-400 bg-blue-50'
+                              : errors.imageUrl
+                              ? 'border-red-400 bg-red-50'
+                              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                          }`}
+                          onDragOver={e => {
                             e.preventDefault();
-                            e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
+                            e.currentTarget.classList.add(
+                              'border-blue-400',
+                              'bg-blue-50'
+                            );
                           }}
-                          onDragLeave={(e) => {
+                          onDragLeave={e => {
                             e.preventDefault();
-                            e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                            e.currentTarget.classList.remove(
+                              'border-blue-400',
+                              'bg-blue-50'
+                            );
                           }}
-                          onDrop={(e) => {
+                          onDrop={e => {
                             e.preventDefault();
-                            e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                            e.currentTarget.classList.remove(
+                              'border-blue-400',
+                              'bg-blue-50'
+                            );
                             const files = e.dataTransfer.files;
                             if (files && files[0]) {
                               const fakeEvent = {
@@ -2048,7 +2071,10 @@ export default function BannerManagementPage() {
                                 <span className="text-blue-600 hover:text-blue-700 font-medium">
                                   Click to upload
                                 </span>
-                                <span className="text-gray-600"> or drag and drop</span>
+                                <span className="text-gray-600">
+                                  {' '}
+                                  or drag and drop
+                                </span>
                               </Label>
                               <p className="text-xs text-gray-500">
                                 PNG, JPG, GIF or WebP (max. 5MB)
@@ -2067,12 +2093,14 @@ export default function BannerManagementPage() {
                             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
                               <div className="flex items-center gap-2 text-blue-600">
                                 <RefreshCw className="h-5 w-5 animate-spin" />
-                                <span className="font-medium">Uploading...</span>
+                                <span className="font-medium">
+                                  Uploading...
+                                </span>
                               </div>
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Preview */}
                         {imageFile && watchedValues.imageUrl && (
                           <div className="relative rounded-lg overflow-hidden border border-gray-200">
@@ -2088,7 +2116,7 @@ export default function BannerManagementPage() {
                             </div>
                           </div>
                         )}
-                        
+
                         {errors.imageUrl && (
                           <p className="text-sm text-red-500 mt-1">
                             {errors.imageUrl.message}
@@ -2213,7 +2241,7 @@ export default function BannerManagementPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="category">Category</Label>
                       <Controller
                         name="category"
@@ -2237,9 +2265,9 @@ export default function BannerManagementPage() {
                           </Select>
                         )}
                       />
-                    </div>
+                    </div> */}
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="tags">Tags</Label>
                       <Controller
                         name="tags"
@@ -2259,7 +2287,7 @@ export default function BannerManagementPage() {
                           />
                         )}
                       />
-                    </div>
+                    </div> */}
 
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2">
@@ -3034,12 +3062,12 @@ export default function BannerManagementPage() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Banner Image</Label>
-                
+
                 {/* Current Image Preview */}
                 {editFormData.imageUrl && (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-3">
                     <img
-                      src={editFormData.imageUrl}
+                      src={`${process.env.NEXT_PUBLIC_API_IMAGE_URL}${editFormData.imageUrl}`}
                       alt="Current banner"
                       className="w-full h-full object-cover"
                     />
@@ -3050,21 +3078,30 @@ export default function BannerManagementPage() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Drag and Drop Upload */}
                 <div
                   className="relative border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-6 transition-colors hover:bg-blue-50/50"
-                  onDragOver={(e) => {
+                  onDragOver={e => {
                     e.preventDefault();
-                    e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
+                    e.currentTarget.classList.add(
+                      'border-blue-400',
+                      'bg-blue-50'
+                    );
                   }}
-                  onDragLeave={(e) => {
+                  onDragLeave={e => {
                     e.preventDefault();
-                    e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                    e.currentTarget.classList.remove(
+                      'border-blue-400',
+                      'bg-blue-50'
+                    );
                   }}
-                  onDrop={(e) => {
+                  onDrop={e => {
                     e.preventDefault();
-                    e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                    e.currentTarget.classList.remove(
+                      'border-blue-400',
+                      'bg-blue-50'
+                    );
                     const files = e.dataTransfer.files;
                     if (files && files[0]) {
                       handleEditImageUpload(files[0]);
@@ -3087,7 +3124,9 @@ export default function BannerManagementPage() {
                         htmlFor="edit-image-upload"
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md cursor-pointer transition-colors">
                         <Upload className="h-4 w-4" />
-                        {editFormData.imageUrl ? 'Change Image' : 'Upload Image'}
+                        {editFormData.imageUrl
+                          ? 'Change Image'
+                          : 'Upload Image'}
                       </Label>
                       <p className="text-xs text-gray-500">
                         or drag and drop • PNG, JPG, GIF, WebP (max. 5MB)
