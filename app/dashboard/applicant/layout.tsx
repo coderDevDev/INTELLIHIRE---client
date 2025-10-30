@@ -7,9 +7,9 @@ export default function ApplicantDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative overflow-hidden">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 relative">
       {/* Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-float"></div>
         <div
           className="absolute top-40 right-20 w-72 h-72 bg-purple-300/15 rounded-full blur-3xl animate-float"
@@ -26,7 +26,7 @@ export default function ApplicantDashboardLayout({
       </div>
 
       <SharedSidebar role="applicant" />
-      <div className="flex-1 relative z-10">{children}</div>
+      <div className="flex-1 relative z-10 overflow-y-auto">{children}</div>
     </div>
   );
 }
