@@ -1068,14 +1068,7 @@ export default function BannerManagementPage() {
       <header className="bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-lg relative z-10">
         <div className="container flex h-20 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
-              <Image
-                src="/images/logo.png"
-                alt="Banner Management"
-                width={24}
-                height={24}
-              />
-            </div>
+           
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Banner Management
@@ -1291,7 +1284,7 @@ export default function BannerManagementPage() {
                           <FileText className="mr-2 h-4 w-4" />
                           Templates
                         </Button> */}
-                        <Button
+                        {/* <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setShowCategoryModal(true)}
@@ -1306,7 +1299,7 @@ export default function BannerManagementPage() {
                           className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80 hover:shadow-md transition-all duration-300">
                           <Target className="mr-2 h-4 w-4" />
                           Tags
-                        </Button>
+                        </Button> */}
                       </div>
                     </div>
 
@@ -1501,7 +1494,7 @@ export default function BannerManagementPage() {
                                 {/* Banner Image */}
                                 <div className="relative h-48 overflow-hidden">
                                   <img
-                                    src={`${process.env.NEXT_PUBLIC_API_IMAGE_URL}${banner.imageUrl}`}
+                                    src={`${banner.imageUrl}`}
                                     alt={banner.title}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   />
@@ -3067,7 +3060,7 @@ export default function BannerManagementPage() {
                 {editFormData.imageUrl && (
                   <div className="relative w-full h-48 rounded-lg overflow-hidden border border-gray-200 mb-3">
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_IMAGE_URL}${editFormData.imageUrl}`}
+                      src={`${editFormData.imageUrl}`}
                       alt="Current banner"
                       className="w-full h-full object-cover"
                     />

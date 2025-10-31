@@ -203,7 +203,7 @@ export function HeroSection({ categories }: HeroSectionProps) {
       style={
         topBanners.length > 0
           ? {
-              backgroundImage: `url(${process.env.NEXT_PUBLIC_API_IMAGE_URL}${topBanners[currentBannerIndex]?.imageUrl})`,
+              backgroundImage: `url(${topBanners[currentBannerIndex]?.imageUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',

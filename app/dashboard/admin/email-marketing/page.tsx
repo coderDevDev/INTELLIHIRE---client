@@ -52,6 +52,8 @@ export default function EmailMarketingPage() {
   const [sending, setSending] = useState<string | null>(null);
   const [jobs, setJobs] = useState<any[]>([]);
   const [recipientCount, setRecipientCount] = useState(0);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [contentView, setContentView] = useState<'code' | 'preview'>('preview');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -214,6 +216,28 @@ export default function EmailMarketingPage() {
       attachedJobs: [],
       template: 'default'
     });
+  };
+
+  const loadTemplate = async (type: string) => {
+    if (!type || type === 'custom') return;
+    
+    setLoadingTemplate(true);
+    try {
+      const response = await emailCampaignAPI.getTemplate(type);
+      if (response.template) {
+        setFormData(prev => ({
+          ...prev,
+          subject: response.template.subject,
+          content: response.template.content
+        }));
+        toast.success('Template loaded successfully!');
+      }
+    } catch (error: any) {
+      toast.error('Failed to load template');
+      console.error('Template load error:', error);
+    } finally {
+      setLoadingTemplate(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -491,22 +515,44 @@ export default function EmailMarketingPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Campaign Type</label>
-                <Select
-                  value={formData.type}
-                  onValueChange={value =>
-                    setFormData({ ...formData, type: value })
-                  }>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newsletter">Newsletter</SelectItem>
-                    <SelectItem value="job_alert">Job Alert</SelectItem>
-                    <SelectItem value="reminder">Reminder</SelectItem>
-                    <SelectItem value="announcement">Announcement</SelectItem>
-                    <SelectItem value="custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select
+                    value={formData.type}
+                    onValueChange={value =>
+                      setFormData({ ...formData, type: value })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newsletter">Newsletter</SelectItem>
+                      <SelectItem value="job_alert">Job Alert</SelectItem>
+                      <SelectItem value="reminder">Reminder</SelectItem>
+                      <SelectItem value="announcement">Announcement</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.type !== 'custom' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadTemplate(formData.type)}
+                      disabled={loadingTemplate}
+                      className="whitespace-nowrap">
+                      {loadingTemplate ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Use Template'
+                      )}
+                    </Button>
+                  )}
+                </div>
+                {formData.type !== 'custom' && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    💡 Click "Use Template" to load a pre-designed email for this type
+                  </p>
+                )}
               </div>
 
               <div>
@@ -544,19 +590,76 @@ export default function EmailMarketingPage() {
             )}
 
             <div>
-              <label className="text-sm font-medium mb-2 block">
-                Email Content (HTML supported)
-              </label>
-              <Textarea
-                value={formData.content}
-                onChange={e => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Write your email content here... You can use HTML tags for formatting."
-                rows={8}
-                className="font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Use {'{firstName}'} to personalize with recipient&apos;s name
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium">
+                  Email Content
+                </label>
+                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                  <button
+                    type="button"
+                    onClick={() => setContentView('preview')}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all ${
+                      contentView === 'preview'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}>
+                    <Eye className="h-3 w-3 inline mr-1" />
+                    Preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentView('code')}
+                    className={`px-3 py-1 text-xs font-medium rounded transition-all ${
+                      contentView === 'code'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}>
+                    <FileText className="h-3 w-3 inline mr-1" />
+                    HTML Code
+                  </button>
+                </div>
+              </div>
+              
+              {contentView === 'code' ? (
+                <>
+                  <Textarea
+                    value={formData.content}
+                    onChange={e => setFormData({ ...formData, content: e.target.value })}
+                    placeholder="Write your email content here... You can use HTML tags for formatting."
+                    rows={12}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Use {'{'}firstName{'}'} to personalize with recipient&apos;s name
+                  </p>
+                </>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 border-b px-3 py-2 flex items-center justify-between">
+                    <span className="text-xs text-gray-600 font-medium">Email Preview</span>
+                    <span className="text-xs text-gray-500">How recipients will see it</span>
+                  </div>
+                  <div 
+                    className="bg-white p-4 max-h-96 overflow-y-auto"
+                    style={{ minHeight: '300px' }}>
+                    {formData.content ? (
+                      <div 
+                        dangerouslySetInnerHTML={{ 
+                          __html: formData.content.replace(/{{firstName}}/g, 'John')
+                        }} 
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        <div className="text-center">
+                          <Mail className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No content to preview</p>
+                          <p className="text-xs mt-1">Select a template or switch to HTML Code to write content</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

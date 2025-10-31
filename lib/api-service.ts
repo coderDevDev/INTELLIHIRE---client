@@ -790,6 +790,12 @@ export const emailCampaignAPI = {
   }) => {
     const response = await api.post('/email-campaigns/test', data);
     return response.data;
+  },
+
+  // Get email template by type
+  getTemplate: async (type: string) => {
+    const response = await api.get(`/email-campaigns/templates/${type}`);
+    return response.data;
   }
 };
 
