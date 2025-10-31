@@ -72,6 +72,14 @@ export default function ReportsPage() {
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
+  // Pagination and filtering state for Job Success Report
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'applications' | 'successRate' | 'jobTitle'>('applications');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+
   useEffect(() => {
     fetchReportsData();
   }, [selectedPeriod]);
@@ -989,8 +997,7 @@ End of Report
                       Job Success Report
                     </CardTitle>
                     <CardDescription>
-                      Analysis of job posting performance and application
-                      success rates
+                      Analysis of job posting performance and application success rates
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
@@ -1018,58 +1025,363 @@ End of Report
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Applications per Job */}
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">
-                      Applications per Job
-                    </h3>
-                    <div className="space-y-3">
-                      {data?.jobSuccess.applicationsPerJob.map(
-                        (item, index) => (
-                          <div
-                            key={index}
-                            className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium text-gray-900">
-                                {item.jobTitle}
-                              </span>
-                              <div className="flex gap-2">
-                                <Badge className="bg-blue-100 text-blue-700">
-                                  {item.applications} applications
-                                </Badge>
-                                <Badge className="bg-green-100 text-green-700">
-                                  {item.successRate}% success
-                                </Badge>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      )}
+                  {/* Search and Controls */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-gradient-to-r from-blue-50/50 to-purple-50/50 p-4 rounded-xl border border-blue-100">
+                    <div className="flex-1 w-full sm:w-auto">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Search by job title..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                        />
+                        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white/80 backdrop-blur-sm text-sm">
+                        <option value={5}>5 per page</option>
+                        <option value={10}>10 per page</option>
+                        <option value={20}>20 per page</option>
+                        <option value={50}>50 per page</option>
+                      </select>
+                      <div className="flex gap-1 bg-white/80 rounded-lg p-1 border border-gray-300">
+                        <button
+                          onClick={() => setViewMode('table')}
+                          className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
+                            viewMode === 'table'
+                              ? 'bg-blue-500 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}>
+                          Table
+                        </button>
+                        <button
+                          onClick={() => setViewMode('cards')}
+                          className={`px-3 py-1.5 rounded text-sm font-medium transition-all ${
+                            viewMode === 'cards'
+                              ? 'bg-blue-500 text-white shadow-sm'
+                              : 'text-gray-600 hover:text-gray-900'
+                          }`}>
+                          Cards
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Top Performing Jobs */}
+                  {/* Applications per Job - Enhanced with Pagination */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">
-                      Top Performing Jobs
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      Applications per Job
+                      <Badge className="bg-blue-100 text-blue-700 ml-2">
+                        {(() => {
+                          const filtered = (data?.jobSuccess.applicationsPerJob || [])
+                            .filter(item => 
+                              item.jobTitle.toLowerCase().includes(searchTerm.toLowerCase())
+                            );
+                          return filtered.length;
+                        })()} total
+                      </Badge>
                     </h3>
-                    <div className="space-y-3">
-                      {data?.jobSuccess.topPerformingJobs.map((item, index) => (
+
+                    {viewMode === 'table' ? (
+                      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white/60 backdrop-blur-sm">
+                        <table className="w-full">
+                          <thead className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+                            <tr>
+                              <th className="px-6 py-4 text-left">
+                                <button
+                                  onClick={() => {
+                                    setSortBy('jobTitle');
+                                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                  }}
+                                  className="flex items-center gap-2 font-semibold text-gray-700 hover:text-blue-600 transition-colors">
+                                  Job Title
+                                  {sortBy === 'jobTitle' && (
+                                    <span className="text-blue-600">
+                                      {sortOrder === 'asc' ? '↑' : '↓'}
+                                    </span>
+                                  )}
+                                </button>
+                              </th>
+                              <th className="px-6 py-4 text-left">
+                                <button
+                                  onClick={() => {
+                                    setSortBy('applications');
+                                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                  }}
+                                  className="flex items-center gap-2 font-semibold text-gray-700 hover:text-blue-600 transition-colors">
+                                  Applications
+                                  {sortBy === 'applications' && (
+                                    <span className="text-blue-600">
+                                      {sortOrder === 'asc' ? '↑' : '↓'}
+                                    </span>
+                                  )}
+                                </button>
+                              </th>
+                              <th className="px-6 py-4 text-left">
+                                <button
+                                  onClick={() => {
+                                    setSortBy('successRate');
+                                    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                                  }}
+                                  className="flex items-center gap-2 font-semibold text-gray-700 hover:text-blue-600 transition-colors">
+                                  Success Rate
+                                  {sortBy === 'successRate' && (
+                                    <span className="text-blue-600">
+                                      {sortOrder === 'asc' ? '↑' : '↓'}
+                                    </span>
+                                  )}
+                                </button>
+                              </th>
+                              <th className="px-6 py-4 text-left font-semibold text-gray-700">
+                                Performance
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200">
+                            {(() => {
+                              const filtered = (data?.jobSuccess.applicationsPerJob || [])
+                                .filter(item => 
+                                  item.jobTitle.toLowerCase().includes(searchTerm.toLowerCase())
+                                )
+                                .sort((a, b) => {
+                                  const aVal = a[sortBy];
+                                  const bVal = b[sortBy];
+                                  if (typeof aVal === 'string' && typeof bVal === 'string') {
+                                    return sortOrder === 'asc' 
+                                      ? aVal.localeCompare(bVal)
+                                      : bVal.localeCompare(aVal);
+                                  }
+                                  return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                                });
+                              
+                              const startIndex = (currentPage - 1) * itemsPerPage;
+                              const endIndex = startIndex + itemsPerPage;
+                              const paginatedData = filtered.slice(startIndex, endIndex);
+
+                              return paginatedData.length > 0 ? (
+                                paginatedData.map((item, index) => (
+                                  <tr key={index} className="hover:bg-blue-50/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                        <span className="font-medium text-gray-900">
+                                          {item.jobTitle}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <Badge className="bg-blue-100 text-blue-700">
+                                        {item.applications}
+                                      </Badge>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <Badge className={`${
+                                        item.successRate >= 50 
+                                          ? 'bg-green-100 text-green-700'
+                                          : item.successRate >= 25
+                                          ? 'bg-yellow-100 text-yellow-700'
+                                          : 'bg-red-100 text-red-700'
+                                      }`}>
+                                        {item.successRate}%
+                                      </Badge>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <div
+                                          className={`h-2 rounded-full transition-all duration-500 ${
+                                            item.successRate >= 50
+                                              ? 'bg-green-500'
+                                              : item.successRate >= 25
+                                              ? 'bg-yellow-500'
+                                              : 'bg-red-500'
+                                          }`}
+                                          style={{ width: `${item.successRate}%` }}>
+                                        </div>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                                    No jobs found matching your search.
+                                  </td>
+                                </tr>
+                              );
+                            })()}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {(() => {
+                          const filtered = (data?.jobSuccess.applicationsPerJob || [])
+                            .filter(item => 
+                              item.jobTitle.toLowerCase().includes(searchTerm.toLowerCase())
+                            )
+                            .sort((a, b) => {
+                              const aVal = a[sortBy];
+                              const bVal = b[sortBy];
+                              if (typeof aVal === 'string' && typeof bVal === 'string') {
+                                return sortOrder === 'asc' 
+                                  ? aVal.localeCompare(bVal)
+                                  : bVal.localeCompare(aVal);
+                              }
+                              return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                            });
+                          
+                          const startIndex = (currentPage - 1) * itemsPerPage;
+                          const endIndex = startIndex + itemsPerPage;
+                          const paginatedData = filtered.slice(startIndex, endIndex);
+
+                          return paginatedData.length > 0 ? (
+                            paginatedData.map((item, index) => (
+                              <div
+                                key={index}
+                                className="p-5 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm hover:shadow-lg transition-all duration-300 group">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                      {item.jobTitle}
+                                    </h4>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2 mb-3">
+                                  <Badge className="bg-blue-100 text-blue-700">
+                                    {item.applications} applications
+                                  </Badge>
+                                  <Badge className={`${
+                                    item.successRate >= 50 
+                                      ? 'bg-green-100 text-green-700'
+                                      : item.successRate >= 25
+                                      ? 'bg-yellow-100 text-yellow-700'
+                                      : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {item.successRate}% success
+                                  </Badge>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                      item.successRate >= 50
+                                        ? 'bg-green-500'
+                                        : item.successRate >= 25
+                                        ? 'bg-yellow-500'
+                                        : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${item.successRate}%` }}>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="col-span-2 text-center py-8 text-gray-500">
+                              No jobs found matching your search.
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Pagination Controls */}
+                    {(() => {
+                      const filtered = (data?.jobSuccess.applicationsPerJob || [])
+                        .filter(item => 
+                          item.jobTitle.toLowerCase().includes(searchTerm.toLowerCase())
+                        );
+                      const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+                      if (totalPages <= 1) return null;
+
+                      return (
+                        <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+                          <div className="text-sm text-gray-600">
+                            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} jobs
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                              disabled={currentPage === 1}
+                              className="bg-white/60 backdrop-blur-sm">
+                              Previous
+                            </Button>
+                            <div className="flex gap-1">
+                              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                  pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                  pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                  pageNum = totalPages - 4 + i;
+                                } else {
+                                  pageNum = currentPage - 2 + i;
+                                }
+                                return (
+                                  <Button
+                                    key={i}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(pageNum)}
+                                    className={`w-10 ${
+                                      currentPage === pageNum
+                                        ? 'bg-blue-500 text-white border-blue-500'
+                                        : 'bg-white/60 backdrop-blur-sm'
+                                    }`}>
+                                    {pageNum}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                              disabled={currentPage === totalPages}
+                              className="bg-white/60 backdrop-blur-sm">
+                              Next
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Top Performing Jobs */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-orange-600" />
+                      Top 5 Performing Jobs
+                    </h3>
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                      {data?.jobSuccess.topPerformingJobs.slice(0, 5).map((item, index) => (
                         <div
                           key={index}
-                          className="p-4 rounded-xl border border-white/50 bg-white/40 backdrop-blur-sm">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <span className="font-medium text-gray-900">
-                                {item.jobTitle}
-                              </span>
-                              <p className="text-sm text-gray-600">
-                                {item.company}
-                              </p>
+                          className="p-4 rounded-xl border border-white/50 bg-gradient-to-br from-white/60 to-orange-50/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 group">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                              {index + 1}
                             </div>
-                            <Badge className="bg-orange-100 text-orange-700">
-                              {item.applications} applications
-                            </Badge>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors truncate">
+                                {item.jobTitle}
+                              </h4>
+                              <p className="text-sm text-gray-600 truncate">{item.company}</p>
+                              <Badge className="bg-orange-100 text-orange-700 mt-2">
+                                {item.applications} applications
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       ))}
