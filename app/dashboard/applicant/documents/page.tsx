@@ -264,6 +264,8 @@ export default function DocumentsPage() {
   ) => {
     if (e.target.files && e.target.files[0]) {
       handleFileUpload(e.target.files[0], type);
+      // Reset the input value so the same file can be selected again
+      e.target.value = '';
     }
   };
 
