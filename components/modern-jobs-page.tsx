@@ -1084,7 +1084,7 @@ export function ModernJobsPage() {
 
                               {/* Actions */}
                               <div className="flex flex-col gap-2 ml-4">
-                                <Button
+                                {/* <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSaveJob(job._id)}
@@ -1094,7 +1094,7 @@ export function ModernJobsPage() {
                                   ) : (
                                     <Bookmark className="h-4 w-4" />
                                   )}
-                                </Button>
+                                </Button> */}
                                 <Button
                                   size="sm"
                                   className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg"
