@@ -1052,27 +1052,27 @@ function ApplicantRankingPageContent() {
                                 <TableCell className="font-medium">
                                   <div className="flex items-center gap-2">
                                     <Badge variant="outline">
-                                      #{ranking.rank}
+                                      #{ranking.rank || 'N/A'}
                                     </Badge>
                                     <span className="text-xs text-gray-500">
-                                      {ranking.percentile}th percentile
+                                      {ranking.percentile ? `${ranking.percentile}th percentile` : 'N/A'}
                                     </span>
                                   </div>
                                 </TableCell>
                                 <TableCell>
                                   <div>
                                     <p className="font-medium">
-                                      {ranking.applicantId.firstName}{' '}
-                                      {ranking.applicantId.lastName}
+                                      {ranking.applicantId?.firstName || 'N/A'}{' '}
+                                      {ranking.applicantId?.lastName || ''}
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                      {ranking.applicantId.email}
+                                      {ranking.applicantId?.email || 'No email provided'}
                                     </p>
                                   </div>
                                 </TableCell>
                                 <TableCell>
                                   <p className="font-medium">
-                                    {ranking.jobId.title}
+                                    {ranking.jobId?.title || 'N/A'}
                                   </p>
                                 </TableCell>
                                 <TableCell>
@@ -1294,19 +1294,19 @@ function ApplicantRankingPageContent() {
                                 <TableCell>
                                   <div>
                                     <p className="font-medium">
-                                      {ranking.applicantId.firstName}{' '}
-                                      {ranking.applicantId.lastName}
+                                      {ranking.applicantId?.firstName}{' '}
+                                      {ranking.applicantId?.lastName}
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                      {ranking.applicantId.email}
+                                      {ranking.applicantId?.email}
                                     </p>
                                   </div>
                                 </TableCell>
-                                <TableCell>
-                                  <p className="font-medium">
-                                    {ranking.jobId.title}
-                                  </p>
-                                </TableCell>
+                               <TableCell>
+                                <p className="font-medium">
+                                  {ranking.jobId?.title || 'N/A'}
+                                </p>
+                              </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <Progress
