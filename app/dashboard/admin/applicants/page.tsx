@@ -507,6 +507,10 @@ export default function AdminApplicantsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
+
+                        {
+                          console.log({applicants})
+                        }
                         {applicants.map(applicant => (
                           <TableRow
                             key={applicant._id}
@@ -514,17 +518,19 @@ export default function AdminApplicantsPage() {
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold shadow-md">
-                                  {applicant.applicantId.firstName[0]}
-                                  {applicant.applicantId.lastName[0]}
+                                  {applicant.applicantId ? (
+                                    <>{applicant.applicantId.firstName?.[0] || ''}{applicant.applicantId.lastName?.[0] || ''}</>
+                                  ) : (
+                                    <span>?</span>
+                                  )}
                                 </div>
                                 <div>
                                   <div className="font-medium text-gray-900">
-                                    {applicant.applicantId.firstName}{' '}
-                                    {applicant.applicantId.lastName}
+                                    {applicant.applicantId?.firstName}{' '}{applicant.applicantId?.lastName}
                                   </div>
                                   <div className="text-sm text-gray-600 flex items-center gap-1">
                                     <Mail className="h-3 w-3" />
-                                    {applicant.applicantId.email}
+                                    {applicant.applicantId?.email || 'No email provided'}
                                   </div>
                                 </div>
                               </div>
@@ -544,13 +550,13 @@ export default function AdminApplicantsPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-col gap-1 text-sm">
-                                {applicant.applicantId.phoneNumber && (
+                                {applicant.applicantId?.phoneNumber && (
                                   <div className="flex items-center gap-1 text-gray-600">
                                     <Phone className="h-3 w-3" />
-                                    {applicant.applicantId.phoneNumber}
+                                    {applicant.applicantId?.phoneNumber}
                                   </div>
                                 )}
-                                {applicant.jobId.location && (
+                                {applicant.jobId?.location && (
                                   <div className="flex items-center gap-1 text-gray-600">
                                     <MapPin className="h-3 w-3" />
                                     {applicant.jobId.location}

@@ -8,10 +8,19 @@ import { Toaster } from 'sonner';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'InteliHire - AI-Enhanced Job Portal',
+  title: 'IntelliHire - AI-Enhanced Job Portal',
   description:
     'Job Portal for PESO with AI-enhanced parsing for Personal Data Sheets',
-  generator: 'v0.dev'
+  generator: '',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' }
+    ],
+    apple: '/apple-touch-icon.png'
+  },
+  manifest: '/site.webmanifest'
 };
 
 export default function RootLayout({
