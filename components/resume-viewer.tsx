@@ -313,7 +313,7 @@ export function ResumeViewer({
   return (
     <div className="w-full max-w-6xl mx-auto p-6 space-y-6">
       {/* PDS Score Card */}
-      {resumeData.atsOptimization && (
+      {/* {resumeData.atsOptimization && (
         <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-xl border border-white/50 shadow-lg hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -340,7 +340,7 @@ export function ResumeViewer({
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
