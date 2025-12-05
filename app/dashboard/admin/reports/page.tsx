@@ -29,10 +29,12 @@ import {
   ArrowRight,
   Plus,
   Settings,
-  Activity
+  Activity,
+  Printer
 } from 'lucide-react';
 import { jobAPI, userAPI, applicationAPI } from '@/lib/api-service';
 import { toast } from 'sonner';
+import { PDFReportGenerator } from '@/lib/pdf-utils';
 
 interface ReportData {
   applicantSummary: {
@@ -70,6 +72,7 @@ export default function ReportsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [exportingAll, setExportingAll] = useState(false);
   const [generatingReport, setGeneratingReport] = useState<string | null>(null);
+  const [printingReport, setPrintingReport] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState('30d');
 
   // Pagination and filtering state for Job Success Report
@@ -353,121 +356,311 @@ export default function ReportsPage() {
       setGeneratingReport(reportType);
       toast.info(`Generating ${reportType} report...`);
 
-      let reportContent = '';
+      // Generate PDF report
+      const pdf = new PDFReportGenerator('portrait');
 
       if (reportType === 'applicant-summary') {
-        reportContent = `
-APPLICANT SUMMARY REPORT
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedPeriod}
-============================================
+        // Add header
+        pdf.addHeader({
+          title: 'Applicant Summary Report',
+          subtitle: 'Comprehensive overview of applicant demographics and qualifications',
+          reportType: 'Applicant Analytics',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
 
-OVERVIEW
--------------------------------------------
-Total Applicants: ${data.applicantSummary.totalApplicants}
-New This Month: ${data.applicantSummary.newThisMonth}
+        // Summary cards
+        pdf.addStatCards([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants, color: [37, 99, 235] },
+          { label: 'New This Month', value: data.applicantSummary.newThisMonth, color: [16, 185, 129] },
+          { label: 'Education Levels', value: data.applicantSummary.byEducation.length, color: [168, 85, 247] }
+        ]);
 
-EDUCATION DISTRIBUTION
--------------------------------------------
-${data.applicantSummary.byEducation
-  .map(item => `${item.level}: ${item.count}`)
-  .join('\n')}
+        // Overview section
+        pdf.addSectionHeader('Overview');
+        pdf.addInfoBox([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants },
+          { label: 'New This Month', value: data.applicantSummary.newThisMonth }
+        ], 2);
 
-EXPERIENCE DISTRIBUTION
--------------------------------------------
-${data.applicantSummary.byExperience
-  .map(item => `${item.range}: ${item.count}`)
-  .join('\n')}
+        // Education Distribution
+        pdf.addTable(
+          [
+            { header: 'Education Level', dataKey: 'level' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byEducation.map(item => ({
+            level: item.level,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Education Distribution'
+        );
 
-LOCATION DISTRIBUTION (Top 10)
--------------------------------------------
-${data.applicantSummary.byLocation
-  .slice(0, 10)
-  .map(item => `${item.location}: ${item.count}`)
-  .join('\n')}
+        // Experience Distribution
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Experience Range', dataKey: 'range' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byExperience.map(item => ({
+            range: item.range,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Experience Distribution'
+        );
 
-============================================
-        `.trim();
+        // Location Distribution
+        if (data.applicantSummary.byLocation.length > 0) {
+          pdf.checkPageBreak(60);
+          pdf.addTable(
+            [
+              { header: 'Location', dataKey: 'location' },
+              { header: 'Count', dataKey: 'count' },
+              { header: 'Percentage', dataKey: 'percentage' }
+            ],
+            data.applicantSummary.byLocation.slice(0, 10).map(item => ({
+              location: item.location,
+              count: item.count,
+              percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+            })),
+            'Top 10 Locations'
+          );
+        }
       } else if (reportType === 'job-success') {
-        reportContent = `
-JOB SUCCESS REPORT
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedPeriod}
-============================================
+        // Add header
+        pdf.addHeader({
+          title: 'Job Success Report',
+          subtitle: 'Analysis of job posting performance and application success rates',
+          reportType: 'Job Analytics',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
 
-OVERVIEW
--------------------------------------------
-Total Jobs: ${data.jobSuccess.totalJobs}
-Active Jobs: ${data.jobSuccess.activeJobs}
+        // Summary cards
+        pdf.addStatCards([
+          { label: 'Total Jobs', value: data.jobSuccess.totalJobs, color: [37, 99, 235] },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs, color: [16, 185, 129] },
+          { label: 'Total Applications', value: data.systemMetrics.totalApplications, color: [168, 85, 247] }
+        ]);
 
-APPLICATIONS PER JOB (Top 10)
--------------------------------------------
-${data.jobSuccess.applicationsPerJob
-  .map(
-    (item, i) =>
-      `${i + 1}. ${item.jobTitle}
-   Applications: ${item.applications}
-   Success Rate: ${item.successRate}%`
-  )
-  .join('\n\n')}
+        // Overview
+        pdf.addSectionHeader('Overview');
+        pdf.addInfoBox([
+          { label: 'Total Jobs', value: data.jobSuccess.totalJobs },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs },
+          { label: 'Avg Applications/Job', value: Math.round(data.systemMetrics.totalApplications / data.jobSuccess.totalJobs) || 0 },
+          { label: 'Processing Time', value: `${data.systemMetrics.averageProcessingTime} days` }
+        ], 2);
 
-TOP PERFORMING JOBS
--------------------------------------------
-${data.jobSuccess.topPerformingJobs
-  .map(
-    (item, i) =>
-      `${i + 1}. ${item.jobTitle} (${item.company})
-   Applications: ${item.applications}`
-  )
-  .join('\n\n')}
+        // Applications per Job
+        pdf.addTable(
+          [
+            { header: 'Job Title', dataKey: 'jobTitle', width: 80 },
+            { header: 'Applications', dataKey: 'applications', width: 30 },
+            { header: 'Success Rate', dataKey: 'successRate', width: 30 }
+          ],
+          data.jobSuccess.applicationsPerJob.slice(0, 10).map(item => ({
+            jobTitle: item.jobTitle,
+            applications: item.applications,
+            successRate: `${item.successRate}%`
+          })),
+          'Applications per Job (Top 10)'
+        );
 
-============================================
-        `.trim();
+        // Top Performing Jobs
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Rank', dataKey: 'rank', width: 20 },
+            { header: 'Job Title', dataKey: 'jobTitle', width: 70 },
+            { header: 'Company', dataKey: 'company', width: 50 },
+            { header: 'Applications', dataKey: 'applications', width: 30 }
+          ],
+          data.jobSuccess.topPerformingJobs.map((item, index) => ({
+            rank: `#${index + 1}`,
+            jobTitle: item.jobTitle,
+            company: item.company,
+            applications: item.applications
+          })),
+          'Top Performing Jobs'
+        );
       } else if (reportType === 'system-metrics') {
-        reportContent = `
-SYSTEM METRICS REPORT
-Generated: ${new Date().toLocaleString()}
-Period: ${selectedPeriod}
-============================================
+        // Add header
+        pdf.addHeader({
+          title: 'System Metrics Report',
+          subtitle: 'System performance and operational metrics',
+          reportType: 'System Analytics',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
 
-SYSTEM PERFORMANCE
--------------------------------------------
-Total Users: ${data.systemMetrics.totalUsers}
-Total Applications: ${data.systemMetrics.totalApplications}
-Average Processing Time: ${data.systemMetrics.averageProcessingTime} days
-System Uptime: ${data.systemMetrics.systemUptime}%
+        // Summary cards
+        pdf.addStatCards([
+          { label: 'Total Users', value: data.systemMetrics.totalUsers, color: [37, 99, 235] },
+          { label: 'Total Applications', value: data.systemMetrics.totalApplications, color: [16, 185, 129] },
+          { label: 'System Uptime', value: `${data.systemMetrics.systemUptime}%`, color: [249, 115, 22] }
+        ]);
 
-SYSTEM STATUS
--------------------------------------------
-Database Connection: Active
-AI Services: Operational
-Email Service: Active
+        // System Performance
+        pdf.addSectionHeader('System Performance');
+        pdf.addInfoBox([
+          { label: 'Total Users', value: data.systemMetrics.totalUsers },
+          { label: 'Total Applications', value: data.systemMetrics.totalApplications },
+          { label: 'Avg Processing Time', value: `${data.systemMetrics.averageProcessingTime} days` },
+          { label: 'System Uptime', value: `${data.systemMetrics.systemUptime}%` }
+        ], 2);
 
-============================================
-        `.trim();
+        // System Status
+        pdf.addSectionHeader('System Status');
+        pdf.addParagraph('All systems are operational and running smoothly.');
+        pdf.addParagraph('• Database Connection: Active');
+        pdf.addParagraph('• AI Services: Operational');
+        pdf.addParagraph('• Email Service: Active');
       }
 
-      // Download the report
-      const blob = new Blob([reportContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}-${
-        new Date().toISOString().split('T')[0]
-      }.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Save PDF
+      const filename = `${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
 
-      toast.success(
-        `${reportType} report generated and downloaded successfully`
-      );
+      toast.success(`${reportType} report generated successfully!`);
     } catch (error) {
       console.error('Error generating report:', error);
       toast.error(`Failed to generate ${reportType} report`);
     } finally {
       setGeneratingReport(null);
+    }
+  };
+
+  const printReport = async (reportType: string) => {
+    if (!data) {
+      toast.error('No data available to print');
+      return;
+    }
+
+    try {
+      setPrintingReport(reportType);
+      toast.info(`Preparing ${reportType} report for printing...`);
+
+      // Generate PDF report (same as generateReport but use print() instead of save())
+      const pdf = new PDFReportGenerator('portrait');
+
+      if (reportType === 'applicant-summary') {
+        pdf.addHeader({
+          title: 'Applicant Summary Report',
+          subtitle: 'Comprehensive overview of applicant demographics and qualifications',
+          reportType: 'Applicant Analytics',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
+
+        pdf.addStatCards([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants, color: [37, 99, 235] },
+          { label: 'New This Month', value: data.applicantSummary.newThisMonth, color: [16, 185, 129] },
+          { label: 'Education Levels', value: data.applicantSummary.byEducation.length, color: [168, 85, 247] }
+        ]);
+
+        pdf.addSectionHeader('Overview');
+        pdf.addInfoBox([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants },
+          { label: 'New This Month', value: data.applicantSummary.newThisMonth }
+        ], 2);
+
+        pdf.addTable(
+          [
+            { header: 'Education Level', dataKey: 'level' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byEducation.map(item => ({
+            level: item.level,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Education Distribution'
+        );
+
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Experience Range', dataKey: 'range' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byExperience.map(item => ({
+            range: item.range,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Experience Distribution'
+        );
+      } else if (reportType === 'job-success') {
+        pdf.addHeader({
+          title: 'Job Success Report',
+          subtitle: 'Analysis of job posting performance and application success rates',
+          reportType: 'Job Analytics',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
+
+        pdf.addStatCards([
+          { label: 'Total Jobs', value: data.jobSuccess.totalJobs, color: [37, 99, 235] },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs, color: [16, 185, 129] },
+          { label: 'Total Applications', value: data.systemMetrics.totalApplications, color: [168, 85, 247] }
+        ]);
+
+        pdf.addSectionHeader('Overview');
+        pdf.addInfoBox([
+          { label: 'Total Jobs', value: data.jobSuccess.totalJobs },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs },
+          { label: 'Avg Applications/Job', value: Math.round(data.systemMetrics.totalApplications / data.jobSuccess.totalJobs) || 0 },
+          { label: 'Processing Time', value: `${data.systemMetrics.averageProcessingTime} days` }
+        ], 2);
+
+        pdf.addTable(
+          [
+            { header: 'Job Title', dataKey: 'jobTitle', width: 80 },
+            { header: 'Applications', dataKey: 'applications', width: 30 },
+            { header: 'Success Rate', dataKey: 'successRate', width: 30 }
+          ],
+          data.jobSuccess.applicationsPerJob.slice(0, 10).map(item => ({
+            jobTitle: item.jobTitle,
+            applications: item.applications,
+            successRate: `${item.successRate}%`
+          })),
+          'Applications per Job (Top 10)'
+        );
+
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Rank', dataKey: 'rank', width: 20 },
+            { header: 'Job Title', dataKey: 'jobTitle', width: 70 },
+            { header: 'Company', dataKey: 'company', width: 50 },
+            { header: 'Applications', dataKey: 'applications', width: 30 }
+          ],
+          data.jobSuccess.topPerformingJobs.map((item, index) => ({
+            rank: `#${index + 1}`,
+            jobTitle: item.jobTitle,
+            company: item.company,
+            applications: item.applications
+          })),
+          'Top Performing Jobs'
+        );
+      }
+
+      // Print the PDF
+      pdf.print();
+      toast.success('Print dialog opened!');
+    } catch (error) {
+      console.error('Error printing report:', error);
+      toast.error(`Failed to print ${reportType} report`);
+    } finally {
+      setPrintingReport(null);
     }
   };
 
@@ -480,8 +673,130 @@ Email Service: Active
     try {
       toast.info(`Preparing ${format.toUpperCase()} export...`);
 
-      // Generate comprehensive report
-      const report = `
+      if (format === 'pdf') {
+        // Generate professional PDF report
+        const pdf = new PDFReportGenerator('portrait');
+        
+        // Add header
+        pdf.addHeader({
+          title: 'Comprehensive Analytics Report',
+          subtitle: 'Complete overview of recruitment metrics and performance',
+          reportType: 'Admin Report',
+          generatedBy: 'Admin Dashboard',
+          dateRange: `Period: ${selectedPeriod}`
+        });
+
+        // Add summary statistics cards
+        pdf.addStatCards([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants, color: [37, 99, 235] },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs, color: [16, 185, 129] },
+          { label: 'Applications', value: data.systemMetrics.totalApplications, color: [168, 85, 247] },
+          { label: 'System Uptime', value: `${data.systemMetrics.systemUptime}%`, color: [249, 115, 22] }
+        ]);
+
+        // Applicant Summary Section
+        pdf.addSectionHeader('Applicant Summary');
+        pdf.addInfoBox([
+          { label: 'Total Applicants', value: data.applicantSummary.totalApplicants },
+          { label: 'New This Month', value: data.applicantSummary.newThisMonth },
+          { label: 'Education Levels', value: data.applicantSummary.byEducation.length },
+          { label: 'Locations', value: data.applicantSummary.byLocation.length }
+        ], 2);
+
+        // Education Distribution Table
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Education Level', dataKey: 'level' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byEducation.map(item => ({
+            level: item.level,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Education Distribution'
+        );
+
+        // Experience Distribution Table
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Experience Range', dataKey: 'range' },
+            { header: 'Count', dataKey: 'count' },
+            { header: 'Percentage', dataKey: 'percentage' }
+          ],
+          data.applicantSummary.byExperience.map(item => ({
+            range: item.range,
+            count: item.count,
+            percentage: `${Math.round((item.count / data.applicantSummary.totalApplicants) * 100)}%`
+          })),
+          'Experience Distribution'
+        );
+
+        // Job Success Section
+        pdf.checkPageBreak(80);
+        pdf.addSectionHeader('Job Success Metrics');
+        pdf.addInfoBox([
+          { label: 'Total Jobs', value: data.jobSuccess.totalJobs },
+          { label: 'Active Jobs', value: data.jobSuccess.activeJobs },
+          { label: 'Avg Applications/Job', value: Math.round(data.systemMetrics.totalApplications / data.jobSuccess.totalJobs) || 0 },
+          { label: 'Processing Time', value: `${data.systemMetrics.averageProcessingTime} days` }
+        ], 2);
+
+        // Applications per Job Table
+        pdf.checkPageBreak(80);
+        pdf.addTable(
+          [
+            { header: 'Job Title', dataKey: 'jobTitle', width: 80 },
+            { header: 'Applications', dataKey: 'applications', width: 30 },
+            { header: 'Success Rate', dataKey: 'successRate', width: 30 }
+          ],
+          data.jobSuccess.applicationsPerJob.slice(0, 10).map(item => ({
+            jobTitle: item.jobTitle,
+            applications: item.applications,
+            successRate: `${item.successRate}%`
+          })),
+          'Top 10 Jobs by Applications'
+        );
+
+        // Top Performing Jobs
+        pdf.checkPageBreak(60);
+        pdf.addTable(
+          [
+            { header: 'Rank', dataKey: 'rank', width: 20 },
+            { header: 'Job Title', dataKey: 'jobTitle', width: 70 },
+            { header: 'Company', dataKey: 'company', width: 50 },
+            { header: 'Applications', dataKey: 'applications', width: 30 }
+          ],
+          data.jobSuccess.topPerformingJobs.map((item, index) => ({
+            rank: `#${index + 1}`,
+            jobTitle: item.jobTitle,
+            company: item.company,
+            applications: item.applications
+          })),
+          'Top 5 Performing Jobs'
+        );
+
+        // System Metrics Section
+        pdf.checkPageBreak(60);
+        pdf.addSectionHeader('System Performance');
+        pdf.addInfoBox([
+          { label: 'Total Users', value: data.systemMetrics.totalUsers },
+          { label: 'Total Applications', value: data.systemMetrics.totalApplications },
+          { label: 'Avg Processing Time', value: `${data.systemMetrics.averageProcessingTime} days` },
+          { label: 'System Uptime', value: `${data.systemMetrics.systemUptime}%` }
+        ], 2);
+
+        // Save PDF
+        const filename = `IntelliHire-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(filename);
+        
+        toast.success('PDF report generated successfully!');
+      } else {
+        // CSV Export (existing functionality)
+        const report = `
 INTELLIHIRE COMPREHENSIVE REPORT
 Generated: ${new Date().toLocaleString()}
 Period: ${selectedPeriod}
@@ -535,20 +850,20 @@ System Uptime: ${data.systemMetrics.systemUptime}%
 End of Report
       `.trim();
 
-      // Create and download file
-      const blob = new Blob([report], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `intellihire-report-${format}-${
-        new Date().toISOString().split('T')[0]
-      }.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `intellihire-report-${format}-${
+          new Date().toISOString().split('T')[0]
+        }.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
 
-      toast.success(`Report exported as ${format.toUpperCase()} successfully`);
+        toast.success(`Report exported as ${format.toUpperCase()} successfully`);
+      }
     } catch (error) {
       console.error('Error exporting report:', error);
       toast.error(`Failed to export report as ${format.toUpperCase()}`);
@@ -854,10 +1169,23 @@ End of Report
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => printReport('applicant-summary')}
+                      disabled={printingReport === 'applicant-summary'}
+                      className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
+                      {printingReport === 'applicant-summary' ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4 mr-2" />
+                      )}
+                      Print
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => exportReport('pdf')}
                       className="bg-white/60 backdrop-blur-sm border-white/50 hover:bg-white/80">
                       <Download className="h-4 w-4 mr-2" />
-                      Export PDF
+                      Download PDF
                     </Button>
                   </div>
                 </CardHeader>
@@ -1017,10 +1345,23 @@ End of Report
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => exportReport('excel')}
+                      onClick={() => printReport('job-success')}
+                      disabled={printingReport === 'job-success'}
+                      className="bg-white/60 backdrop-blur-sm border-white/50">
+                      {printingReport === 'job-success' ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4 mr-2" />
+                      )}
+                      Print
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportReport('pdf')}
                       className="bg-white/60 backdrop-blur-sm border-white/50">
                       <Download className="h-4 w-4 mr-2" />
-                      Export Excel
+                      Download PDF
                     </Button>
                   </div>
                 </CardHeader>

@@ -26,13 +26,15 @@ import {
   RefreshCw,
   Plus,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { PDFReportGenerator } from '@/lib/pdf-utils';
 import {
   Select,
   SelectContent,
@@ -200,6 +202,8 @@ export default function ApplicantApplicationsPage() {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const [printingPDF, setPrintingPDF] = useState(false);
   const searchParams = useSearchParams();
   const highlightedAppId = searchParams.get('id');
 
@@ -336,6 +340,221 @@ export default function ApplicantApplicationsPage() {
     { value: 'withdrawn', label: 'Withdrawn' }
   ];
 
+  // Print applications report
+  const printApplicationsReport = async () => {
+    if (applications.length === 0) {
+      toast.error('No applications to print');
+      return;
+    }
+
+    try {
+      setPrintingPDF(true);
+      toast.info('Preparing your applications report for printing...');
+
+      const pdf = new PDFReportGenerator('portrait');
+
+      // Add header
+      pdf.addHeader({
+        title: 'My Job Applications Report',
+        subtitle: 'Complete overview of your job application history',
+        reportType: 'Applicant Report',
+        generatedBy: 'Applicant Dashboard',
+        dateRange: `Total Applications: ${applications.length}`
+      });
+
+      // Add summary statistics cards
+      pdf.addStatCards([
+        { label: 'Total Applications', value: stats.total, color: [37, 99, 235] },
+        { label: 'In Progress', value: stats.applied + stats.screening, color: [234, 179, 8] },
+        { label: 'Interviews', value: stats.interview + stats.offered, color: [168, 85, 247] },
+        { label: 'Hired', value: stats.hired, color: [16, 185, 129] }
+      ]);
+
+      // Application Status Breakdown
+      pdf.addSectionHeader('Application Status Overview');
+      pdf.addInfoBox([
+        { label: 'Applied', value: stats.applied },
+        { label: 'Screening', value: stats.screening },
+        { label: 'Interview', value: stats.interview },
+        { label: 'Offered', value: stats.offered },
+        { label: 'Hired', value: stats.hired },
+        { label: 'Rejected', value: stats.rejected }
+      ], 3);
+
+      // Applications Table
+      pdf.checkPageBreak(80);
+      const tableData = sortedApps.slice(0, 20).map(app => ({
+        jobTitle: app.jobId?.title || 'N/A',
+        company: app.jobId?.companyId?.name || 'N/A',
+        status: app.status.charAt(0).toUpperCase() + app.status.slice(1),
+        appliedDate: new Date(app.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      }));
+
+      pdf.addTable(
+        [
+          { header: 'Job Title', dataKey: 'jobTitle', width: 60 },
+          { header: 'Company', dataKey: 'company', width: 50 },
+          { header: 'Status', dataKey: 'status', width: 30 },
+          { header: 'Applied Date', dataKey: 'appliedDate', width: 40 }
+        ],
+        tableData,
+        'Application Details (Top 20)'
+      );
+
+      // Print the PDF
+      pdf.print();
+      toast.success('Print dialog opened!');
+    } catch (error) {
+      console.error('Error printing PDF:', error);
+      toast.error('Failed to print report');
+    } finally {
+      setPrintingPDF(false);
+    }
+  };
+
+  // Export applications report as PDF
+  const exportApplicationsReport = async () => {
+    if (applications.length === 0) {
+      toast.error('No applications to export');
+      return;
+    }
+
+    try {
+      setExportingPDF(true);
+      toast.info('Generating your applications report...');
+
+      const pdf = new PDFReportGenerator('portrait');
+
+      // Add header
+      pdf.addHeader({
+        title: 'My Job Applications Report',
+        subtitle: 'Complete overview of your job application history',
+        reportType: 'Applicant Report',
+        generatedBy: 'Applicant Dashboard',
+        dateRange: `Total Applications: ${applications.length}`
+      });
+
+      // Add summary statistics cards
+      pdf.addStatCards([
+        { label: 'Total Applications', value: stats.total, color: [37, 99, 235] },
+        { label: 'In Progress', value: stats.applied + stats.screening, color: [234, 179, 8] },
+        { label: 'Interviews', value: stats.interview + stats.offered, color: [168, 85, 247] },
+        { label: 'Hired', value: stats.hired, color: [16, 185, 129] }
+      ]);
+
+      // Application Status Breakdown
+      pdf.addSectionHeader('Application Status Overview');
+      pdf.addInfoBox([
+        { label: 'Applied', value: stats.applied },
+        { label: 'Screening', value: stats.screening },
+        { label: 'Interview', value: stats.interview },
+        { label: 'Offered', value: stats.offered },
+        { label: 'Hired', value: stats.hired },
+        { label: 'Rejected', value: stats.rejected }
+      ], 3);
+
+      // Applications Table
+      pdf.checkPageBreak(80);
+      const tableData = sortedApps.map(app => ({
+        jobTitle: app.jobId?.title || 'N/A',
+        company: app.jobId?.companyId?.name || 'N/A',
+        location: app.jobId?.location || 'N/A',
+        status: app.status.charAt(0).toUpperCase() + app.status.slice(1),
+        appliedDate: new Date(app.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      }));
+
+      pdf.addTable(
+        [
+          { header: 'Job Title', dataKey: 'jobTitle', width: 50 },
+          { header: 'Company', dataKey: 'company', width: 40 },
+          { header: 'Location', dataKey: 'location', width: 35 },
+          { header: 'Status', dataKey: 'status', width: 25 },
+          { header: 'Applied Date', dataKey: 'appliedDate', width: 30 }
+        ],
+        tableData,
+        'Application Details'
+      );
+
+      // Add detailed breakdown by status
+      const statusGroups = [
+        { status: 'applied', label: 'Applied', color: [37, 99, 235] as [number, number, number] },
+        { status: 'screening', label: 'Screening', color: [234, 179, 8] as [number, number, number] },
+        { status: 'interview', label: 'Interview', color: [168, 85, 247] as [number, number, number] },
+        { status: 'offered', label: 'Offered', color: [16, 185, 129] as [number, number, number] },
+        { status: 'hired', label: 'Hired', color: [5, 150, 105] as [number, number, number] },
+        { status: 'rejected', label: 'Rejected', color: [239, 68, 68] as [number, number, number] }
+      ];
+
+      for (const group of statusGroups) {
+        const statusApps = applications.filter(app => app.status === group.status);
+        if (statusApps.length > 0) {
+          pdf.checkPageBreak(60);
+          pdf.addSectionHeader(`${group.label} Applications (${statusApps.length})`);
+          
+          const statusTableData = statusApps.slice(0, 10).map(app => ({
+            jobTitle: app.jobId?.title || 'N/A',
+            company: app.jobId?.companyId?.name || 'N/A',
+            appliedDate: new Date(app.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric'
+            })
+          }));
+
+          if (statusTableData.length > 0) {
+            pdf.addTable(
+              [
+                { header: 'Job Title', dataKey: 'jobTitle', width: 70 },
+                { header: 'Company', dataKey: 'company', width: 50 },
+                { header: 'Applied Date', dataKey: 'appliedDate', width: 40 }
+              ],
+              statusTableData,
+              statusApps.length > 10 ? `Top 10 ${group.label} Applications` : undefined
+            );
+          }
+        }
+      }
+
+      // Add insights section
+      pdf.checkPageBreak(40);
+      pdf.addSectionHeader('Application Insights');
+      
+      const successRate = stats.total > 0 
+        ? Math.round(((stats.hired + stats.offered) / stats.total) * 100) 
+        : 0;
+      const responseRate = stats.total > 0
+        ? Math.round(((stats.total - stats.applied) / stats.total) * 100)
+        : 0;
+
+      pdf.addParagraph(`Success Rate: ${successRate}% of your applications have resulted in offers or hires.`);
+      pdf.addParagraph(`Response Rate: ${responseRate}% of your applications have progressed beyond the initial application stage.`);
+      
+      const mostActiveStatus = Object.entries(stats)
+        .filter(([key]) => key !== 'total')
+        .reduce((a, b) => a[1] > b[1] ? a : b)[0];
+      pdf.addParagraph(`Most Active Status: ${mostActiveStatus.charAt(0).toUpperCase() + mostActiveStatus.slice(1)}`);
+
+      // Save PDF
+      const filename = `My-Applications-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(filename);
+
+      toast.success('Applications report downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF report');
+    } finally {
+      setExportingPDF(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -439,6 +658,32 @@ export default function ApplicantApplicationsPage() {
               className="bg-white/60 backdrop-blur-sm border border-white/50 hover:bg-white/80">
               <Filter className="h-4 w-4 mr-2" />
               Filters {showFilters && '✓'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={printApplicationsReport}
+              disabled={printingPDF || applications.length === 0}
+              className="bg-white/60 backdrop-blur-sm border border-white/50 hover:bg-white/80">
+              {printingPDF ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Printer className="h-4 w-4 mr-2" />
+              )}
+              {printingPDF ? 'Preparing...' : 'Print'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportApplicationsReport}
+              disabled={exportingPDF || applications.length === 0}
+              className="bg-white/60 backdrop-blur-sm border border-white/50 hover:bg-white/80">
+              {exportingPDF ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {exportingPDF ? 'Generating...' : 'Download Report'}
             </Button>
             <Button
               asChild
