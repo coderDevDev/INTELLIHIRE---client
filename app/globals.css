@@ -753,43 +753,5 @@
     @apply text-lg leading-relaxed;
   }
 
-  /* Mobile-optimized 2xl text */
-  .2xl-mobile {
-    @apply text-xl leading-relaxed;
-  }
 
-  /* Mobile-optimized 3xl text */
-  .3xl-mobile {
-    @apply text-2xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 4xl text */
-  .4xl-mobile {
-    @apply text-3xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 5xl text */
-  .5xl-mobile {
-    @apply text-4xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 6xl text */
-  .6xl-mobile {
-    @apply text-5xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 7xl text */
-  .7xl-mobile {
-    @apply text-6xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 8xl text */
-  .8xl-mobile {
-    @apply text-7xl leading-relaxed;
-  }
-
-  /* Mobile-optimized 9xl text */
-  .9xl-mobile {
-    @apply text-8xl leading-relaxed;
-  }
 }
